@@ -1,0 +1,360 @@
+package extractor;
+
+import com.google.common.collect.HashMultimap;
+import edu.stanford.nlp.util.Pair;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.security.spec.MGF1ParameterSpec;
+import java.util.*;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: Jazz
+ * Date: 15-3-13
+ * Time: 下午4:22
+ * To change this template use File | Settings | File Templates.
+ */
+class Node{
+    public int index;
+    ArrayList<Pair<String,Node>> nextNodeArray = new ArrayList<Pair<String,Node>>();
+
+    public Node(int index){
+        this.index = index;
+    }
+}
+
+public class TargetExtractor {
+    // 名词性惯用语,名词性语素,副动词,名动词,不及物动词（内动词）,动词性惯用语,动词性语素,形容词
+    public final String[] OPINION_SET = {"/nl", "/ng", "/a"};
+    // 动词性情感词黑名单
+    public final String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
+    // 基本目标依赖关系类型
+    public final String[] BASIC_TARGET_REL_SET = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
+    // 否定词
+    public final String[] NOT_SET = {"不", "没", "非", "无"};
+    // 否定词白名单
+    public final String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
+    // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
+    private HashMultimap<String, String> targetPairMap = HashMultimap.create();
+    // 候选名词
+    private HashMap<Integer, String> potentialNounMap = new HashMap<Integer, String>();
+    // 候选情感词
+    private HashMap<Integer, String> potentialSentimentMap = new HashMap<Integer, String>();
+    // 副词
+    private HashMap<Integer, String> adverbMap = new HashMap<Integer, String>();
+
+    // 所有词块节点存储
+    private HashMap<Integer, Node> nodeMap = new HashMap<Integer, Node>();
+    // 依存关系存储   rel,head->tail
+    private HashMultimap<String, Pair<Integer,Integer>> depMap = HashMultimap.create();
+    // 以支配词为键值的依存关系存储
+    //private HashMap<Integer, Set<Pair<Integer, String>>> headDepMap = new HashMap();
+
+    // 从分词后合并词组的已标注句子中提取目标词
+    public void extractPotentialWords(String sentence){
+        if(sentence.length() <= 0)
+            return;
+        String[] blockArray = sentence.split(" ");
+        Node node = new Node(0);
+        nodeMap.put(new Integer(0), node);
+        for(int i=0; i<blockArray.length; ++i){
+            // 初始化节点
+            node = new Node(i+1);
+            nodeMap.put(new Integer(i+1), node);
+            // 是否是情感词
+            if(isContainsSentiment(blockArray[i])){
+                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
+                potentialSentimentMap.put(new Integer(i+1), blockArray[i]);
+            }
+            // 是否是名词对象
+            else if(isContainsTargetObject(blockArray[i])){
+                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
+                potentialNounMap.put(new Integer(i+1), blockArray[i]);
+            }
+            // 副词
+            else if(blockArray[i].contains("/d")){
+                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
+                adverbMap.put(new Integer(i+1), blockArray[i]);
+            }
+        }
+    }
+
+    // 读取句子的句法分析后的关系
+    public void readRelation(String depSentence) throws Exception{
+        depSentence = depSentence.substring(1, depSentence.length()-1);
+        depSentence += ", ";
+        String[] blockArray = depSentence.split("\\), ");
+        int index = 0, index2 = 0;
+        String relation = "";
+        Integer head = 0, tail = 0;
+        for(String block : blockArray){
+            if(block!=null && block.length() <= 3)
+                continue;
+            // 获取每个节点所有指针的后续节点
+            try{
+                // 获取关系类型
+                index = block.indexOf('(');
+                relation = block.substring(0, index);
+                // 获取头节点
+                index2 = block.indexOf(", ", index);
+                index = block.lastIndexOf('-', index2);
+                head = new Integer(block.substring(index+1, index2));
+                // 获取尾巴节点
+                index = block.lastIndexOf('-');
+                tail = new Integer(block.substring(index+1));
+                // 存储依存关系
+                Node node = nodeMap.get(tail);
+                nodeMap.get(head).nextNodeArray.add(new Pair<String, Node>(relation, node));
+                depMap.put(relation, new Pair<Integer, Integer>(head,tail));
+                /*if(headDepMap.containsKey(head))
+                    headDepMap.get(head).add(new Pair<Integer, String>(tail, relation));
+                else {
+                    HashSet<Pair<Integer, String>> hashSet = new HashSet<Pair<Integer, String>>();
+                    hashSet.add(new Pair<Integer, String>(tail, relation));
+                    headDepMap.put(head, hashSet);
+                }*/
+            }catch (Exception e){
+                throw new Exception(e);
+            }
+        }
+    }
+
+    // Root规则抽取 ：情感词与主题关联
+    public void extractByRootRule(){
+        Set<Pair<Integer, Integer>> set = depMap.get("root");
+        Iterator<Pair<Integer,Integer>> iterator = set.iterator();
+        if(iterator.hasNext()){
+            Pair<Integer,Integer> pair = iterator.next();
+            // 判断获取的pair中是否存在潜在情感词
+            if(potentialSentimentMap.containsKey(pair.second)){
+                // 获取和该词存在依存关系的词
+                HashMap<Integer, String> depWordMap = getDepPairMap(pair.second);
+                for(Integer index : depWordMap.keySet()){
+                    // 关联的词是否属于潜在评价对象
+                    if(!potentialNounMap.containsKey(index)){
+                        targetPairMap.put("#", potentialSentimentMap.get(pair.second));
+                    }
+                }
+            }
+            // 是否间接存在情感词
+           HashMap<Integer, String> depWordMap = getDepPairMap(pair.second);
+           for(Integer index : depWordMap.keySet()){
+               // 关联的词是否属于潜在评价对象
+               if(potentialSentimentMap.containsKey(index)){
+                   targetPairMap.put("#", potentialSentimentMap.get(index));
+               }
+           }
+        }
+    }
+
+    //  直接规则抽取 ：情感词与对象直接关联
+    void extractByDirectRule(){
+        for(Map.Entry entry : depMap.entries()){
+            // 获取关系类型
+            String rel = (String)entry.getKey();
+            Integer index1 = 0, index2 = 0;
+            // 关系是否属于情感关系类型subj, obj, mod, ccomp
+            if(isContainsTargetRel(rel, false)){
+                index1 = ((Pair<Integer, Integer>)entry.getValue()).first;
+                index2 = ((Pair<Integer, Integer>)entry.getValue()).second;
+
+                // 第一个词是情感词，并且第二个词是潜在名词对象
+                if(potentialSentimentMap.containsKey(index1) && potentialNounMap.containsKey(index2)){
+                    targetPairMap.put(potentialNounMap.get(index2), potentialSentimentMap.get(index1));
+                }
+                // 第二个词是情感词，并且第一个词是潜在名词对象
+                else if(potentialSentimentMap.containsKey(index2) && potentialNounMap.containsKey(index1)){
+                    targetPairMap.put(potentialNounMap.get(index1), potentialSentimentMap.get(index2));
+                }
+            }
+        }
+    }
+
+    // 间接规则抽取:1) H->T,H->O 2) O->H->T  3) T->H->O
+    public void extractByIndirectRule(){
+        // 1) H->T,H->O
+        for(Node node : nodeMap.values()){
+            Integer nounIndex = 0, sentimentIndex = 0;
+            if(node.nextNodeArray.size() >= 2){
+                for(Pair<String, Node> pair : node.nextNodeArray){
+                    // 获取情感词
+                    if(isContainsTargetRel(pair.first, true) && potentialSentimentMap.containsKey(pair.second.index)){
+                        sentimentIndex = pair.second.index;
+                        // 获取名词
+                        for(Pair<String, Node> pair1 : node.nextNodeArray){
+                            if(isContainsTargetRel(pair1.first, true) && potentialNounMap.containsKey(pair1.second.index)){
+                                nounIndex = pair1.second.index;
+                                targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 规则 2) 3)
+        for(Node node : nodeMap.values()){
+            // 名词，情感词序号
+            Integer nounIndex = 0, sentimentIndex = 0;
+            boolean isFirstWordOpinion = false;
+            // 当前节点是否是情感词
+            if(potentialSentimentMap.containsKey(node.index)){
+                isFirstWordOpinion = true;
+                sentimentIndex = new Integer(node.index);
+            }
+            // 当前节点是否是名词
+            else if(potentialNounMap.containsKey(node.index)){
+                isFirstWordOpinion = false;
+                nounIndex = new Integer(node.index);
+            }else{
+                continue;
+            }
+            // 遍历当前节点的所有后续节点
+            for(Pair<String,Node> pair : node.nextNodeArray){
+                // 是否找到目标依赖关系
+                if(isContainsTargetRel(pair.first, true)) {
+                    // 遍历后续节点的所有后续节点
+                    for(Pair<String,Node> pair1 : pair.second.nextNodeArray){
+                        // 是否后续节点找到目标依赖关系
+                        if(isContainsTargetRel(pair1.first, true)) {
+                            if(isFirstWordOpinion && potentialNounMap.containsKey(pair1.second.index)) {
+                                nounIndex =  new Integer(pair1.second.index);
+                                targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                            } else if(!isFirstWordOpinion && potentialSentimentMap.containsKey(pair1.second.index)) {
+                                sentimentIndex =  new Integer(pair1.second.index);
+                                targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 否定反转
+    public void negReverse(){
+        // 待替换容器
+        Set<Pair<String,String>> replaceSet = new HashSet<Pair<String, String>>();
+        // 临近词反转
+        boolean isWhiteWord = false; // 是否在白名单中
+        String tmpW = null;
+        for(Integer key : adverbMap.keySet()){
+            String adverb = adverbMap.get(key);
+            // 检测是否在白名单中
+            for(String whiteWord : NOT_WHITE_SET){
+                if(whiteWord.equals(adverb)){
+                    isWhiteWord = true;
+                    break;
+                }
+            }
+
+            if(isWhiteWord){
+                isWhiteWord = false;
+                continue;
+            }
+            // 检测是否是否定词
+            else{
+                for(String notWord : NOT_SET){
+                    if(adverb.contains(notWord)){
+                        // 寻找是否临近修饰情感词
+                        for(int i=1; i<4; ++i){
+                            if(potentialSentimentMap.containsKey(new Integer(key-i))){
+                                tmpW = potentialSentimentMap.get(new Integer(key-i));
+                                break;
+                            }
+                            else if(potentialSentimentMap.containsKey(new Integer(key+i))){
+                                tmpW = potentialSentimentMap.get(new Integer(key+i));
+                                break;
+                            }
+                        }
+
+                        if(tmpW != null){
+                            for(String noun : targetPairMap.keySet()){
+                                for(String tmpSentiment : targetPairMap.get(noun)) {
+                                    if(tmpSentiment.equals(tmpW)){
+                                        replaceSet.add(new Pair<String,String>(noun, tmpW));
+                                    }
+                                }
+                            }
+                            tmpW = null;
+                        }
+                    }
+                }
+            }
+        }
+        // 依存关系反转
+        Set<Pair<Integer,Integer>> negSet = depMap.get("neg");
+        String sentimentStr = null;
+        Iterator iterator = negSet.iterator();
+        while(iterator.hasNext()){
+            sentimentStr = potentialSentimentMap.get(((Pair<Integer, Integer>)iterator.next()).first);
+            for(String key : targetPairMap.keySet()){
+                for(String tmpSentiment : targetPairMap.get(key)) {
+                    if(tmpSentiment.equals(sentimentStr)){
+                        replaceSet.add(new Pair<String,String>(key, tmpSentiment));
+                    }
+                }
+            }
+        }
+        for(Pair<String,String> pair : replaceSet){
+            targetPairMap.remove(pair.first, pair.second);
+            targetPairMap.put(pair.first, "(-)"+pair.second);
+        }
+    }
+
+    // 分析并提取出目标元组，输出
+    public HashMultimap<String, String> extract(){
+        extractByRootRule();
+        extractByDirectRule();
+        extractByIndirectRule();
+        negReverse();
+        return targetPairMap;
+    }
+
+    // 是否包含潜在情感词
+    public boolean isContainsSentiment(String word){
+        for(String label : OPINION_SET){
+            if(word.contains(label))
+                return true;
+        }
+        if(word.contains("/v")){
+            for(String label : BLACK_OPINION_SET){
+                if(word.contains(label))
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // 是否包含潜在评价词
+    public boolean isContainsTargetObject(String word){
+        return word.contains("/n") && !word.contains("/nl") && !word.contains("/ng");
+    }
+
+    // 是否包含在目标基本依赖关系
+    public boolean isContainsTargetRel(String word, boolean extendLabel){
+        if(extendLabel && word.contains("conj"))
+            return true;
+        for(String label : BASIC_TARGET_REL_SET){
+            if(word.contains(label))
+                return true;
+        }
+        return false;
+    }
+
+    // 获取和目标词存在依存关系的词以及关系
+    public HashMap<Integer, String> getDepPairMap(Integer targetIndex){
+        HashMap<Integer, String> depWordMap = new HashMap<Integer, String>();
+        for(Map.Entry entry : depMap.entries()){
+            Pair<Integer, Integer> relPair = (Pair<Integer, Integer>) entry.getValue();
+            if(targetIndex.equals(relPair.first)){
+                depWordMap.put(relPair.second, (String)entry.getKey());
+            } else if(targetIndex.equals(relPair.second)){
+                depWordMap.put(relPair.first, (String)entry.getKey());
+            }
+        }
+        return depWordMap;
+    }
+}
