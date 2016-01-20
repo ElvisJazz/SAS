@@ -1,9 +1,6 @@
-import edu.stanford.nlp.ling.Sentence;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import extractor.CorpusExtractor;
-import wordSimilarity.WordSimilarity;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -14,7 +11,7 @@ import java.util.Scanner;
  * Time: 下午1:13
  * To change this template use File | Settings | File Templates.
  */
-public class test {
+public class testLTP {
     public static void main(String[] args) throws IOException {
         // 语料预处理，生成纯句子+纯id标注
        CorpusPreHandler cph = new CorpusPreHandler();
@@ -40,29 +37,20 @@ public class test {
             System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步");
         }
 
-
-
         System.out.println("输入0跳过，1继续下一步：分词");
         int a = cin.nextInt();
 
         // 分词操作
         if(a == 1) {
             CorpusSegmenter seg = new CorpusSegmenter();
+            seg.useLTPSeg = true;
+            seg.useLTPPos = true;
             if(!seg.init())
                 return;
-            // 批量生成带pos和不带pos的分词
-            seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_segmentCorpus_pos", true);
-            seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_segmentCorpus_noPos", false);
+            // 批量生成带pos的分词
+            seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_ltp_segmentCorpus_noPos", false);
+            seg.batchSegment("corpus//3_ltp_segmentCorpus_noPos", "corpus//3_ltp_segmentCorpus_pos", true);
             seg.destroy();
-        }
-
-        System.out.println("输入0跳过，1继续下一步：短语合并");
-        a = cin.nextInt();
-
-        // 短语合并
-        if(a == 1) {
-            PhraseProducer pp = new PhraseProducer();
-            pp.produceAll("corpus//3_segmentCorpus_pos", "corpus//4_phraseSegmentCorpus_pos", "corpus//4_phraseSegmentCorpus_noPos");
         }
 
         System.out.println("输入0跳过，1继续下一步：句法分析");
@@ -71,7 +59,28 @@ public class test {
         // 依存句法分析
         if(a == 1) {
             DependencyParser parser = new DependencyParser();
-            parser.parseAll("corpus//4_phraseSegmentCorpus_noPos", "corpus//5_dependencyCorpus");
+            parser.useLTPDep = true;
+            if(!parser.init())
+                return;
+            parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus");
+            parser.destroy();
+        }
+
+        System.out.println("输入0跳过，1继续下一步：语义分析(会先进行命名实体识别)");
+        a = cin.nextInt();
+        if(a == 1) {
+            // 命名实体识别
+            NamedEntityRecognizer ner = new NamedEntityRecognizer();
+            if(!ner.init())
+                return;
+            ner.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//6_ltp_nerCorpus");
+            ner.destroy();
+            // 语义分析
+            SemanticParser parser = new SemanticParser();
+            if(!parser.init())
+                return;
+            parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_SemanticCorpus");
+            parser.destroy();
         }
 
         System.out.println("输入0跳过，1继续下一步：潜在对象和情感词抽取");
