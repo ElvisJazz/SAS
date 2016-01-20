@@ -66,16 +66,23 @@ public class testLTP {
             parser.destroy();
         }
 
-        System.out.println("输入0跳过，1继续下一步：语义分析(会先进行命名实体识别)");
+        System.out.println("输入0跳过，1继续下一步：命名实体识别");
         a = cin.nextInt();
+
+        // 命名实体识别
         if(a == 1) {
-            // 命名实体识别
             NamedEntityRecognizer ner = new NamedEntityRecognizer();
             if(!ner.init())
                 return;
             ner.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//6_ltp_nerCorpus");
             ner.destroy();
-            // 语义分析
+        }
+
+        System.out.println("输入0跳过，1继续下一步：语义分析");
+        a = cin.nextInt();
+
+        // 语义分析
+        if(a == 1) {
             SemanticParser parser = new SemanticParser();
             if(!parser.init())
                 return;
