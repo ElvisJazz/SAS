@@ -21,15 +21,15 @@ public class testLTP {
         while(cin.hasNext()){
             int a = cin.nextInt();
             if(a == 1) {
-                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", false, false);  // 预处理标注语料
+                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // 预处理标注语料
                 //break;
             }
             else  if(a == 2){
-                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", true, false);  // 预处理评测语料对齐
+                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // 预处理评测语料对齐
                 //break;
             }
             else if(a == 3){
-                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", false, true);  // 预处理评估语料对齐
+                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // 预处理评估语料对齐
                 //break;
             }
             else
