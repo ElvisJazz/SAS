@@ -1,4 +1,4 @@
-package utils;
+package cn.edu.seu.utils;
 
 import java.io.File;
 import java.io.FileInputStream;

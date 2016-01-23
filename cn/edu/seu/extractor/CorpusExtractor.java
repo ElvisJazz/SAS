@@ -1,7 +1,6 @@
-package extractor;
+package cn.edu.seu.extractor;
 
 import com.google.common.collect.HashMultimap;
-import edu.stanford.nlp.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -61,13 +60,10 @@ public class CorpusExtractor {
                 TargetExtractor extractor = new TargetExtractor();
                 extractor.extractPotentialWords(phraseSentence);
                 extractor.readRelation(depSentence);
-                outputMap.put(new Integer(i), extractor.extract());
+                outputMap.put(i, extractor.extract());
                 i++;
-                if(i==20)
-                    System.out.print("");
             }
             // 输出名词-情感词关系对，以空格隔开
-            Pair<Integer, Integer> outputPair = null;
             HashMultimap<String, String> subMap = null;
             for(HashMap.Entry entry : outputMap.entrySet()){
                 subMap = (HashMultimap<String, String>)entry.getValue();

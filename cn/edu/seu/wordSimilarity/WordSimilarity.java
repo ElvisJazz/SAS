@@ -1,9 +1,7 @@
 /*
  * Copyright (C) 2008 SKLSDE(State Key Laboratory of Software Development and Environment, Beihang University)., All Rights Reserved.
  */
-package wordSimilarity;
-
-import com.sun.prism.shader.AlphaOne_Color_Loader;
+package cn.edu.seu.wordSimilarity;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

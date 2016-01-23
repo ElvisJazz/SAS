@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 SKLSDE(State Key Laboratory of Software Development and Environment, Beihang University)., All Rights Reserved.
  */
-package wordSimilarity;
+package cn.edu.seu.wordSimilarity;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,9 +1,7 @@
-import edu.stanford.nlp.ling.Sentence;
-import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
-import extractor.CorpusExtractor;
-import wordSimilarity.WordSimilarity;
+package cn.edu.seu;
 
-import java.io.File;
+import cn.edu.seu.extractor.CorpusExtractor;
+
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -89,7 +87,7 @@ public class test {
         // 情感相似度计算
         if(a == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
-            sentimentSorter.init("corpus//dic//positive.txt", "corpus//dic//negative.txt");
+            sentimentSorter.init("corpus//dic//posOpionionDic.txt", "corpus//dic//negOpionionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
             sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//7_nounSentimentPairCorpus");
         }
         // 对齐操作

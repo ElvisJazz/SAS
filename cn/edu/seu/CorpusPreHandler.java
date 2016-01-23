@@ -1,3 +1,5 @@
+package cn.edu.seu;
+
 import edu.hit.ir.ltp4j.Pair;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -6,7 +8,6 @@ import org.dom4j.io.SAXReader;
 import java.io.*;
 import java.util.Iterator;
 import java.util.Stack;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -178,17 +179,23 @@ public class CorpusPreHandler {
       3）以hashtag标注的主题。*/
     public Pair<String, String> getTopicAndContent(String sentence, String hashtag){
         int startTagIndex, endTagIndex;
+        String topic = "";
         // 获取当前主题
-        String topic = null;
-        startTagIndex = sentence.indexOf('#');
-        if(startTagIndex != -1) {
-            endTagIndex = sentence.indexOf('#', startTagIndex+1);
-            if(endTagIndex != -1){
-                topic = sentence.substring(startTagIndex+1, endTagIndex).trim();
-                sentence = sentence.substring(endTagIndex+1).trim();
+        if(sentence.startsWith("#") && sentence.endsWith("#"))
+            sentence = sentence.substring(1, sentence.length()-1);
+        else{
+            startTagIndex = sentence.indexOf('#');
+            while(startTagIndex != -1) {
+                endTagIndex = sentence.indexOf('#', startTagIndex+1);
+                if(endTagIndex != -1){
+                    topic = sentence.substring(startTagIndex+1, endTagIndex).trim();
+                    startTagIndex = sentence.indexOf('#', endTagIndex+1);
+                } else
+                    break;
             }
+            sentence = sentence.replaceAll("#.*#", "").trim();
         }
-        topic = (topic==null)? hashtag : topic;
+        topic = (topic=="")? hashtag : topic;
         // 处理句首或句末的《》
         startTagIndex = sentence.indexOf('《');
         if(startTagIndex != -1) {
@@ -242,10 +249,9 @@ public class CorpusPreHandler {
                     break;
                 }
             }
+            if(flag)
+                return 0;
         }
-        if(flag)
-            return 0;
-        flag = true;
         // 是否在句末
         if(start>0 && sentence.charAt(start-1)==' ') {
             for(int i=end; i<sentence.length(); ++i){
@@ -254,9 +260,9 @@ public class CorpusPreHandler {
                     break;
                 }
             }
+            if(flag)
+                return 1;
         }
-        if(flag)
-            return 1;
         return -1;
     }
 
@@ -295,7 +301,7 @@ public class CorpusPreHandler {
         String lastSen;
         do{
             lastSen = sentence;
-            String pattern = "([^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#]+)(\\s+)([^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#]+)";
+            String pattern = "(.*[^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#])(\\s+)([^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#].*)";
             Pattern p = Pattern.compile(pattern);
             Matcher m = p.matcher(sentence);
             StringBuffer sb = new StringBuffer();
@@ -319,7 +325,7 @@ public class CorpusPreHandler {
 
     public static  void main(String args[]){
         CorpusPreHandler p = new CorpusPreHandler();
-        String a = p.handleSpaceInSentence("hah    好啊     好的");
+       Pair<String,String> a = p.getTopicAndContent("看过《笑傲江湖》：力荐此剧的唯一原因就是东方不败！","");
         System.out.println(a);
     }
 }

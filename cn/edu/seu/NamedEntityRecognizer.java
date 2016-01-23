@@ -1,3 +1,5 @@
+package cn.edu.seu;
+
 import edu.hit.ir.ltp4j.NER;
 import edu.hit.ir.ltp4j.Parser;
 import edu.stanford.nlp.trees.GrammaticalStructure;
@@ -55,10 +57,10 @@ public class NamedEntityRecognizer {
         try{
             // 文件输出变量
             File file = new File(outputDir+"//"+fileName);
-            if(file.exists()) {
+            /*if(file.exists()) {
                 System.out.println(fileName+"已存在！");
                 return;
-            }
+            }*/
             writer = new FileWriter(file);
             reader = new FileReader(new File(filePath));
             br = new BufferedReader(reader);
@@ -70,25 +72,26 @@ public class NamedEntityRecognizer {
             int size = 0, num = 0;
             while((line=br.readLine()) != null) {
                 ++num;
+                line = line.trim();
+                if(line.equals(""))
+                    continue;
                 String[] trunks = line.split(" ");
                 words.clear();
                 tags.clear();
                 ners.clear();
                 for(String t : trunks){
-                    int index = t.lastIndexOf('/');
+                   int index = t.lastIndexOf('/');
                     words.add(t.substring(0, index));
                     tags.add(t.substring(index+1));
                 }
                 size = NER.recognize(words, tags, ners);
                 for(int i = 0; i<size; i++) {
-                    writer.write(ners.get(i));
-                    if(i == size-1) {
-                        writer.write("\n");
-                    }
-                    else{
+                    writer.write(words.get(i)+"/"+ners.get(i));
+                    if(i != size-1) {
                         writer.write(" ");
                     }
                 }
+                writer.write("\n");
                 System.out.print(String.valueOf(num) + "\r");
             }
 

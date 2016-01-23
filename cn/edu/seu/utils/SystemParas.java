@@ -1,4 +1,4 @@
-package utils;
+package cn.edu.seu.utils;
 
 /**
  * 系统配置参数加载类

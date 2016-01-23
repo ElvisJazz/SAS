@@ -1,11 +1,8 @@
-package extractor;
+package cn.edu.seu.extractor;
 
 import com.google.common.collect.HashMultimap;
 import edu.stanford.nlp.util.Pair;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.security.spec.MGF1ParameterSpec;
 import java.util.*;
 
 /**
@@ -17,7 +14,7 @@ import java.util.*;
  */
 class Node{
     public int index;
-    ArrayList<Pair<String,Node>> nextNodeArray = new ArrayList<Pair<String,Node>>();
+    ArrayList<Pair<String, Node>> nextNodeArray = new ArrayList<Pair<String, Node>>();
 
     public Node(int index){
         this.index = index;
@@ -26,15 +23,17 @@ class Node{
 
 public class TargetExtractor {
     // 名词性惯用语,名词性语素,副动词,名动词,不及物动词（内动词）,动词性惯用语,动词性语素,形容词
-    public final String[] OPINION_SET = {"/nl", "/ng", "/a"};
+    public final static String[] OPINION_SET_FOR_STF = {"/nl", "/ng", "/a"};
+    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v"};
     // 动词性情感词黑名单
-    public final String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
+    public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
-    public final String[] BASIC_TARGET_REL_SET = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
     // 否定词
-    public final String[] NOT_SET = {"不", "没", "非", "无"};
+    public final static String[] NOT_SET = {"不", "没", "非", "无"};
     // 否定词白名单
-    public final String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
+    public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
     private HashMultimap<String, String> targetPairMap = HashMultimap.create();
     // 候选名词
@@ -50,6 +49,23 @@ public class TargetExtractor {
     private HashMultimap<String, Pair<Integer,Integer>> depMap = HashMultimap.create();
     // 以支配词为键值的依存关系存储
     //private HashMap<Integer, Set<Pair<Integer, String>>> headDepMap = new HashMap();
+    // 抽取类型
+    public enum EXTRACT_TYPE{ STF, LTP};
+    private EXTRACT_TYPE type = EXTRACT_TYPE.STF;
+
+    // 设置抽取类型
+    public void setExtractType(EXTRACT_TYPE type){
+        this.type = type;
+    }
+
+    // 设置潜在评价对象数组
+    public void setPotentialNounMap(HashMap<Integer, String> potentialNounMap){
+        this.potentialNounMap = potentialNounMap;
+    }
+
+    public HashMultimap<String, Pair<Integer, Integer>> getDepMap() {
+        return depMap;
+    }
 
     // 从分词后合并词组的已标注句子中提取目标词
     public void extractPotentialWords(String sentence){
@@ -107,13 +123,6 @@ public class TargetExtractor {
                 Node node = nodeMap.get(tail);
                 nodeMap.get(head).nextNodeArray.add(new Pair<String, Node>(relation, node));
                 depMap.put(relation, new Pair<Integer, Integer>(head,tail));
-                /*if(headDepMap.containsKey(head))
-                    headDepMap.get(head).add(new Pair<Integer, String>(tail, relation));
-                else {
-                    HashSet<Pair<Integer, String>> hashSet = new HashSet<Pair<Integer, String>>();
-                    hashSet.add(new Pair<Integer, String>(tail, relation));
-                    headDepMap.put(head, hashSet);
-                }*/
             }catch (Exception e){
                 throw new Exception(e);
             }
@@ -211,11 +220,11 @@ public class TargetExtractor {
                 continue;
             }
             // 遍历当前节点的所有后续节点
-            for(Pair<String,Node> pair : node.nextNodeArray){
+            for(Pair<String, Node> pair : node.nextNodeArray){
                 // 是否找到目标依赖关系
                 if(isContainsTargetRel(pair.first, true)) {
                     // 遍历后续节点的所有后续节点
-                    for(Pair<String,Node> pair1 : pair.second.nextNodeArray){
+                    for(Pair<String, Node> pair1 : pair.second.nextNodeArray){
                         // 是否后续节点找到目标依赖关系
                         if(isContainsTargetRel(pair1.first, true)) {
                             if(isFirstWordOpinion && potentialNounMap.containsKey(pair1.second.index)) {
@@ -259,12 +268,12 @@ public class TargetExtractor {
                     if(adverb.contains(notWord)){
                         // 寻找是否临近修饰情感词
                         for(int i=1; i<4; ++i){
-                            if(potentialSentimentMap.containsKey(new Integer(key-i))){
-                                tmpW = potentialSentimentMap.get(new Integer(key-i));
+                            if(potentialSentimentMap.containsKey(key-i)){
+                                tmpW = potentialSentimentMap.get(key-i);
                                 break;
                             }
-                            else if(potentialSentimentMap.containsKey(new Integer(key+i))){
-                                tmpW = potentialSentimentMap.get(new Integer(key+i));
+                            else if(potentialSentimentMap.containsKey(key+i)){
+                                tmpW = potentialSentimentMap.get(key+i);
                                 break;
                             }
                         }
@@ -314,30 +323,50 @@ public class TargetExtractor {
 
     // 是否包含潜在情感词
     public boolean isContainsSentiment(String word){
-        for(String label : OPINION_SET){
+        String[] set;
+        if(type == EXTRACT_TYPE.STF)
+            set = OPINION_SET_FOR_STF;
+        else
+            set = OPINION_SET_FOR_LTP;
+
+        for(String label : set){
             if(word.contains(label))
                 return true;
         }
         if(word.contains("/v")){
-            for(String label : BLACK_OPINION_SET){
-                if(word.contains(label))
-                    return false;
+            if(type == EXTRACT_TYPE.STF){
+                for(String label : BLACK_OPINION_SET){
+                    if(word.contains(label))
+                        return false;
+                }
             }
             return true;
         }
         return false;
     }
 
-    // 是否包含潜在评价词
+    // 是否包含潜在评价对象
     public boolean isContainsTargetObject(String word){
-        return word.contains("/n") && !word.contains("/nl") && !word.contains("/ng");
+        if(type == EXTRACT_TYPE.STF)
+            return word.contains("/n") && !word.contains("/nl") && !word.contains("/ng");
+        else
+            return false;
     }
 
     // 是否包含在目标基本依赖关系
     public boolean isContainsTargetRel(String word, boolean extendLabel){
-        if(extendLabel && word.contains("conj"))
+        String extendLabelStr;
+        String[] set;
+        if(type == EXTRACT_TYPE.STF) {
+            extendLabelStr = "conj";
+            set = BASIC_TARGET_REL_SET_FOR_STF;
+        }else {
+            extendLabelStr = "COO";
+            set = BASIC_TARGET_REL_SET_FOR_LTP;
+        }
+        if(extendLabel && word.contains(extendLabelStr))
             return true;
-        for(String label : BASIC_TARGET_REL_SET){
+        for(String label : set){
             if(word.contains(label))
                 return true;
         }

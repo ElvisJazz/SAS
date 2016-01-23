@@ -1,4 +1,4 @@
-package ltp;
+package cn.edu.seu.ltp;
 
 /**
  * Created with IntelliJ IDEA.

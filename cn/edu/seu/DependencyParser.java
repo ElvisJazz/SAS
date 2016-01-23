@@ -1,7 +1,7 @@
+package cn.edu.seu;
+
 import edu.hit.ir.ltp4j.Parser;
-import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
-import edu.stanford.nlp.process.DocumentPreprocessor;
 import edu.stanford.nlp.trees.*;
 import edu.stanford.nlp.trees.international.pennchinese.ChineseTreebankLanguagePack;
 
@@ -65,10 +65,10 @@ public class DependencyParser {
         try{
             // 文件输出变量
             File file = new File(outputDir+"//"+fileName);
-            if(file.exists()) {
+            /*if(file.exists()) {
                 System.out.println(fileName+"已存在！");
                 return;
-            }
+            }*/
             writer = new FileWriter(file);
             reader = new FileReader(new File(filePath));
             br = new BufferedReader(reader);
@@ -84,6 +84,9 @@ public class DependencyParser {
                 StringBuffer buf;
                 while((line=br.readLine()) != null) {
                     ++num;
+                    line = line.trim();
+                    if(line.equals(""))
+                        continue;
                     String[] trunks = line.split(" ");
                     words.clear();
                     tags.clear();
@@ -95,7 +98,8 @@ public class DependencyParser {
                         tags.add(t.substring(index+1));
                     }
                     size = Parser.parse(words,tags,heads,deprels);
-                    writer.write("[");
+                    if(size != 0)
+                        writer.write("[");
                     for(int i = 0; i<size; i++) {
                         head = heads.get(i);
                         buf = new StringBuffer();
@@ -114,12 +118,13 @@ public class DependencyParser {
                         buf.append(')');
                         writer.write(buf.toString());
                         if(i == size-1) {
-                            writer.write("]\n");
+                            writer.write("]");
                         }
                         else{
                             writer.write(", ");
                         }
                     }
+                    writer.write("\n");
                     System.out.print(String.valueOf(num) + "\r");
                 }
             } else{

@@ -1,5 +1,6 @@
-import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
-import extractor.CorpusExtractor;
+package cn.edu.seu;
+
+import cn.edu.seu.extractor.CorpusExtractor;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -49,7 +50,9 @@ public class testLTP {
                 return;
             // 批量生成带pos的分词
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_ltp_segmentCorpus_noPos", false);
+            seg.batchSegment("corpus//2_preprocessTopicCorpus", "corpus//3_ltp_segmentTopicCorpus_noPos", false);
             seg.batchSegment("corpus//3_ltp_segmentCorpus_noPos", "corpus//3_ltp_segmentCorpus_pos", true);
+            seg.batchSegment("corpus//3_ltp_segmentTopicCorpus_noPos", "corpus//3_ltp_segmentTopicCorpus_pos", true);
             seg.destroy();
         }
 
@@ -63,6 +66,7 @@ public class testLTP {
             if(!parser.init())
                 return;
             parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus");
+            parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus");
             parser.destroy();
         }
 
@@ -75,6 +79,7 @@ public class testLTP {
             if(!ner.init())
                 return;
             ner.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//6_ltp_nerCorpus");
+            ner.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//6_ltp_nerTopicCorpus");
             ner.destroy();
         }
 
@@ -87,6 +92,7 @@ public class testLTP {
             if(!parser.init())
                 return;
             parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_SemanticCorpus");
+            parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_SemanticTopicCorpus");
             parser.destroy();
         }
 
@@ -105,7 +111,7 @@ public class testLTP {
         // 情感相似度计算
         if(a == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
-            sentimentSorter.init("corpus//dic//positive.txt", "corpus//dic//negative.txt");
+            SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
             sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//7_nounSentimentPairCorpus");
         }
         // 对齐操作

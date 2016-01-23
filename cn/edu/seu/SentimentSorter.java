@@ -1,13 +1,15 @@
+package cn.edu.seu;
+
 import com.google.common.collect.HashMultimap;
-import wordSimilarity.WordSimilarity;
+import cn.edu.seu.wordSimilarity.WordSimilarity;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
+import java.util.Vector;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,55 +19,51 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class SentimentSorter {
+    public static final String POS = "POS";
+    public static final String NEG = "NEG";
+    public static final String OTHER = "OTHER";
     // 种子情感词积极+消极
     private final String[] POSITIVE_SENTIMENTS = {"积极", "正确", "快乐", "伟大", "纯洁", "促进"};//
     private final String[] NEGATIVE_SENTIMENTS = {"消极", "错误", "悲伤", "渺小", "肮脏", "阻碍"};//
 
-    // 正面情感词词典
-    private Set<String> posSentimentDic = new HashSet<String>();
-    // 负面情感词词典
-    private Set<String> negSentimentDic = new HashSet<String>();
+    // 正面评价词词典
+    private static Set<String> posOpinionDic = new HashSet<String>();
+    // 负面评价词典
+    private static Set<String> negOpinionDic = new HashSet<String>();
+    // 正面感情词词典
+    private static Set<String> posEmotionDic = new HashSet<String>();
+    // 负面感情词典
+    private static Set<String> negEmotionDic = new HashSet<String>();
 
     // 相似度计算独享
     private WordSimilarity ws = new WordSimilarity();
 
-    public void init(String posDicPath, String negDicPath){
-        FileReader posReader=null, negReader=null;
-        BufferedReader posBufferReader=null, negBufferReader=null;
+    public static void init(String posDicPath, String negDicPath, String posEmotionDicPath, String negEmotionDicPath){
+        Vector<BufferedReader> bufVec = new Vector<>();
+        Vector<Set> setVec = new Vector<>();
         try{
-            File posFile = new File(posDicPath);
-            File negFile = new File(negDicPath);
-            posReader = new FileReader(posFile);
-            negReader = new FileReader(negFile);
-            posBufferReader = new BufferedReader(posReader);
-            negBufferReader = new BufferedReader(negReader);
-            // 读取正面情感词词典
-            String pos = posBufferReader.readLine();
-            while(pos != null){
-                pos = pos.substring(0,pos.length()-1);
-                posSentimentDic.add(pos);
-                pos = posBufferReader.readLine();
+            bufVec.add(new BufferedReader(new FileReader(new File(posDicPath))));
+            bufVec.add(new BufferedReader(new FileReader(new File(negDicPath))));
+            bufVec.add(new BufferedReader(new FileReader(new File(posEmotionDicPath))));
+            bufVec.add(new BufferedReader(new FileReader(new File(negEmotionDicPath))));
+            setVec.add(posOpinionDic);
+            setVec.add(negOpinionDic);
+            setVec.add(posEmotionDic);
+            setVec.add(negEmotionDic);
+            String tmp;
+            // 读取词典
+            for(int i=0; i<4; ++i){
+                while((tmp=bufVec.get(i).readLine()) != null){
+                    tmp = tmp.substring(0,tmp.length()-1);
+                    setVec.get(i).add(tmp);
+                }
             }
-            // 读取负面情感词词典
-            String neg = negBufferReader.readLine();
-            while(neg != null){
-                neg = neg.substring(0,neg.length()-1);
-                negSentimentDic.add(neg);
-                neg = negBufferReader.readLine();
-            }
-
         }catch (Exception e){
             e.printStackTrace();
         }finally {
             try{
-                if(posReader != null)
-                    posReader.close();
-                if(negReader != null)
-                    negReader.close();
-                if(posBufferReader != null)
-                    posBufferReader.close();
-                if(negBufferReader != null)
-                    negBufferReader.close();
+                for(int i=0; i<4; ++i)
+                    bufVec.get(i).close();
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -108,7 +106,7 @@ public class SentimentSorter {
                 // 分析当前句子
                 for (String noun : nounSentimentMap.keySet()) {
                     String outputTag = compute(nounSentimentMap.get(noun));
-                    if (!"OTHER".equals(outputTag))
+                    if (!OTHER.equals(outputTag))
                         fileWriter.write("[" + noun + ", " + outputTag + "]");
                 }
                 fileWriter.write("\n");
@@ -196,11 +194,6 @@ public class SentimentSorter {
         boolean isNegReverse = false;
 
         for (String word : wordSet) {
-           /* // 处理新闻用词
-            if("来自".equals(word))
-                continue;
-*/
-
             // 处理反转情况 ,形如： (-)高兴
             if(word.contains("(-)")){
                 isNegReverse = true;
@@ -220,7 +213,6 @@ public class SentimentSorter {
                 tmpNegativeScore = ws.simWord(word, NEGATIVE_SENTIMENTS[i]);
 
                 if (tmpPositiveScore < 0.06 && tmpNegativeScore < 0.06){
-
                     continue;
                 }
 
@@ -240,13 +232,13 @@ public class SentimentSorter {
             }
             if(posScore == negScore){
                 // 从情感词典中匹配
-                if(posSentimentDic.contains(word)) {
+                if(posOpinionDic.contains(word) || posEmotionDic.contains(word)) {
                     if(isNegReverse){
                         negScore++;
                     }else{
                         posScore++;
                     }
-                }else if(negSentimentDic.contains(word)){
+                }else if(negOpinionDic.contains(word) || negEmotionDic.contains(word)){
                     if(isNegReverse){
                         posScore++;
                     }else{
@@ -263,10 +255,24 @@ public class SentimentSorter {
             negScore = 0;
         }
         if (maxPosScore > maxNegScore)
-            return "POS";
+            return POS;
         else if (maxPosScore < maxNegScore)
-            return "NEG";
+            return NEG;
         else
-            return "POS";
+            return OTHER;
+    }
+
+    // 获取情感词类别：0：不是情感词或观点词，+-1：观点词，+-2：情感词
+    public static int getSentimentWordType(String word){
+        if(posOpinionDic.contains(word))
+            return 1;
+        else if(negOpinionDic.contains(word))
+            return -1;
+        else if(posEmotionDic.contains(word))
+            return 2;
+        else if(negEmotionDic.contains(word))
+            return -2;
+
+        return 0;
     }
 }

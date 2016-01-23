@@ -1,3 +1,5 @@
+package cn.edu.seu;
+
 import edu.hit.ir.ltp4j.Pair;
 import edu.hit.ir.ltp4j.Parser;
 import edu.hit.ir.ltp4j.SRL;
@@ -93,6 +95,8 @@ public class SemanticParser {
                 deps.clear();
                 heads.clear();
                 for(String t : trunks){
+                    if(t.equals(""))
+                        continue;
                     index = t.lastIndexOf('/');
                     words.add(t.substring(0, index));
                     tags.add(t.substring(index+1));
@@ -101,6 +105,7 @@ public class SemanticParser {
                 nerLine = nerBr.readLine();
                 String[] nerTrunks = nerLine.split(" ");
                 for(String ner : nerTrunks){
+                    ner = ner.replaceAll("[^/]*/", "");
                     ners.add(ner);
                 }
                 // 读取依存关系
@@ -118,10 +123,19 @@ public class SemanticParser {
                 // 语义分析
                 List<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>> srls = new ArrayList<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>>();
                 SRL.srl(words, tags, ners, heads, deps, srls);
+                int start, end, preIndex;
+                String seq = "";
                 for (int i = 0; i < srls.size(); ++i) {
-                    writer.write(srls.get(i).first + ":");
+                    preIndex = srls.get(i).first;
+                    writer.write(preIndex + "("+words.get(preIndex)+"):");
                     for (int j = 0; j < srls.get(i).second.size(); ++j) {
-                        writer.write(" type="+ srls.get(i).second.get(j).first + " beg="+ srls.get(i).second.get(j).second.first + " end="+ srls.get(i).second.get(j).second.second);
+                        start = srls.get(i).second.get(j).second.first;
+                        end = srls.get(i).second.get(j).second.second;
+                        for(int k=start; k<=end; ++k)
+                            seq += words.get(k);
+                        writer.write(" type="+ srls.get(i).second.get(j).first +
+                                " beg="+ start + " end="+ end + " seq=" + seq);
+                        seq = "";
                     }
                     writer.write(";");
                 }

@@ -1,3 +1,5 @@
+package cn.edu.seu;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,12 +129,11 @@ public class CorpusSegmenter {
                     size = Segmentor.segment(s, words);
                     for(int i = 0; i<size; i++) {
                         nativeBytes += words.get(i);
-                        if(i == size-1) {
-                            nativeBytes += '\n';
-                        } else{
+                        if(i != size-1) {
                             nativeBytes += ' ';
                         }
                     }
+                    nativeBytes += '\n';
                     words.clear();
                 }
             }else if(useLTPPos && isPos){
@@ -149,12 +150,11 @@ public class CorpusSegmenter {
                     size = Postagger.postag(words, postags);
                     for(int i = 0; i < size; i++) {
                         nativeBytes += (words.get(i)+"/"+postags.get(i));
-                        if(i == size-1) {
-                            nativeBytes += '\n';
-                        } else{
+                        if(i != size-1) {
                             nativeBytes += ' ';
                         }
                     }
+                    nativeBytes += '\n';
                 }
             }else{
                 if(isPos)
