@@ -29,7 +29,7 @@ public class TargetExtractor {
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
     public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
-    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "COO", "nn", "conj"};
     // 否定词
     public final static String[] NOT_SET = {"不", "没", "非", "无"};
     // 否定词白名单

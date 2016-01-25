@@ -1,5 +1,6 @@
 package cn.edu.seu;
 
+import cn.edu.seu.utils.PunctuationUtil;
 import edu.hit.ir.ltp4j.Pair;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -19,8 +20,6 @@ import java.util.regex.Pattern;
  * To change this template use File | Settings | File Templates.
  */
 public class CorpusPreHandler {
-    // 标点符号
-    private String punctuation = "$% ,，、.。;；:!！?？-—_=+<>（）(){}|\\/*&^'\"”“’‘@#";
     // 预处理所有原始语料，生成待分析语料
     public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation){
         File[] fileArray = (new File(readDir)).listFiles();
@@ -217,7 +216,7 @@ public class CorpusPreHandler {
         while(startTagIndex != -1) {
             // 前面可以有标点符号
             for(int i=0; i<startTagIndex; ++i){
-                if(punctuation.indexOf(sentence.charAt(i)) == -1) {
+                if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
                     flag = false;
                     break;
                 }
@@ -244,7 +243,7 @@ public class CorpusPreHandler {
         // 是否在句首
         if(end<sentence.length() && sentence.charAt(end)==' ') {
             for(int i=0; i<start; ++i){
-                if(punctuation.indexOf(sentence.charAt(i)) == -1) {
+                if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
                     flag = false;
                     break;
                 }
@@ -255,7 +254,7 @@ public class CorpusPreHandler {
         // 是否在句末
         if(start>0 && sentence.charAt(start-1)==' ') {
             for(int i=end; i<sentence.length(); ++i){
-                if(punctuation.indexOf(sentence.charAt(i)) == -1) {
+                if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
                     flag = false;
                     break;
                 }

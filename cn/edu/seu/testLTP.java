@@ -1,6 +1,7 @@
 package cn.edu.seu;
 
 import cn.edu.seu.extractor.CorpusExtractor;
+import cn.edu.seu.ltp_extractor.LTPCorpusExtractor;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -101,8 +102,9 @@ public class testLTP {
 
         // 潜在对象和情感词抽取
         if(a == 1) {
-            CorpusExtractor corpusExtractor = new CorpusExtractor();
-            corpusExtractor.extractorAll("corpus//4_phraseSegmentCorpus_pos", "corpus//5_dependencyCorpus", "corpus//6_targetPairCorpus");
+            LTPCorpusExtractor corpusExtractor = new LTPCorpusExtractor();
+            corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_SemanticCorpus,",
+                    "corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_SemanticTopicCorpus,", "corpus//8_ltp_TargetPairCorpus" );
         }
 
         System.out.println("输入0跳过，1继续下一步：情感相似度计算");
