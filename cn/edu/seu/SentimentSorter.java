@@ -20,8 +20,8 @@ public class SentimentSorter {
     public static final String NEG = "NEG";
     public static final String OTHER = "OTHER";
     // 种子情感词积极+消极
-    private final String[] POSITIVE_SENTIMENTS = {"积极", "正确", "快乐", "伟大", "纯洁", "促进"};//
-    private final String[] NEGATIVE_SENTIMENTS = {"消极", "错误", "悲伤", "渺小", "肮脏", "阻碍"};//
+    private final static String[] POSITIVE_SENTIMENTS = {"积极", "正确", "快乐", "伟大", "纯洁", "促进"};//
+    private final static String[] NEGATIVE_SENTIMENTS = {"消极", "错误", "悲伤", "渺小", "肮脏", "阻碍"};//
 
     // 正面评价词词典
     private static Set<String> posOpinionDic = new HashSet<String>();
@@ -33,7 +33,7 @@ public class SentimentSorter {
     private static Set<String> negEmotionDic = new HashSet<String>();
 
     // 相似度计算独享
-    private WordSimilarity ws = new WordSimilarity();
+    private static WordSimilarity WS = new WordSimilarity();
 
     public static void init(String posDicPath, String negDicPath, String posEmotionDicPath, String negEmotionDicPath){
         Vector<BufferedReader> bufVec = new Vector<>();
@@ -184,7 +184,7 @@ public class SentimentSorter {
     }
 
     // 计算与种子词情感相似度值,返回正满POS，负面NEG,其他OTHER
-    public String compute(Set<String> wordSet) {
+    public static String compute(Set<String> wordSet) {
         int posScore = 0, negScore = 0;
         int maxPosScore = 0, maxNegScore = 0;
         double tmpPositiveScore, tmpNegativeScore;
@@ -206,8 +206,8 @@ public class SentimentSorter {
             }
 
             for (int i = 0; i < POSITIVE_SENTIMENTS.length; ++i) {
-                tmpPositiveScore = ws.simWord(word, POSITIVE_SENTIMENTS[i]);
-                tmpNegativeScore = ws.simWord(word, NEGATIVE_SENTIMENTS[i]);
+                tmpPositiveScore = WS.simWord(word, POSITIVE_SENTIMENTS[i]);
+                tmpNegativeScore = WS.simWord(word, NEGATIVE_SENTIMENTS[i]);
 
                 if (tmpPositiveScore < 0.06 && tmpNegativeScore < 0.06){
                     continue;

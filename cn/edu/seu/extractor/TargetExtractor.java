@@ -1,5 +1,6 @@
 package cn.edu.seu.extractor;
 
+import cn.edu.seu.SentimentSorter;
 import com.google.common.collect.HashMultimap;
 import edu.stanford.nlp.util.Pair;
 
@@ -29,7 +30,12 @@ public class TargetExtractor {
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
     public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
-    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "COO", "nn", "conj"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "COO", "ADV", "conj"};
+    // 根关系
+    public final static String ROOT_FOR_STF = "root";
+    public final static String ROOT_FOR_LTP = "HED";
+    // 反转关系
+    public final static String NEG_FOR_STF = "neg";
     // 否定词
     public final static String[] NOT_SET = {"不", "没", "非", "无"};
     // 否定词白名单
@@ -63,8 +69,14 @@ public class TargetExtractor {
         this.potentialNounMap = potentialNounMap;
     }
 
+    // 获取依存关系映射
     public HashMultimap<String, Pair<Integer, Integer>> getDepMap() {
         return depMap;
+    }
+
+    // 清空结果集
+    public void clearResult(){
+        targetPairMap.clear();
     }
 
     // 从分词后合并词组的已标注句子中提取目标词
@@ -133,7 +145,8 @@ public class TargetExtractor {
 
     // Root规则抽取 ：情感词与主题关联
     public void extractByRootRule(){
-        Set<Pair<Integer, Integer>> set = depMap.get("root");
+        String rootStr = (type.equals(EXTRACT_TYPE.LTP))? ROOT_FOR_LTP : ROOT_FOR_STF;
+        Set<Pair<Integer, Integer>> set = depMap.get(rootStr);
         Iterator<Pair<Integer,Integer>> iterator = set.iterator();
         if(iterator.hasNext()){
             Pair<Integer,Integer> pair = iterator.next();
@@ -295,19 +308,22 @@ public class TargetExtractor {
             }
         }
         // 依存关系反转
-        Set<Pair<Integer,Integer>> negSet = depMap.get("neg");
-        String sentimentStr = null;
-        Iterator iterator = negSet.iterator();
-        while(iterator.hasNext()){
-            sentimentStr = potentialSentimentMap.get(((Pair<Integer, Integer>)iterator.next()).first);
-            for(String key : targetPairMap.keySet()){
-                for(String tmpSentiment : targetPairMap.get(key)) {
-                    if(tmpSentiment.equals(sentimentStr)){
-                        replaceSet.add(new Pair<String,String>(key, tmpSentiment));
+        if(type.equals(EXTRACT_TYPE.STF)){
+            Set<Pair<Integer,Integer>> negSet = depMap.get(NEG_FOR_STF);
+            String sentimentStr = null;
+            Iterator iterator = negSet.iterator();
+            while(iterator.hasNext()){
+                sentimentStr = potentialSentimentMap.get(((Pair<Integer, Integer>)iterator.next()).first);
+                for(String key : targetPairMap.keySet()){
+                    for(String tmpSentiment : targetPairMap.get(key)) {
+                        if(tmpSentiment.equals(sentimentStr)){
+                            replaceSet.add(new Pair<String,String>(key, tmpSentiment));
+                        }
                     }
                 }
             }
         }
+
         for(Pair<String,String> pair : replaceSet){
             targetPairMap.remove(pair.first, pair.second);
             targetPairMap.put(pair.first, "(-)"+pair.second);
@@ -345,6 +361,9 @@ public class TargetExtractor {
             return true;
         }
         return false;
+        /*Set<String> set = new HashSet<>();
+        set.add(word);
+        return SentimentSorter.compute(set).equals("OTHER");*/
     }
 
     // 是否包含潜在评价对象
