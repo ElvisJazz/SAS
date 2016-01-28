@@ -1,42 +1,39 @@
 package cn.edu.seu;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-11
- * Time: ÏÂÎç9:47
+ * Time: ä¸‹åˆ9:47
  * To change this template use File | Settings | File Templates.
  */
 public class PhraseProducer {
-    // Ãû²á¶ÌÓïÌØĞÔµ¥´Ê
+    // åå†ŒçŸ­è¯­ç‰¹æ€§å•è¯
     public final int  N_TYPE = 1;
-    // Öú´Ê µÄ
+    // åŠ©è¯ çš„
     public final int  DE_TYPE = 2;
-    // ĞÎÈİ´Ê
+    // å½¢å®¹è¯
     public final int ADJ_TYPE = 3;
-    // ÊıÁ¿´Ê
+    // æ•°é‡è¯
     public final int MQ_TYPE = 4;
 
-    // Åú´¦Àí¶ÌÓïºÏ²¢ÎÄ¼ş
+    // æ‰¹å¤„ç†çŸ­è¯­åˆå¹¶æ–‡ä»¶
     public void produceAll(String readDir, String outputPosDir, String outputNoPosDir) {
         File[] fileArray = (new File(readDir)).listFiles();
 
         File file1 = new File(outputPosDir);
         if(!file1.exists()) {
             if(!file1.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
         File file2 = new File(outputNoPosDir);
         if(!file2.exists()) {
             if(!file2.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -45,24 +42,24 @@ public class PhraseProducer {
             produce(fileArray[i].getAbsolutePath(), fileArray[i].getName(), outputPosDir, outputNoPosDir);
         }
     }
-    // ½«µ¥¸öÎÄ¼şÖĞµÄ¶ÌÓïºÏ²¢
+    // å°†å•ä¸ªæ–‡ä»¶ä¸­çš„çŸ­è¯­åˆå¹¶
     public void produce(String filePath, String fileName, String outputPosDir, String outputNoPosDir){
-        FileReader reader = null;
-        FileWriter posWriter = null;
-        FileWriter noPosWriter = null;
+        BufferedReader reader = null;
+        BufferedWriter posWriter = null;
+        BufferedWriter noPosWriter = null;
         try {
-            // ¶ÁÈ¡ÎÄ¼şÄÚÈİ
+            // è¯»å–æ–‡ä»¶å†…å®¹
             File file = new File(filePath);
-            reader = new FileReader(file);
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
             int length = (int)file.length();
             char[] content = new char[length];
             reader.read(content);
             String contentStr = String.valueOf(content);
             StringBuffer contentBuffer = new StringBuffer();
 
-            // ±éÀú´¦ÀíÃû´Ê¶ÌÓï
+            // éå†å¤„ç†åè¯çŸ­è¯­
            String[] lineArray = contentStr.split("\n");
-            // ±éÀúÃ¿ĞĞ
+            // éå†æ¯è¡Œ
             for(int j=0; j<lineArray.length-1; ++j){
                 if(lineArray[j].length() > 0){
                     contentBuffer.append(produceLine(lineArray[j]));
@@ -70,15 +67,15 @@ public class PhraseProducer {
                 }
             }
 
-            System.out.println(fileName+"´Ê×éºÏ²¢Íê³É£¡");
-            // Êä³ö
+            System.out.println(fileName+"è¯ç»„åˆå¹¶å®Œæˆï¼");
+            // è¾“å‡º
             File outputPosFile = new File(outputPosDir+"//"+fileName);
             File outputNoPosFile = new File(outputNoPosDir+"//"+fileName);
-            posWriter = new FileWriter(outputPosFile);
-            noPosWriter = new FileWriter(outputNoPosFile);
+            posWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPosFile), "UTF-8"));
+            noPosWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputNoPosFile), "UTF-8"));
             posWriter.write(contentBuffer.toString());
 
-            // È¥µô±êÇ©
+            // å»æ‰æ ‡ç­¾
             String tmpStr = String.valueOf(contentBuffer);
             tmpStr = tmpStr.replaceAll("/[^\\s]*", "");
             noPosWriter.write(tmpStr);
@@ -87,7 +84,7 @@ public class PhraseProducer {
             e.printStackTrace();
         }  finally {
             try{
-                // ½áÊø¹¤×÷
+                // ç»“æŸå·¥ä½œ
                 noPosWriter.close();
                 posWriter.close();
                 reader.close();
@@ -98,66 +95,66 @@ public class PhraseProducer {
 
     }
 
-    // Éú³É´¦ÀíºóµÄĞĞ
+    // ç”Ÿæˆå¤„ç†åçš„è¡Œ
     public StringBuffer produceLine(String line){
         StringBuffer tmpLine = new StringBuffer();
-        int lastEndIndex = line.lastIndexOf('¡·');
+        int lastEndIndex = line.lastIndexOf('ã€‹');
         int length = line.length();
         String[] blockArray = line.split(" ");
-        // ±éÀúÃ¿¸ö¿Õ¸ñ¸ô¿ªµÄ´Ê¿é
+        // éå†æ¯ä¸ªç©ºæ ¼éš”å¼€çš„è¯å—
         for(int i=0; i<blockArray.length; ++i){
-            // Ìæ»»ÊéÃûºÅ¶ÌÓï
+            // æ›¿æ¢ä¹¦åå·çŸ­è¯­
             if(blockArray[i].length() <= 0)
                 continue;
-            if(blockArray[i].charAt(0)=='¡¶'){
+            if(blockArray[i].charAt(0)=='ã€Š'){
                 StringBuffer copyLine = tmpLine;
                 if(lastEndIndex != -1) {
-                    while(i<blockArray.length && blockArray[i].length()>0 && blockArray[i].charAt(0)!='¡·'){
+                    while(i<blockArray.length && blockArray[i].length()>0 && blockArray[i].charAt(0)!='ã€‹'){
                         blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                         tmpLine.append(blockArray[i]);
                         ++i;
                     }
-                    // ¼ÓÉÏ×îºóµÄ¡·
-                    if(blockArray[i].length()>0 && blockArray[i].charAt(0)=='¡·')
-                        tmpLine.append("¡·/n");
+                    // åŠ ä¸Šæœ€åçš„ã€‹
+                    if(blockArray[i].length()>0 && blockArray[i].charAt(0)=='ã€‹')
+                        tmpLine.append("ã€‹/n");
                     else
                         tmpLine = copyLine;
                 }
             }
-            // Ìæ»»Ãû´Ê¶ÌÓï
+            // æ›¿æ¢åè¯çŸ­è¯­
             else if(containSpecialWords(blockArray[i], N_TYPE)){
                 while(i<blockArray.length-1 && (containSpecialWords(blockArray[i+1],N_TYPE) || containSpecialWords(blockArray[i+1],DE_TYPE))){
                     blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                     tmpLine.append(blockArray[i]);
                     ++i;
                 }
-                // ¼ÓÉÏ×îºóµÄÃû´Ê
+                // åŠ ä¸Šæœ€åçš„åè¯
                 if(i > 0) {
                     blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "/n");
                 }
                 tmpLine.append(blockArray[i]).append(' ');
             }
-            // Ìæ»»º¬ÊıÁ¿´ÊµÄÃû´Ê¶ÌÓï
+            // æ›¿æ¢å«æ•°é‡è¯çš„åè¯çŸ­è¯­
             else if(containSpecialWords(blockArray[i], MQ_TYPE)){
                 while(i<blockArray.length-1 && (containSpecialWords(blockArray[i+1],MQ_TYPE) || containSpecialWords(blockArray[i+1],N_TYPE) || containSpecialWords(blockArray[i+1],DE_TYPE))){
                     blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                     tmpLine.append(blockArray[i]);
                     ++i;
                 }
-                // ¼ÓÉÏ×îºóµÄÃû´Ê
+                // åŠ ä¸Šæœ€åçš„åè¯
                 if(i > 0) {
                     blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "/n");
                 }
                 tmpLine.append(blockArray[i]).append(' ');
             }
-            // ´¦ÀíĞÎÈİ´Ê+de
+            // å¤„ç†å½¢å®¹è¯+de
             else if(containSpecialWords(blockArray[i], ADJ_TYPE)){
                 while(i<blockArray.length-1 && (containSpecialWords(blockArray[i+1],ADJ_TYPE) || containSpecialWords(blockArray[i+1],DE_TYPE))){
                     blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                     tmpLine.append(blockArray[i]);
                     ++i;
                 }
-                // ¼ÓÉÏ×îºóµÄĞÎÈİ´Ê
+                // åŠ ä¸Šæœ€åçš„å½¢å®¹è¯
                 blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "/a");
                 tmpLine.append(blockArray[i]).append(' ');
             }
@@ -170,7 +167,7 @@ public class PhraseProducer {
 
     public boolean containSpecialWords(String str, int type){
         if(type == N_TYPE){
-            return str.contains("/n") || str.contains("/vn")|| str.contains("/r"); //Ãû´Ê£¬Ãû¶¯´Ê£¬´ú´Ê
+            return str.contains("/n") || str.contains("/vn")|| str.contains("/r"); //åè¯ï¼ŒååŠ¨è¯ï¼Œä»£è¯
         }else if(type == DE_TYPE){
             return str.contains("/ude1");
         }else if(type == ADJ_TYPE){

@@ -10,46 +10,49 @@ import java.util.Scanner;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 12-7-19
- * Time: ÏÂÎç1:13
+ * Time: ä¸‹åˆ1:13
  * To change this template use File | Settings | File Templates.
  */
 public class testLTP {
     public static void main(String[] args) throws IOException {
-        // ÓïÁÏÔ¤´¦Àí£¬Éú³É´¿¾ä×Ó+´¿id±ê×¢
+        boolean runInAll = false;
+        // è¯­æ–™é¢„å¤„ç†ï¼Œç”Ÿæˆçº¯å¥å­+çº¯idæ ‡æ³¨
        CorpusPreHandler cph = new CorpusPreHandler();
-
-        System.out.println("ÊäÈë£º1.Ô¤´¦Àí±ê×¢ÓïÁÏ; 2.Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë; 3.Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë; 4~:ÏÂÒ»²½");
+        System.out.println("è¾“å…¥ï¼š1.é¢„å¤„ç†æ ‡æ³¨è¯­æ–™; 2.é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½; 3.é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½; 4~:ä¸‹ä¸€æ­¥; 5ï¼šrun in all" );
         Scanner cin = new Scanner(System.in);
         while(cin.hasNext()){
             int a = cin.nextInt();
             if(a == 1) {
-                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // Ô¤´¦Àí±ê×¢ÓïÁÏ
+                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // é¢„å¤„ç†æ ‡æ³¨è¯­æ–™
                 //break;
             }
             else  if(a == 2){
-                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë
+                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½
                 //break;
             }
             else if(a == 3){
-                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë
+                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½
                 //break;
+            }
+            else if(a == 5){
+                runInAll = true;
+                break;
             }
             else
                 break;
-            System.out.println("ÊäÈë£º1.Ô¤´¦Àí±ê×¢ÓïÁÏ; 2.Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë; 3.Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë; 4~:ÏÂÒ»²½");
+            System.out.println("è¾“å…¥ï¼š1.é¢„å¤„ç†æ ‡æ³¨è¯­æ–™; 2.é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½; 3.é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½; 4~:ä¸‹ä¸€æ­¥; 5ï¼šrun in all");
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£º·Ö´Ê");
-        int a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šåˆ†è¯");
 
-        // ·Ö´Ê²Ù×÷
-        if(a == 1) {
+        // åˆ†è¯æ“ä½œ
+        if(runInAll || (cin.nextInt()) == 1) {
             CorpusSegmenter seg = new CorpusSegmenter();
             seg.useLTPSeg = true;
             seg.useLTPPos = true;
             if(!seg.init())
                 return;
-            // ÅúÁ¿Éú³É´øposµÄ·Ö´Ê
+            // æ‰¹é‡ç”Ÿæˆå¸¦posçš„åˆ†è¯
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_ltp_segmentCorpus_noPos", false);
             seg.batchSegment("corpus//2_preprocessTopicCorpus", "corpus//3_ltp_segmentTopicCorpus_noPos", false);
             seg.batchSegment("corpus//3_ltp_segmentCorpus_noPos", "corpus//3_ltp_segmentCorpus_pos", true);
@@ -57,11 +60,10 @@ public class testLTP {
             seg.destroy();
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£º¾ä·¨·ÖÎö");
-        a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šå¥æ³•åˆ†æ");
 
-        // ÒÀ´æ¾ä·¨·ÖÎö
-        if(a == 1) {
+        // ä¾å­˜å¥æ³•åˆ†æ
+        if(runInAll || (cin.nextInt()) == 1) {
             DependencyParser parser = new DependencyParser();
             parser.useLTPDep = true;
             if(!parser.init())
@@ -71,11 +73,10 @@ public class testLTP {
             parser.destroy();
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÃüÃûÊµÌåÊ¶±ğ");
-        a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šå‘½åå®ä½“è¯†åˆ«");
 
-        // ÃüÃûÊµÌåÊ¶±ğ
-        if(a == 1) {
+        // å‘½åå®ä½“è¯†åˆ«
+        if(runInAll || (cin.nextInt()) == 1) {
             NamedEntityRecognizer ner = new NamedEntityRecognizer();
             if(!ner.init())
                 return;
@@ -84,52 +85,50 @@ public class testLTP {
             ner.destroy();
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÓïÒå·ÖÎö");
-        a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šè¯­ä¹‰åˆ†æ");
 
-        // ÓïÒå·ÖÎö
-        if(a == 1) {
+        // è¯­ä¹‰åˆ†æ
+        if(runInAll || (cin.nextInt()) == 1) {
             SemanticParser parser = new SemanticParser();
             if(!parser.init())
                 return;
-            parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_SemanticCorpus");
-            parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_SemanticTopicCorpus");
+            parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_semanticCorpus");
+            parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_semanticTopicCorpus");
             parser.destroy();
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÇ±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡");
-        a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šæ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–");
 
-        // Ç±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡
-        if(a == 1) {
+        SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
+
+        // æ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–
+        if(runInAll || (cin.nextInt()) == 1) {
             LTPCorpusExtractor corpusExtractor = new LTPCorpusExtractor();
-            corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_SemanticCorpus,",
-                    "corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_SemanticTopicCorpus,", "corpus//8_ltp_TargetPairCorpus" );
+            corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_semanticCorpus",
+                    "corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_semanticTopicCorpus", "corpus//8_ltp_targetPairCorpus" );
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÇé¸ĞÏàËÆ¶È¼ÆËã");
-        a = cin.nextInt();
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šæƒ…æ„Ÿç›¸ä¼¼åº¦è®¡ç®—");
 
-        // Çé¸ĞÏàËÆ¶È¼ÆËã
-        if(a == 1) {
+        // æƒ…æ„Ÿç›¸ä¼¼åº¦è®¡ç®—
+        if(runInAll || (cin.nextInt()) == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
-            SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
-            sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//7_nounSentimentPairCorpus");
+            sentimentSorter.sortAll("corpus//8_ltp_targetPairCorpus", "corpus//8_ltp_nounSentimentPairCorpus");
         }
-        // ¶ÔÆë²Ù×÷
+        // å¯¹é½æ“ä½œ
         Aligner aligner = new Aligner();
-        aligner.alignAllResult("corpus//8_alignCorpus", "corpus//7_nounSentimentPairCorpus", "corpus//8_alignCorpus_label", "corpus//2_preprocessCorpus_label", "corpus//9_testResult");
+        aligner.alignAllResult("corpus//8_alignCorpus", "corpus//8_ltp_nounSentimentPairCorpus", "corpus//8_alignCorpus_label", "corpus//2_preprocessCorpus_label", "corpus//9_testResult");
 
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÆÀ¹À¼ÆËã");
-        a = cin.nextInt();
-        // ÆÀ¹À¼ÆËã
-        if(a == 1) {
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šè¯„ä¼°è®¡ç®—");
+
+        // è¯„ä¼°è®¡ç®—
+        if(runInAll || (cin.nextInt()) == 1) {
             Evaluator evaluator = new Evaluator();
-            // ÆÀ¼Û¶ÔÏó+Çé¸ĞÆÀ¹À
+            // è¯„ä»·å¯¹è±¡+æƒ…æ„Ÿè¯„ä¼°
             evaluator.evaluateAll("corpus//10_evaluationCorpus", "corpus//9_testResult", true);
             evaluator.getEvaluationResult("corpus//result_sentiment.txt");
-            // ÆÀ¼Û¶ÔÏóÆÀ¹À
+            // è¯„ä»·å¯¹è±¡è¯„ä¼°
             evaluator = new Evaluator();
             evaluator.evaluateAll("corpus//10_evaluationCorpus", "corpus//9_testResult", false);
             evaluator.getEvaluationResult("corpus//result_target.txt");

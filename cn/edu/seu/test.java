@@ -9,101 +9,101 @@ import java.util.Scanner;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 12-7-19
- * Time: ÏÂÎç1:13
+ * Time: ä¸‹åˆ1:13
  * To change this template use File | Settings | File Templates.
  */
 public class test {
     public static void main(String[] args) throws IOException {
-        // ÓïÁÏÔ¤´¦Àí£¬Éú³É´¿¾ä×Ó+´¿id±ê×¢
+        // è¯­æ–™é¢„å¤„ç†ï¼Œç”Ÿæˆçº¯å¥å­+çº¯idæ ‡æ³¨
        CorpusPreHandler cph = new CorpusPreHandler();
 
-        System.out.println("ÊäÈë£º1.Ô¤´¦Àí±ê×¢ÓïÁÏ; 2.Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë; 3.Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë; 4~:ÏÂÒ»²½");
+        System.out.println("è¾“å…¥ï¼š1.é¢„å¤„ç†æ ‡æ³¨è¯­æ–™; 2.é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½; 3.é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½; 4~:ä¸‹ä¸€æ­¥");
         Scanner cin = new Scanner(System.in);
         while(cin.hasNext()){
             int a = cin.nextInt();
             if(a == 1) {
-                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // Ô¤´¦Àí±ê×¢ÓïÁÏ
+                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // é¢„å¤„ç†æ ‡æ³¨è¯­æ–™
                 //break;
             }
             else  if(a == 2){
-                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë
+                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½
                 //break;
             }
             else if(a == 3){
-                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë
+                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½
                 //break;
             }
             else
                 break;
-            System.out.println("ÊäÈë£º1.Ô¤´¦Àí±ê×¢ÓïÁÏ; 2.Ô¤´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë; 3.Ô¤´¦ÀíÆÀ¹ÀÓïÁÏ¶ÔÆë; 4~:ÏÂÒ»²½");
+            System.out.println("è¾“å…¥ï¼š1.é¢„å¤„ç†æ ‡æ³¨è¯­æ–™; 2.é¢„å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½; 3.é¢„å¤„ç†è¯„ä¼°è¯­æ–™å¯¹é½; 4~:ä¸‹ä¸€æ­¥");
         }
 
 
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£º·Ö´Ê");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šåˆ†è¯");
         int a = cin.nextInt();
 
-        // ·Ö´Ê²Ù×÷
+        // åˆ†è¯æ“ä½œ
         if(a == 1) {
             CorpusSegmenter seg = new CorpusSegmenter();
             if(!seg.init())
                 return;
-            // ÅúÁ¿Éú³É´øposºÍ²»´øposµÄ·Ö´Ê
+            // æ‰¹é‡ç”Ÿæˆå¸¦poså’Œä¸å¸¦posçš„åˆ†è¯
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_segmentCorpus_pos", true);
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_segmentCorpus_noPos", false);
             seg.destroy();
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£º¶ÌÓïºÏ²¢");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šçŸ­è¯­åˆå¹¶");
         a = cin.nextInt();
 
-        // ¶ÌÓïºÏ²¢
+        // çŸ­è¯­åˆå¹¶
         if(a == 1) {
             PhraseProducer pp = new PhraseProducer();
             pp.produceAll("corpus//3_segmentCorpus_pos", "corpus//4_phraseSegmentCorpus_pos", "corpus//4_phraseSegmentCorpus_noPos");
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£º¾ä·¨·ÖÎö");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šå¥æ³•åˆ†æ");
         a = cin.nextInt();
 
-        // ÒÀ´æ¾ä·¨·ÖÎö
+        // ä¾å­˜å¥æ³•åˆ†æ
         if(a == 1) {
             DependencyParser parser = new DependencyParser();
             parser.parseAll("corpus//4_phraseSegmentCorpus_noPos", "corpus//5_dependencyCorpus");
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÇ±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šæ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–");
         a = cin.nextInt();
 
-        // Ç±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡
+        // æ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–
         if(a == 1) {
             CorpusExtractor corpusExtractor = new CorpusExtractor();
             corpusExtractor.extractorAll("corpus//4_phraseSegmentCorpus_pos", "corpus//5_dependencyCorpus", "corpus//6_targetPairCorpus");
         }
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÇé¸ĞÏàËÆ¶È¼ÆËã");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šæƒ…æ„Ÿç›¸ä¼¼åº¦è®¡ç®—");
         a = cin.nextInt();
 
-        // Çé¸ĞÏàËÆ¶È¼ÆËã
+        // æƒ…æ„Ÿç›¸ä¼¼åº¦è®¡ç®—
         if(a == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
             sentimentSorter.init("corpus//dic//posOpionionDic.txt", "corpus//dic//negOpionionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
             sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//7_nounSentimentPairCorpus");
         }
-        // ¶ÔÆë²Ù×÷
+        // å¯¹é½æ“ä½œ
         Aligner aligner = new Aligner();
         aligner.alignAllResult("corpus//8_alignCorpus", "corpus//7_nounSentimentPairCorpus", "corpus//8_alignCorpus_label", "corpus//2_preprocessCorpus_label", "corpus//9_testResult");
 
 
-        System.out.println("ÊäÈë0Ìø¹ı£¬1¼ÌĞøÏÂÒ»²½£ºÆÀ¹À¼ÆËã");
+        System.out.println("è¾“å…¥0è·³è¿‡ï¼Œ1ç»§ç»­ä¸‹ä¸€æ­¥ï¼šè¯„ä¼°è®¡ç®—");
         a = cin.nextInt();
-        // ÆÀ¹À¼ÆËã
+        // è¯„ä¼°è®¡ç®—
         if(a == 1) {
             Evaluator evaluator = new Evaluator();
-            // ÆÀ¼Û¶ÔÏó+Çé¸ĞÆÀ¹À
+            // è¯„ä»·å¯¹è±¡+æƒ…æ„Ÿè¯„ä¼°
             evaluator.evaluateAll("corpus//10_evaluationCorpus", "corpus//9_testResult", true);
             evaluator.getEvaluationResult("corpus//result_sentiment.txt");
-            // ÆÀ¼Û¶ÔÏóÆÀ¹À
+            // è¯„ä»·å¯¹è±¡è¯„ä¼°
             evaluator = new Evaluator();
             evaluator.evaluateAll("corpus//10_evaluationCorpus", "corpus//9_testResult", false);
             evaluator.getEvaluationResult("corpus//result_target.txt");

@@ -13,7 +13,7 @@ import java.util.List;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-10
- * Time: ÏÂÎç7:10
+ * Time: ä¸‹åˆ7:10
  * To change this template use File | Settings | File Templates.
  */
 public class DependencyParser {
@@ -21,7 +21,7 @@ public class DependencyParser {
 
     private LexicalizedParser lp;
 
-    // ³õÊ¼»¯
+    // åˆå§‹åŒ–
     public boolean init(){
         if(useLTPDep){
             if(Parser.create("ltp_data/parser.model")<0) {
@@ -35,19 +35,19 @@ public class DependencyParser {
         return true;
     }
 
-    // ÇåÀí
+    // æ¸…ç†
     public void destroy(){
         if(useLTPDep)
             Parser.release();
     }
 
-    // ÅúÁ¿·ÖÎö
+    // æ‰¹é‡åˆ†æ
     public void parseAll( String readDir, String outputDir){
         File[] fileArray = (new File(readDir)).listFiles();
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -57,23 +57,23 @@ public class DependencyParser {
         }
     }
 
-    // µ¥¸öÎÄ¼ş·ÖÎö
+    // å•ä¸ªæ–‡ä»¶åˆ†æ
     public void parse(String filePath, String fileName, String outputDir){
-        FileReader reader = null;
-        FileWriter writer = null;
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
         BufferedReader br = null;
         try{
-            // ÎÄ¼şÊä³ö±äÁ¿
+            // æ–‡ä»¶è¾“å‡ºå˜é‡
             File file = new File(outputDir+"//"+fileName);
-            /*if(file.exists()) {
-                System.out.println(fileName+"ÒÑ´æÔÚ£¡");
+            if(file.exists()) {
+                System.out.println(fileName+"å·²å­˜åœ¨ï¼");
                 return;
-            }*/
-            writer = new FileWriter(file);
-            reader = new FileReader(new File(filePath));
+            }
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath)), "UTF-8"));
             br = new BufferedReader(reader);
             String line;
-            // ÎÄ¼ş¾ä·¨·ÖÎö
+            // æ–‡ä»¶å¥æ³•åˆ†æ
             if(useLTPDep){
                 List<String> words = new ArrayList<String>();
                 List<String> tags = new ArrayList<String>();
@@ -85,8 +85,10 @@ public class DependencyParser {
                 while((line=br.readLine()) != null) {
                     ++num;
                     line = line.trim();
-                    if(line.equals(""))
+                    if(line.equals("")) {
+                        writer.write("\n");
                         continue;
+                    }
                     String[] trunks = line.split(" ");
                     words.clear();
                     tags.clear();
@@ -144,12 +146,12 @@ public class DependencyParser {
                     writer.write(tdl.toString()+"\n");
                 }
             }
-            System.out.println(fileName+"¾ä·¨ÒÀ´æ·ÖÎöÍê³É");
+            System.out.println(fileName+"å¥æ³•ä¾å­˜åˆ†æå®Œæˆ");
         }catch (Exception e){
             e.printStackTrace();
         }
         finally {
-            // ¹Ø±ÕĞ´ÎÄ¼ş
+            // å…³é—­å†™æ–‡ä»¶
             try {
                 if(writer != null)
                     writer.close();
@@ -175,7 +177,7 @@ public class DependencyParser {
             gsf = tlp.grammaticalStructureFactory();
         }
         int i = 0;
-        String line = "¹úÎñÔº ×ÜÀí Àî¿ËÇ¿ µ÷ÑĞ ÉÏº£ Íâ¸ßÇÅ Ê± Ìá³ö £¬ Ö§³Ö ÉÏº£ »ı¼« Ì½Ë÷ ĞÂ»úÖÆ ¡£";
+        String line = "å›½åŠ¡é™¢ æ€»ç† æå…‹å¼º è°ƒç ” ä¸Šæµ· å¤–é«˜æ¡¥ æ—¶ æå‡º ï¼Œ æ”¯æŒ ä¸Šæµ· ç§¯æ æ¢ç´¢ æ–°æœºåˆ¶ ã€‚";
         Tree parse = lp.parse(line);
         GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
         List tdl = gs.typedDependenciesCCprocessed();

@@ -1,7 +1,7 @@
 package cn.edu.seu.utils;
 
 /**
- * 系统配置参数加载类
+ * 绯荤粺閰岖疆鍙傛暟锷犺浇绫?
  * 
  * @author kernal
  * 

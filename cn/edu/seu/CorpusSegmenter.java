@@ -14,27 +14,27 @@ import edu.hit.ir.ltp4j.Segmentor;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-10
- * Time: ÏÂÎç3:58
+ * Time: ä¸‹åˆ3:58
  * To change this template use File | Settings | File Templates.
  */
 public class CorpusSegmenter {
     public boolean useLTPSeg = false;
     public boolean useLTPPos = false;
 
-    // ¶¨Òå½Ó¿ÚCLibrary£¬¼Ì³Ğ×Ôcom.sun.jna.Library
+    // å®šä¹‰æ¥å£CLibraryï¼Œç»§æ‰¿è‡ªcom.sun.jna.Library
     public interface CLibrary extends Library{
         CLibrary Instance = (CLibrary) Native.loadLibrary("NLPIR", CLibrary.class);
-        // ³õÊ¼»¯º¯ÊıÉùÃ÷
+        // åˆå§‹åŒ–å‡½æ•°å£°æ˜
         public int NLPIR_Init(byte[] sDataPath, int encoding, byte[] sLicenceCode);
-        //Ö´ĞĞ·Ö´Êº¯ÊıÉùÃ÷
+        //æ‰§è¡Œåˆ†è¯å‡½æ•°å£°æ˜
         public String NLPIR_ParagraphProcess(String sSrc, int bPOSTagged);
-        //ÌáÈ¡¹Ø¼ü´Êº¯ÊıÉùÃ÷
+        //æå–å…³é”®è¯å‡½æ•°å£°æ˜
         public String NLPIR_GetKeyWords(String sLine, int nMaxKeyLimit, boolean bWeightOut);
-        //ÍË³öº¯ÊıÉùÃ÷
+        //é€€å‡ºå‡½æ•°å£°æ˜
         public void NLPIR_Exit();
     }
 
-    //  ³õÊ¼»¯
+    //  åˆå§‹åŒ–
     public boolean init(){
         if(useLTPSeg){
             if(Segmentor.create("ltp_data/cws.model") < 0){
@@ -53,13 +53,13 @@ public class CorpusSegmenter {
         if(!useLTPSeg || !useLTPPos){
             try{
                 String argu = "";
-                String system_charset = "GBK";
+                String system_charset = "UTF-8";
                 int charset_type = 1;
                 int init_flag = 0;
                 init_flag = CLibrary.Instance.NLPIR_Init(argu.getBytes(system_charset), charset_type, "0".getBytes(system_charset));
 
                 if (0 == init_flag) {
-                    System.err.println("³õÊ¼»¯Ê§°Ü£¡");
+                    System.err.println("åˆå§‹åŒ–å¤±è´¥ï¼");
                     return false;
                 }
             }catch (Exception e) {
@@ -70,7 +70,7 @@ public class CorpusSegmenter {
         return true;
     }
 
-    // Ïú»Ù
+    // é”€æ¯
     public void destroy(){
         if(useLTPSeg)
             Segmentor.release();
@@ -80,7 +80,7 @@ public class CorpusSegmenter {
             CLibrary.Instance.NLPIR_Exit();
     }
 
-    // ÅúÁ¿·Ö´Ê
+    // æ‰¹é‡åˆ†è¯
     public void batchSegment(String readDir, String outputDir, boolean isPos){
         File[] fileArray = (new File(readDir)).listFiles();
         for(int i=0; i<fileArray.length; ++i){
@@ -88,20 +88,20 @@ public class CorpusSegmenter {
         }
     }
 
-    // ·Ö´Ê
+    // åˆ†è¯
     public void segment(String fileName, boolean isPos, String outputDir){
-        Writer writer = null;
-        FileReader reader = null;
+        BufferedWriter writer = null;
+        BufferedReader reader = null;
         try {
-            // ¶ÁÈ¡´ı·Ö´ÊÎÄ±¾
+            // è¯»å–å¾…åˆ†è¯æ–‡æœ¬
             File file = new File(fileName);
-            reader = new FileReader(file);
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
             int length = (int)file.length();
             char[] charBuffer = new char[length];
             reader.read(charBuffer);
             String sInput = String.valueOf(charBuffer);
 
-            // Êä³ö·Ö´Ê½á¹û
+            // è¾“å‡ºåˆ†è¯ç»“æœ
             File outputFile = null;
             StringBuilder outputFileName = new StringBuilder(file.getName());
             if(isPos){
@@ -111,12 +111,12 @@ public class CorpusSegmenter {
                 outputFile = new File(outputDir+"//"+outputFileName);
             }
 
-            // ´´½¨Êä³öÎÄ¼ş
+            // åˆ›å»ºè¾“å‡ºæ–‡ä»¶
             if(!outputFile.getParentFile().exists()){
                 if(!outputFile.getParentFile().mkdirs())
-                    throw new Exception("´´½¨·Ö´ÊÊä³öÄ¿Â¼Ê§°Ü£¡");
+                    throw new Exception("åˆ›å»ºåˆ†è¯è¾“å‡ºç›®å½•å¤±è´¥ï¼");
             }
-            writer = new OutputStreamWriter(new FileOutputStream(outputFile.getPath(), false), "GBK");
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getPath(), false), "UTF-8"));
             String nativeBytes = "";
             if(useLTPSeg && !isPos){
                 List<String> words = new ArrayList<String>();
@@ -164,13 +164,13 @@ public class CorpusSegmenter {
             }
             writer.write(nativeBytes);
 
-            System.out.println(outputFileName + "·Ö´ÊÍê³É£¡");
+            System.out.println(outputFileName + "åˆ†è¯å®Œæˆï¼");
 
         }catch (Exception e) {
             e.printStackTrace();
         }
         finally {
-            // ¹Ø±ÕĞ´ÎÄ¼ş
+            // å…³é—­å†™æ–‡ä»¶
             try {
                 if(writer != null)
                     writer.close();
@@ -182,7 +182,7 @@ public class CorpusSegmenter {
         }
     }
 
-    // ·Ö´Ê
+    // åˆ†è¯
     public String segmentSentence(String sentence, boolean isPos){
         try {
                 String argu = "";
@@ -192,7 +192,7 @@ public class CorpusSegmenter {
                 init_flag = CLibrary.Instance.NLPIR_Init(argu.getBytes(system_charset), charset_type, "0".getBytes(system_charset));
 
                 if (0 == init_flag) {
-                    System.err.println("³õÊ¼»¯Ê§°Ü£¡");
+                    System.err.println("åˆå§‹åŒ–å¤±è´¥ï¼");
                     return null;
                 }
 

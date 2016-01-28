@@ -3,10 +3,7 @@ package cn.edu.seu;
 import com.google.common.collect.HashMultimap;
 import cn.edu.seu.wordSimilarity.WordSimilarity;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
@@ -15,43 +12,43 @@ import java.util.Vector;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-15
- * Time: ÏÂÎç11:39
+ * Time: ä¸‹åˆ11:39
  * To change this template use File | Settings | File Templates.
  */
 public class SentimentSorter {
     public static final String POS = "POS";
     public static final String NEG = "NEG";
     public static final String OTHER = "OTHER";
-    // ÖÖ×ÓÇé¸Ğ´Ê»ı¼«+Ïû¼«
-    private final String[] POSITIVE_SENTIMENTS = {"»ı¼«", "ÕıÈ·", "¿ìÀÖ", "Î°´ó", "´¿½à", "´Ù½ø"};//
-    private final String[] NEGATIVE_SENTIMENTS = {"Ïû¼«", "´íÎó", "±¯ÉË", "ÃìĞ¡", "°¹Ôà", "×è°­"};//
+    // ç§å­æƒ…æ„Ÿè¯ç§¯æ+æ¶ˆæ
+    private final String[] POSITIVE_SENTIMENTS = {"ç§¯æ", "æ­£ç¡®", "å¿«ä¹", "ä¼Ÿå¤§", "çº¯æ´", "ä¿ƒè¿›"};//
+    private final String[] NEGATIVE_SENTIMENTS = {"æ¶ˆæ", "é”™è¯¯", "æ‚²ä¼¤", "æ¸ºå°", "è‚®è„", "é˜»ç¢"};//
 
-    // ÕıÃæÆÀ¼Û´Ê´Êµä
+    // æ­£é¢è¯„ä»·è¯è¯å…¸
     private static Set<String> posOpinionDic = new HashSet<String>();
-    // ¸ºÃæÆÀ¼Û´Êµä
+    // è´Ÿé¢è¯„ä»·è¯å…¸
     private static Set<String> negOpinionDic = new HashSet<String>();
-    // ÕıÃæ¸ĞÇé´Ê´Êµä
+    // æ­£é¢æ„Ÿæƒ…è¯è¯å…¸
     private static Set<String> posEmotionDic = new HashSet<String>();
-    // ¸ºÃæ¸ĞÇé´Êµä
+    // è´Ÿé¢æ„Ÿæƒ…è¯å…¸
     private static Set<String> negEmotionDic = new HashSet<String>();
 
-    // ÏàËÆ¶È¼ÆËã¶ÀÏí
+    // ç›¸ä¼¼åº¦è®¡ç®—ç‹¬äº«
     private WordSimilarity ws = new WordSimilarity();
 
     public static void init(String posDicPath, String negDicPath, String posEmotionDicPath, String negEmotionDicPath){
         Vector<BufferedReader> bufVec = new Vector<>();
         Vector<Set> setVec = new Vector<>();
         try{
-            bufVec.add(new BufferedReader(new FileReader(new File(posDicPath))));
-            bufVec.add(new BufferedReader(new FileReader(new File(negDicPath))));
-            bufVec.add(new BufferedReader(new FileReader(new File(posEmotionDicPath))));
-            bufVec.add(new BufferedReader(new FileReader(new File(negEmotionDicPath))));
+            bufVec.add(new BufferedReader(new InputStreamReader(new FileInputStream(new File(posDicPath)),"GBK")));
+            bufVec.add(new BufferedReader(new InputStreamReader(new FileInputStream(new File(negDicPath)),"GBK")));
+            bufVec.add(new BufferedReader(new InputStreamReader(new FileInputStream(new File(posEmotionDicPath)),"GBK")));
+            bufVec.add(new BufferedReader(new InputStreamReader(new FileInputStream(new File(negEmotionDicPath)),"GBK")));
             setVec.add(posOpinionDic);
             setVec.add(negOpinionDic);
             setVec.add(posEmotionDic);
             setVec.add(negEmotionDic);
             String tmp;
-            // ¶ÁÈ¡´Êµä
+            // è¯»å–è¯å…¸
             for(int i=0; i<4; ++i){
                 while((tmp=bufVec.get(i).readLine()) != null){
                     tmp = tmp.substring(0,tmp.length()-1);
@@ -70,13 +67,13 @@ public class SentimentSorter {
         }
 
     }
-    // ·ÖÀàÖ¸¶¨Ä¿Â¼ÏÂµÄÎÄ¼ş
+    // åˆ†ç±»æŒ‡å®šç›®å½•ä¸‹çš„æ–‡ä»¶
     public void sortAll(String readDir, String outputDir) {
 
         File file = new File(outputDir);
         if (!file.exists()) {
             if (!file.mkdirs()) {
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -88,7 +85,7 @@ public class SentimentSorter {
         }
     }
 
-    // ·ÖÀàµ¥¸öÎÄ¼ş
+    // åˆ†ç±»å•ä¸ªæ–‡ä»¶
     public void sort(String readFilePath, String outputFilePath, String fileName) {
         FileReader fileReader = null;
         FileWriter fileWriter = null;
@@ -101,19 +98,19 @@ public class SentimentSorter {
             bufferedReader = new BufferedReader(fileReader);
             sentence = bufferedReader.readLine();
             while (sentence != null) {
-                // ´æ´¢ËùÓĞÃû´Ê-Çé¸Ğ´Ê¶Ô
+                // å­˜å‚¨æ‰€æœ‰åè¯-æƒ…æ„Ÿè¯å¯¹
                 HashMultimap<String, String> nounSentimentMap = readNounSentiment(sentence);
-                // ·ÖÎöµ±Ç°¾ä×Ó
+                // åˆ†æå½“å‰å¥å­
                 for (String noun : nounSentimentMap.keySet()) {
                     String outputTag = compute(nounSentimentMap.get(noun));
                     if (!OTHER.equals(outputTag))
                         fileWriter.write("[" + noun + ", " + outputTag + "]");
                 }
                 fileWriter.write("\n");
-                // »ñÈ¡ÏÂÒ»¸ö¾ä×Ó
+                // è·å–ä¸‹ä¸€ä¸ªå¥å­
                 sentence = bufferedReader.readLine();
             }
-            System.out.println(fileName + "Çé¸ĞÏàËÆ¶È·ÖÎöÍê³É£¡");
+            System.out.println(fileName + "æƒ…æ„Ÿç›¸ä¼¼åº¦åˆ†æå®Œæˆï¼");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -133,7 +130,7 @@ public class SentimentSorter {
         }
     }
 
-    // ¶ÁÈ¡Ò»¾äÖĞËùÓĞÃû´Ê-Çé¸Ğ´Ê¶Ô
+    // è¯»å–ä¸€å¥ä¸­æ‰€æœ‰åè¯-æƒ…æ„Ÿè¯å¯¹
     public HashMultimap<String, String> readNounSentiment(String sentence) {
         HashMultimap<String, String> nounSentenceMap = HashMultimap.create();
         int index1 = 0;
@@ -144,8 +141,8 @@ public class SentimentSorter {
             noun = sentence.substring(index1 + 1, index2);
             sentiment = sentence.substring(index2 + 2, index3);
 
-            // ´¦ÀíÇé¸Ğ´Ê
-            if ('µÄ' == sentiment.charAt(sentiment.length() - 1)) {
+            // å¤„ç†æƒ…æ„Ÿè¯
+            if ('çš„' == sentiment.charAt(sentiment.length() - 1)) {
                 sentiment = sentiment.substring(0, sentiment.length() - 1);
             }
             nounSentenceMap.put(noun, sentiment);
@@ -154,7 +151,7 @@ public class SentimentSorter {
             index3 = sentence.indexOf(']', index2);
 
         }
-        // ´¦ÀírootÇé¿ö£¬Èç¹ûroot¶ÔÓ¦Çé¸Ğ´ÊÓĞÆäËûÃû´Ê¶ÔÓ¦£¬ÔòÈ¡Ïûroot¶ÔÓ¦Çé¿ö
+        // å¤„ç†rootæƒ…å†µï¼Œå¦‚æœrootå¯¹åº”æƒ…æ„Ÿè¯æœ‰å…¶ä»–åè¯å¯¹åº”ï¼Œåˆ™å–æ¶ˆrootå¯¹åº”æƒ…å†µ
         Set<String> sentimentSet = nounSentenceMap.get("#");
         Set<String> valueSet = null;
         Set<String> delSet = new HashSet<String>();
@@ -164,7 +161,7 @@ public class SentimentSorter {
                 if (!"#".equals(key)) {
                     valueSet = nounSentenceMap.get(key);
                     for(String sen : valueSet) {
-                        // ÒÆ³ıÔ­À´µÄrootÇé¸Ğ¶Ô
+                        // ç§»é™¤åŸæ¥çš„rootæƒ…æ„Ÿå¯¹
                         if(sentiment1.equals(sen)){
                             delSet.add(sen);
                             isOut = true;
@@ -178,7 +175,7 @@ public class SentimentSorter {
                 }
             }
         }
-        // É¾³ıÔªËØ
+        // åˆ é™¤å…ƒç´ 
         for (String delSentiment : delSet) {
             nounSentenceMap.remove("#", delSentiment);
         }
@@ -186,7 +183,7 @@ public class SentimentSorter {
         return nounSentenceMap;
     }
 
-    // ¼ÆËãÓëÖÖ×Ó´ÊÇé¸ĞÏàËÆ¶ÈÖµ,·µ»ØÕıÂúPOS£¬¸ºÃæNEG,ÆäËûOTHER
+    // è®¡ç®—ä¸ç§å­è¯æƒ…æ„Ÿç›¸ä¼¼åº¦å€¼,è¿”å›æ­£æ»¡POSï¼Œè´Ÿé¢NEG,å…¶ä»–OTHER
     public String compute(Set<String> wordSet) {
         int posScore = 0, negScore = 0;
         int maxPosScore = 0, maxNegScore = 0;
@@ -194,14 +191,14 @@ public class SentimentSorter {
         boolean isNegReverse = false;
 
         for (String word : wordSet) {
-            // ´¦Àí·´×ªÇé¿ö ,ĞÎÈç£º (-)¸ßĞË
+            // å¤„ç†åè½¬æƒ…å†µ ,å½¢å¦‚ï¼š (-)é«˜å…´
             if(word.contains("(-)")){
                 isNegReverse = true;
                 word = word.substring(3);
             }
-            if(word.length() > 2 && word.contains("µÄ")){
+            if(word.length() > 2 && word.contains("çš„")){
                 //System.out.println(word);
-                int index = word.indexOf("µÄ");
+                int index = word.indexOf("çš„");
                 if(index == word.length()-1)
                     word = word.substring(0, index);
                 else
@@ -231,7 +228,7 @@ public class SentimentSorter {
                 }
             }
             if(posScore == negScore){
-                // ´ÓÇé¸Ğ´ÊµäÖĞÆ¥Åä
+                // ä»æƒ…æ„Ÿè¯å…¸ä¸­åŒ¹é…
                 if(posOpinionDic.contains(word) || posEmotionDic.contains(word)) {
                     if(isNegReverse){
                         negScore++;
@@ -262,7 +259,7 @@ public class SentimentSorter {
             return OTHER;
     }
 
-    // »ñÈ¡Çé¸Ğ´ÊÀà±ğ£º0£º²»ÊÇÇé¸Ğ´Ê»ò¹Ûµã´Ê£¬+-1£º¹Ûµã´Ê£¬+-2£ºÇé¸Ğ´Ê
+    // è·å–æƒ…æ„Ÿè¯ç±»åˆ«ï¼š0ï¼šä¸æ˜¯æƒ…æ„Ÿè¯æˆ–è§‚ç‚¹è¯ï¼Œ+-1ï¼šè§‚ç‚¹è¯ï¼Œ+-2ï¼šæƒ…æ„Ÿè¯
     public static int getSentimentWordType(String word){
         if(posOpinionDic.contains(word))
             return 1;

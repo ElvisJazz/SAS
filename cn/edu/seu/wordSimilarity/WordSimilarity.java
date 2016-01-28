@@ -15,14 +15,14 @@ import java.util.Set;
 //import java.util.Collections;
 
 /**
- * ¸ÃÀàÎª´ËÏîÄ¿µÄÖ÷ÒªÎÄ¼ş£¬Ìá¹©¼ÆËã´ÊÓïÏàËÆ¶ÈµÄÒ»Ğ©»ù±¾¹«Ê½£¬¶¼Îª¾²Ì¬¡£
- * ´ËÀàÏß³Ì°²È«£¬¿ÉÒÔ¶àÏß³Ìµ÷ÓÃ¡£
- * ¾ßÌåËã·¨²Î¿¼ÂÛÎÄ£º ¡¶»ùÓÚ£¼ÖªÍø£¾µÄ´Ê»ãÓïÒåÏàËÆ¶È¼ÆËã¡·ÂÛÎÄ.pdf
+ * è¯¥ç±»ä¸ºæ­¤é¡¹ç›®çš„ä¸»è¦æ–‡ä»¶ï¼Œæä¾›è®¡ç®—è¯è¯­ç›¸ä¼¼åº¦çš„ä¸€äº›åŸºæœ¬å…¬å¼ï¼Œéƒ½ä¸ºé™æ€ã€‚
+ * æ­¤ç±»çº¿ç¨‹å®‰å…¨ï¼Œå¯ä»¥å¤šçº¿ç¨‹è°ƒç”¨ã€‚
+ * å…·ä½“ç®—æ³•å‚è€ƒè®ºæ–‡ï¼š ã€ŠåŸºäºï¼œçŸ¥ç½‘ï¼çš„è¯æ±‡è¯­ä¹‰ç›¸ä¼¼åº¦è®¡ç®—ã€‹è®ºæ–‡.pdf
  * @author Yingqiang Wu
  * @version 1.0
  */
 public class WordSimilarity {
-    // ´Ê¿âÖĞËùÓĞµÄ¾ßÌå´Ê£¬»òÕßÒåÔ­
+    // è¯åº“ä¸­æ‰€æœ‰çš„å…·ä½“è¯ï¼Œæˆ–è€…ä¹‰åŸ
     private Map<String, List<Word>> ALLWORDS;
     
     //private Map<String, List<Word>> ALLWORDStemp; 
@@ -31,59 +31,59 @@ public class WordSimilarity {
      */
     private final double alpha = 1.6;
     /**
-     * ¼ÆËãÊµ´ÊµÄÏàËÆ¶È£¬²ÎÊı£¬»ù±¾ÒåÔ­È¨ÖØ
+     * è®¡ç®—å®è¯çš„ç›¸ä¼¼åº¦ï¼Œå‚æ•°ï¼ŒåŸºæœ¬ä¹‰åŸæƒé‡
      */
     private final double beta1 = 0.5;
     /**
-     * ¼ÆËãÊµ´ÊµÄÏàËÆ¶È£¬²ÎÊı£¬ÆäËûÒåÔ­È¨ÖØ
+     * è®¡ç®—å®è¯çš„ç›¸ä¼¼åº¦ï¼Œå‚æ•°ï¼Œå…¶ä»–ä¹‰åŸæƒé‡
      */
     private final double beta2 = 0.2;
     /**
-     * ¼ÆËãÊµ´ÊµÄÏàËÆ¶È£¬²ÎÊı£¬¹ØÏµÒåÔ­È¨ÖØ
+     * è®¡ç®—å®è¯çš„ç›¸ä¼¼åº¦ï¼Œå‚æ•°ï¼Œå…³ç³»ä¹‰åŸæƒé‡
      */
     private final double beta3 = 0.17;
     /**
-     * ¼ÆËãÊµ´ÊµÄÏàËÆ¶È£¬²ÎÊı£¬¹ØÏµ·ûºÅÒåÔ­È¨ÖØ
+     * è®¡ç®—å®è¯çš„ç›¸ä¼¼åº¦ï¼Œå‚æ•°ï¼Œå…³ç³»ç¬¦å·ä¹‰åŸæƒé‡
      */
     private final double beta4 = 0.13;
     /**
-     * ¾ßÌå´ÊÓëÒåÔ­µÄÏàËÆ¶ÈÒ»ÂÉ´¦ÀíÎªÒ»¸ö±È½ÏĞ¡µÄ³£Êı. ¾ßÌå´ÊºÍ¾ßÌå´ÊµÄÏàËÆ¶È£¬Èç¹ûÁ½¸ö´ÊÏàÍ¬£¬ÔòÎª1£¬·ñÔòÎª0.
+     * å…·ä½“è¯ä¸ä¹‰åŸçš„ç›¸ä¼¼åº¦ä¸€å¾‹å¤„ç†ä¸ºä¸€ä¸ªæ¯”è¾ƒå°çš„å¸¸æ•°. å…·ä½“è¯å’Œå…·ä½“è¯çš„ç›¸ä¼¼åº¦ï¼Œå¦‚æœä¸¤ä¸ªè¯ç›¸åŒï¼Œåˆ™ä¸º1ï¼Œå¦åˆ™ä¸º0.
      */
     private final double gamma = 0.2;
     /**
-     * ½«ÈÎÒ»·Ç¿ÕÖµÓë¿ÕÖµµÄÏàËÆ¶È¶¨ÒåÎªÒ»¸ö±È½ÏĞ¡µÄ³£Êı
+     * å°†ä»»ä¸€éç©ºå€¼ä¸ç©ºå€¼çš„ç›¸ä¼¼åº¦å®šä¹‰ä¸ºä¸€ä¸ªæ¯”è¾ƒå°çš„å¸¸æ•°
      */
     private final double delta = 0.2;
     /**
-     * Á½¸öÎŞ¹ØÒåÔ­Ö®¼äµÄÄ¬ÈÏ¾àÀë
+     * ä¸¤ä¸ªæ— å…³ä¹‰åŸä¹‹é—´çš„é»˜è®¤è·ç¦»
      */
     private final int DEFAULT_PRIMITIVE_DIS = 20;
     /**
-     * ÖªÍøÖĞµÄÂß¼­·ûºÅ
+     * çŸ¥ç½‘ä¸­çš„é€»è¾‘ç¬¦å·
      */
     private final String LOGICAL_SYMBOL = ",~^";
     /**
-     * ÖªÍøÖĞµÄ¹ØÏµ·ûºÅ
+     * çŸ¥ç½‘ä¸­çš„å…³ç³»ç¬¦å·
      */
     private final String RELATIONAL_SYMBOL = "#%$*+&@?!";
     /**
-     * ÖªÍøÖĞµÄÌØÊâ·ûºÅ£¬Ğé´Ê£¬»ò¾ßÌå´Ê
+     * çŸ¥ç½‘ä¸­çš„ç‰¹æ®Šç¬¦å·ï¼Œè™šè¯ï¼Œæˆ–å…·ä½“è¯
      */
     private final String SPECIAL_SYMBOL = "{";
     /**
-     * Ä¬ÈÏ¼ÓÔØÎÄ¼ş
+     * é»˜è®¤åŠ è½½æ–‡ä»¶
      */
     //static {
     //    loadGlossary();
     //}
-    //¹¹Ôìº¯Êı
+    //æ„é€ å‡½æ•°
     public WordSimilarity(){
         ALLWORDS = new HashMap<String, List<Word>>();
     	loadGlossary();
     }
 
     /**
-     * ¼ÓÔØ glossay.dat ÎÄ¼ş,°Ñ¶Áµ½µÄ´Ê·ÅÈëµ½ALLWORDStempÖĞ
+     * åŠ è½½ glossay.dat æ–‡ä»¶,æŠŠè¯»åˆ°çš„è¯æ”¾å…¥åˆ°ALLWORDStempä¸­
      */
     public  void loadGlossary() {
     	//ALLWORDS = new HashMap<String, List<Word>>();
@@ -95,12 +95,12 @@ public class WordSimilarity {
             while (line != null) {
                 // parse the line
                 // the line format is like this:
-                // °¢²¼Ôú±È N place|µØ·½,capital|¹ú¶¼,ProperName|×¨,(the United Arab Emirates|°¢À­²®ÁªºÏÇõ³¤¹ú)
+                // é˜¿å¸ƒæ‰æ¯” N place|åœ°æ–¹,capital|å›½éƒ½,ProperName|ä¸“,(the United Arab Emirates|é˜¿æ‹‰ä¼¯è”åˆé…‹é•¿å›½)
                 line = line.trim().replaceAll("\\s+", " ");
                 String[] strs = line.split(" ");
                 String word = strs[0];
                 String type = strs[1];
-                // ÒòÎªÊÇ°´¿Õ¸ñ»®·Ö£¬×îºóÒ»²¿·ÖµÄ¼Ó»ØÈ¥
+                // å› ä¸ºæ˜¯æŒ‰ç©ºæ ¼åˆ’åˆ†ï¼Œæœ€åä¸€éƒ¨åˆ†çš„åŠ å›å»
                 String related = strs[2];
                 for (int i = 3; i < strs.length; i++) {
                     related += (" " + strs[i]);
@@ -134,7 +134,7 @@ public class WordSimilarity {
     
 
     /**
-     * ½âÎö¾ßÌå¸ÅÄî²¿·Ö£¬½«½âÎöµÄ½á¹û´æÈë<code>Word word</code>.
+     * è§£æå…·ä½“æ¦‚å¿µéƒ¨åˆ†ï¼Œå°†è§£æçš„ç»“æœå­˜å…¥<code>Word word</code>.
      * 
      * @param related
      */
@@ -148,15 +148,15 @@ public class WordSimilarity {
         String relationalPrimitiveKey = null;
         String simbolKey = null;
         for (int i = 0; i < parts.length; i++) {
-            // Èç¹ûÊÇ¾ßÌå´Ê£¬ÔòÒÔÀ¨ºÅ¿ªÊ¼ºÍ½áÎ²: (Bahrain|°ÍÁÖ)
+            // å¦‚æœæ˜¯å…·ä½“è¯ï¼Œåˆ™ä»¥æ‹¬å·å¼€å§‹å’Œç»“å°¾: (Bahrain|å·´æ—)
             if (parts[i].startsWith("(")) {
                 parts[i] = parts[i].substring(1, parts[i].length() - 1);
                 // parts[i] = parts[i].replaceAll("\\s+", "");
             }
-            // ¹ØÏµÒåÔ­£¬Ö®ºóµÄ¶¼ÊÇ¹ØÏµÒåÔ­
+            // å…³ç³»ä¹‰åŸï¼Œä¹‹åçš„éƒ½æ˜¯å…³ç³»ä¹‰åŸ
             if (parts[i].contains("=")) {
                 isRelational = true;
-                // format: content=fact|ÊÂÇé
+                // format: content=fact|äº‹æƒ…
                 String[] strs = parts[i].split("=");
                 relationalPrimitiveKey = strs[0];
                 String value = strs[1].split("\\|")[1];
@@ -165,9 +165,9 @@ public class WordSimilarity {
                 continue;
             }
             String[] strs = parts[i].split("\\|");
-            // ¿ªÊ¼µÄµÚÒ»¸ö×Ö·û£¬È·¶¨ÊÇ·ñÎªÒåÔ­£¬»òÊÇÆäËû¹ØÏµ¡£
+            // å¼€å§‹çš„ç¬¬ä¸€ä¸ªå­—ç¬¦ï¼Œç¡®å®šæ˜¯å¦ä¸ºä¹‰åŸï¼Œæˆ–æ˜¯å…¶ä»–å…³ç³»ã€‚
             int type = getPrimitiveType(strs[0]);
-            // ÆäÖĞÖĞÎÄ²¿·ÖµÄ´ÊÓï,²¿·ÖĞé´ÊÃ»ÓĞÖĞÎÄ½âÊÍ
+            // å…¶ä¸­ä¸­æ–‡éƒ¨åˆ†çš„è¯è¯­,éƒ¨åˆ†è™šè¯æ²¡æœ‰ä¸­æ–‡è§£é‡Š
             if (strs.length > 1) {
                 chinese = strs[1];
             }
@@ -175,16 +175,16 @@ public class WordSimilarity {
                     && (chinese.endsWith(")") || chinese.endsWith("}"))) {
                 chinese = chinese.substring(0, chinese.length() - 1);
             }
-            // ÒåÔ­
+            // ä¹‰åŸ
             if (type == 0) {
-                // Ö®Ç°ÓĞÒ»¸ö¹ØÏµÒåÔ­
+                // ä¹‹å‰æœ‰ä¸€ä¸ªå…³ç³»ä¹‰åŸ
                 if (isRelational) {
                     word
                             .addRelationalPrimitive(relationalPrimitiveKey,
                                     chinese);
                     continue;
                 }
-                // Ö®Ç°ÓĞÒ»¸öÊÇ·ûºÅÒåÔ­
+                // ä¹‹å‰æœ‰ä¸€ä¸ªæ˜¯ç¬¦å·ä¹‰åŸ
                 if (isSimbol) {
                     word.addRelationSimbolPrimitive(simbolKey, chinese);
                     continue;
@@ -198,7 +198,7 @@ public class WordSimilarity {
                     continue;
                 }
             }
-            // ¹ØÏµ·ûºÅ±í
+            // å…³ç³»ç¬¦å·è¡¨
             if (type == 1) {
                 isSimbol = true;
                 isRelational = false;
@@ -207,16 +207,16 @@ public class WordSimilarity {
                 continue;
             }
             if (type == 2) {
-                // Ğé´Ê
+                // è™šè¯
                 if (strs[0].startsWith("{")) {
-                    // È¥µô¿ªÊ¼µÚÒ»¸ö×Ö·û "{"
+                    // å»æ‰å¼€å§‹ç¬¬ä¸€ä¸ªå­—ç¬¦ "{"
                     String english = strs[0].substring(1);
-                    // È¥µôÓĞ°ë²¿·Ö "}"
+                    // å»æ‰æœ‰åŠéƒ¨åˆ† "}"
                     if (chinese != null) {
                         word.addStructruralWord(chinese);
                         continue;
                     } else {
-                        // Èç¹ûÃ»ÓĞÖĞÎÄ²¿·Ö£¬ÔòÊ¹ÓÃÓ¢ÎÄ´Ê
+                        // å¦‚æœæ²¡æœ‰ä¸­æ–‡éƒ¨åˆ†ï¼Œåˆ™ä½¿ç”¨è‹±æ–‡è¯
                         word.addStructruralWord(english);
                         continue;
                     }
@@ -227,14 +227,14 @@ public class WordSimilarity {
 
     /**
      * <p>
-     * ´ÓÓ¢ÎÄ²¿·ÖÈ·¶¨Õâ¸öÒåÔ­µÄÀà±ğ¡£
+     * ä»è‹±æ–‡éƒ¨åˆ†ç¡®å®šè¿™ä¸ªä¹‰åŸçš„ç±»åˆ«ã€‚
      * </p>
      * <p>
      * 0-----Primitive<br/> 1-----Relational<br/> 2-----Special
      * </p>
      * 
      * @param
-     * @return Ò»¸ö´ú±íÀà±ğµÄÕûÊı£¬ÆäÖµÎª1£¬2£¬3¡£
+     * @return ä¸€ä¸ªä»£è¡¨ç±»åˆ«çš„æ•´æ•°ï¼Œå…¶å€¼ä¸º1ï¼Œ2ï¼Œ3ã€‚
      */
     public int getPrimitiveType(String str) {
         String first = Character.toString(str.charAt(0));
@@ -248,11 +248,11 @@ public class WordSimilarity {
     }
 
     /**
-     * ¼ÆËãÁ½¸ö´ÊÓïµÄÏàËÆ¶È
+     * è®¡ç®—ä¸¤ä¸ªè¯è¯­çš„ç›¸ä¼¼åº¦
      */
     public  double simWord(String word1, String word2) {
     	//loadGlossary();
-    	//System.out.println("¼ÓÔØ³É¹¦");
+    	//System.out.println("åŠ è½½æˆåŠŸ");
         if (this.ALLWORDS.containsKey(word1) && this.ALLWORDS.containsKey(word2)) {
             List<Word> list1 = this.ALLWORDS.get(word1);
             //System.out.println(list1);
@@ -271,54 +271,54 @@ public class WordSimilarity {
             }
             return max;
         }
-        //System.out.println("ÆäÖĞÓĞ´ÊÃ»ÓĞ±»ÊÕÂ¼");
+        //System.out.println("å…¶ä¸­æœ‰è¯æ²¡æœ‰è¢«æ”¶å½•");
         return 0.0;
     }
 
     /**
-     * ¼ÆËãÁ½¸ö´ÊÓïµÄÏàËÆ¶È
+     * è®¡ç®—ä¸¤ä¸ªè¯è¯­çš„ç›¸ä¼¼åº¦
      * @param w1
      * @param w2
      * @return
      */
     public double simWord(Word w1, Word w2) {
-        // Ğé´ÊºÍÊµ´ÊµÄÏàËÆ¶ÈÎªÁã
+        // è™šè¯å’Œå®è¯çš„ç›¸ä¼¼åº¦ä¸ºé›¶
         if (w1.isStructruralWord() != w2.isStructruralWord()) {
-            //System.out.println("Ğé´ÊºÍÊµ´ÊÏàËÆ¶ÈÎª0");
+            //System.out.println("è™šè¯å’Œå®è¯ç›¸ä¼¼åº¦ä¸º0");
             return 0;
         }
-        // Ğé´Ê
+        // è™šè¯
         if (w1.isStructruralWord() && w2.isStructruralWord()) {
-        	//System.out.println("¶¼ÊÇĞé´Ê");
+        	//System.out.println("éƒ½æ˜¯è™šè¯");
             List<String> list1 = w1.getStructruralWords();
             List<String> list2 = w2.getStructruralWords();
             return simList(list1, list2);
         }
-        // Êµ´Ê
+        // å®è¯
         if (!w1.isStructruralWord() && !w2.isStructruralWord()) {
-            // Êµ´ÊµÄÏàËÆ¶È·ÖÎª4¸ö²¿·Ö
-            // »ù±¾ÒåÔ­ÏàËÆ¶È
-        	//System.out.println("¶¼ÊÇÊµ´Ê");
+            // å®è¯çš„ç›¸ä¼¼åº¦åˆ†ä¸º4ä¸ªéƒ¨åˆ†
+            // åŸºæœ¬ä¹‰åŸç›¸ä¼¼åº¦
+        	//System.out.println("éƒ½æ˜¯å®è¯");
             String firstPrimitive1 = w1.getFirstPrimitive();
             String firstPrimitive2 = w2.getFirstPrimitive();
             double sim1 = simPrimitive(firstPrimitive1, firstPrimitive2);
             //System.out.print("sim1: "+sim1+" || ");
-            // ÆäËû»ù±¾ÒåÔ­ÏàËÆ¶È
+            // å…¶ä»–åŸºæœ¬ä¹‰åŸç›¸ä¼¼åº¦
             List<String> list1 = w1.getOtherPrimitives();
             //System.out.println(w1.getWord());
             //if(list1.isEmpty())
-            	//System.out.println("listÊÇ¿ÕµÄ");
+            	//System.out.println("listæ˜¯ç©ºçš„");
             List<String> list2 = w2.getOtherPrimitives();
             //if(list1.isEmpty())
-            	//System.out.println("listÊÇ¿ÕµÄ");
+            	//System.out.println("listæ˜¯ç©ºçš„");
             double sim2 = simList(list1, list2);
             //System.out.print("sim2: "+sim2+" || ");
-            // ¹ØÏµÒåÔ­ÏàËÆ¶È
+            // å…³ç³»ä¹‰åŸç›¸ä¼¼åº¦
             Map<String, List<String>> map1 = w1.getRelationalPrimitives();
             Map<String, List<String>> map2 = w2.getRelationalPrimitives();
             double sim3 = simMap(map1, map2);
             //System.out.print("sim3: "+sim3+" || ");
-            // ¹ØÏµ·ûºÅÏàËÆ¶È
+            // å…³ç³»ç¬¦å·ç›¸ä¼¼åº¦
             map1 = w1.getRelationSimbolPrimitives();
             map2 = w2.getRelationSimbolPrimitives();
             double sim4 = simMap(map1, map2);
@@ -337,7 +337,7 @@ public class WordSimilarity {
     }
 
     /**
-     * mapµÄÏàËÆ¶È¡£
+     * mapçš„ç›¸ä¼¼åº¦ã€‚
      * 
      * @param map1
      * @param map2
@@ -364,7 +364,7 @@ public class WordSimilarity {
     }
 
     /**
-     * ±È½ÏÁ½¸ö¼¯ºÏµÄÏàËÆ¶È
+     * æ¯”è¾ƒä¸¤ä¸ªé›†åˆçš„ç›¸ä¼¼åº¦
      * 
      * @param list11
      * @param list22
@@ -372,7 +372,7 @@ public class WordSimilarity {
      */
     public double simList(List<String> list11, List<String> list22) {
         if (list11.isEmpty() && list22.isEmpty()){
-        	//System.out.println("listÊÇ¿ÕµÄÍÛ@£¡£¡");
+        	//System.out.println("listæ˜¯ç©ºçš„å“‡@ï¼ï¼");
             return 1;
         }
         List<String> list1 = new ArrayList<String>(list11);
@@ -407,7 +407,7 @@ public class WordSimilarity {
     }
 
     /**
-     * ÄÚ²¿±È½ÏÁ½¸ö´Ê£¬¿ÉÄÜÊÇÎª¾ßÌå´Ê£¬Ò²¿ÉÄÜÊÇÒåÔ­
+     * å†…éƒ¨æ¯”è¾ƒä¸¤ä¸ªè¯ï¼Œå¯èƒ½æ˜¯ä¸ºå…·ä½“è¯ï¼Œä¹Ÿå¯èƒ½æ˜¯ä¹‰åŸ
      * 
      * @param word1
      * @param word2
@@ -416,17 +416,17 @@ public class WordSimilarity {
     private double innerSimWord(String word1, String word2) {
         boolean isPrimitive1 = Primitive.isPrimitive(word1);
         boolean isPrimitive2 = Primitive.isPrimitive(word2);
-        // Á½¸öÒåÔ­
+        // ä¸¤ä¸ªä¹‰åŸ
         if (isPrimitive1 && isPrimitive2)
             return simPrimitive(word1, word2);
-        // ¾ßÌå´Ê
+        // å…·ä½“è¯
         if (!isPrimitive1 && !isPrimitive2) {
             if (word1.equals(word2))
                 return 1;
             else
                 return 0;
         }
-        // ÒåÔ­ºÍ¾ßÌå´ÊµÄÏàËÆ¶È, Ä¬ÈÏÎªgamma=0.2
+        // ä¹‰åŸå’Œå…·ä½“è¯çš„ç›¸ä¼¼åº¦, é»˜è®¤ä¸ºgamma=0.2
         return gamma;
     }
 
@@ -441,7 +441,7 @@ public class WordSimilarity {
     }
 
     /**
-     * ¼ÆËãÁ½¸öÒåÔ­Ö®¼äµÄ¾àÀë£¬Èç¹ûÁ½¸öÒåÔ­²ã´ÎÃ»ÓĞ¹²Í¬½Úµã£¬ÔòÉèÖÃËûÃÇµÄ¾àÀëÎª20¡£
+     * è®¡ç®—ä¸¤ä¸ªä¹‰åŸä¹‹é—´çš„è·ç¦»ï¼Œå¦‚æœä¸¤ä¸ªä¹‰åŸå±‚æ¬¡æ²¡æœ‰å…±åŒèŠ‚ç‚¹ï¼Œåˆ™è®¾ç½®ä»–ä»¬çš„è·ç¦»ä¸º20ã€‚
      * 
      * @param primitive1
      * @param primitive2
@@ -461,7 +461,7 @@ public class WordSimilarity {
     }
 
     /**
-     * ¼ÓÈëÒ»¸ö´ÊÓï
+     * åŠ å…¥ä¸€ä¸ªè¯è¯­
      * 
      * @param word
      */

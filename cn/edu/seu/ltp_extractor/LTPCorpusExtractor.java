@@ -2,17 +2,14 @@ package cn.edu.seu.ltp_extractor;
 
 import com.google.common.collect.HashMultimap;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.HashMap;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-13
- * Time: ÏÂÎç4:37
+ * Time: ä¸‹åˆ4:37
  * To change this template use File | Settings | File Templates.
  */
 public class LTPCorpusExtractor {
@@ -22,7 +19,7 @@ public class LTPCorpusExtractor {
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -33,10 +30,10 @@ public class LTPCorpusExtractor {
         File[] readSegTopicFileArray = (new File(segTopicDir)).listFiles();
         File[] readDepTopicFileArray = (new File(depTopicDir)).listFiles();
         File[] readSrTopicFileArray = (new File(srTopicDir)).listFiles();
-        // ÈôÊıÁ¿²»¶ÔµÈ£¬Ôò·µ»Ø
+        // è‹¥æ•°é‡ä¸å¯¹ç­‰ï¼Œåˆ™è¿”å›
         if(readSegFileArray.length !=  readDepFileArray.length || readDepFileArray.length !=  readSrFileArray.length
                 || readSegTopicFileArray.length !=  readDepTopicFileArray.length || readDepTopicFileArray.length !=  readSrTopicFileArray.length) {
-            System.out.println("ÃüÃûÊµÌå¡¢ÒÀ´æ¹ØÏµºÍÓïÒå½ÇÉ«ÎÄ¼şÊıÄ¿²»Æ¥Åä£¡");
+            System.out.println("å‘½åå®ä½“ã€ä¾å­˜å…³ç³»å’Œè¯­ä¹‰è§’è‰²æ–‡ä»¶æ•°ç›®ä¸åŒ¹é…ï¼");
             return;
         }
 
@@ -50,17 +47,18 @@ public class LTPCorpusExtractor {
     public void extractorFile(String segPath, String depPath, String srPath,
                               String segTopicPath, String depTopicPath, String srTopicPath,
                               String outputFilePath, String fileName){
-        FileWriter writer = null;
+        BufferedWriter writer = null;
         BufferedReader bufferSegReader = null, bufferDepReader = null, bufferSrReader = null;
         BufferedReader bufferSegTopicReader = null, bufferDepTopicReader = null, bufferSrTopicReader = null;
         try{
-            writer = new FileWriter(new File(outputFilePath));
-            bufferSegReader = new BufferedReader(new FileReader(new File(segPath)));
-            bufferDepReader = new BufferedReader(new FileReader(new File(depPath)));
-            bufferSrReader = new BufferedReader(new FileReader(new File(srPath)));
-            bufferSegTopicReader = new BufferedReader(new FileReader(new File(segTopicPath)));
-            bufferDepTopicReader = new BufferedReader(new FileReader(new File(depTopicPath)));
-            bufferSrTopicReader = new BufferedReader(new FileReader(new File(srTopicPath)));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(outputFilePath)), "UTF-8"));
+
+            bufferSegReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(segPath)), "UTF-8"));
+            bufferDepReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(depPath)), "UTF-8"));
+            bufferSrReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srPath)), "UTF-8"));
+            bufferSegTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(segTopicPath)), "UTF-8"));
+            bufferDepTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(depTopicPath)), "UTF-8"));
+            bufferSrTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srTopicPath)), "UTF-8"));
 
             String segSentence="", depSentence="", srSentence="";
             String segTopicSentence="", depTopicSentence="", srTopicSentence="";
@@ -68,24 +66,24 @@ public class LTPCorpusExtractor {
             HashMap<Integer, HashMultimap<String, String>> outputMap = new HashMap();
             while((segSentence=bufferSegReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null && (srSentence = bufferSrReader.readLine())!=null
                     && (segTopicSentence=bufferSegTopicReader.readLine())!=null && (depTopicSentence = bufferDepTopicReader.readLine())!=null && (srTopicSentence = bufferSrTopicReader.readLine())!=null){
-                // ·Ö±ğ¶ÁÈ¡·Ö´Ê£¨°üÀ¨ÁËÃüÃûÊµÌåÊ¶±ğ£©¡¢ÒÀ´æ¹ØÏµ¡¢ÓïÒå½ÇÉ«ÎÄ¼ş£¬Êä³öÄ¿±êÔª×é£¨ÆÀ¼Û¶ÔÏó£¬Çé¸Ğ´Ê£©
+                // åˆ†åˆ«è¯»å–åˆ†è¯ï¼ˆåŒ…æ‹¬äº†å‘½åå®ä½“è¯†åˆ«ï¼‰ã€ä¾å­˜å…³ç³»ã€è¯­ä¹‰è§’è‰²æ–‡ä»¶ï¼Œè¾“å‡ºç›®æ ‡å…ƒç»„ï¼ˆè¯„ä»·å¯¹è±¡ï¼Œæƒ…æ„Ÿè¯ï¼‰
                 LTPTargetExtractor extractor = new LTPTargetExtractor();
                 extractor.readContentCorpusSentence(segSentence, depSentence, srSentence);
                 extractor.readTopicCorpusSentence(segTopicSentence, depTopicSentence, srTopicSentence);
                 outputMap.put(i, extractor.extract());
                 i++;
             }
-            // Êä³öÃû´Ê-Çé¸Ğ´Ê¹ØÏµ¶Ô£¬ÒÔ¿Õ¸ñ¸ô¿ª
+            // è¾“å‡ºåè¯-æƒ…æ„Ÿè¯å…³ç³»å¯¹ï¼Œä»¥ç©ºæ ¼éš”å¼€
             HashMultimap<String, String> subMap = null;
             for(HashMap.Entry entry : outputMap.entrySet()){
                 subMap = (HashMultimap<String, String>)entry.getValue();
-                // Êä³öÃ¿¾äµÄ¹ØÏµ¶Ô
+                // è¾“å‡ºæ¯å¥çš„å…³ç³»å¯¹
                 for(HashMap.Entry entry1 : subMap.entries()){
                     writer.write("["+entry1.getKey()+", "+entry1.getValue()+"]");
                 }
                 writer.write("\n");
             }
-            System.out.println(fileName+"Ç±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡Íê³É£¡");
+            System.out.println(fileName+"æ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–å®Œæˆï¼");
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -16,11 +16,11 @@ import java.util.regex.Pattern;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 12-7-19
- * Time: ÉÏÎç11:00
+ * Time: ä¸Šåˆ11:00
  * To change this template use File | Settings | File Templates.
  */
 public class CorpusPreHandler {
-    // Ô¤´¦ÀíËùÓĞÔ­Ê¼ÓïÁÏ£¬Éú³É´ı·ÖÎöÓïÁÏ
+    // é¢„å¤„ç†æ‰€æœ‰åŸå§‹è¯­æ–™ï¼Œç”Ÿæˆå¾…åˆ†æè¯­æ–™
     public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation){
         File[] fileArray = (new File(readDir)).listFiles();
         for(int i=0; i<fileArray.length; ++i){
@@ -28,28 +28,28 @@ public class CorpusPreHandler {
         }
     }
 
-    // ¶ÁÈ¡²¢½âÎöxmlÎÄ¼ş
+    // è¯»å–å¹¶è§£æxmlæ–‡ä»¶
     public void readXmlFile(String readFilePath, String fileName, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation) {
-        // Ğ´ÎÄ¼ş±äÁ¿
+        // å†™æ–‡ä»¶å˜é‡
         Writer labelWriter = null;
         Writer sentenceWriter = null;
         Writer topicWriter = null;
         try{
-            // ÉèÖÃ¶ÁÈ¡±äÁ¿
+            // è®¾ç½®è¯»å–å˜é‡
             Element weiboElement, sentenceElement;
             String weiboId=null, sentenceId=null, opinionated=null, sentence=null, topic=null, hashtag=null;
             Iterator sentenceIterator, hashtagIterator;
             int startTagIndex=0, endTagIndex=0, tmpIndex=0;
 
 
-            // ¶ÁÈ¡ÎÄ¼ş
+            // è¯»å–æ–‡ä»¶
             SAXReader reader = new SAXReader();
             Document document = reader.read(new File(readFilePath));
 
-            // »ñÈ¡¸ù½Úµã
+            // è·å–æ ¹èŠ‚ç‚¹
             Element root = document.getRootElement();
             topic = root.attributeValue("title");
-            System.out.println("µ±Ç°´¦ÀíÎÄµµ£º" + fileName);
+            System.out.println("å½“å‰å¤„ç†æ–‡æ¡£ï¼š" + fileName);
             if(topic == null){
                 int index = fileName.indexOf('.');
                 if(index != -1)
@@ -58,18 +58,18 @@ public class CorpusPreHandler {
                     topic = fileName;
             }
 
-            // ÎÄ¼şÊä³ö±äÁ¿
+            // æ–‡ä»¶è¾“å‡ºå˜é‡
             File outputFile = new File(outputDir);
             if(!outputFile.exists()) {
                 if(!outputFile.mkdirs())
-                    throw new Exception("´´½¨ÕıÎÄÊä³öÎÄ¼şÄ¿Â¼Ê§°Ü£¡");
+                    throw new Exception("åˆ›å»ºæ­£æ–‡è¾“å‡ºæ–‡ä»¶ç›®å½•å¤±è´¥ï¼");
             }
 
             String labelFileName = outputFile.getPath()+"_label//";
             File labelFile = new File(labelFileName);
             if(!labelFile.exists() && !isEvaluation) {
                 if(!labelFile.mkdirs())
-                    throw new Exception("´´½¨±êÇ©ÎÄ¼şÄ¿Â¼Ê§°Ü£¡");
+                    throw new Exception("åˆ›å»ºæ ‡ç­¾æ–‡ä»¶ç›®å½•å¤±è´¥ï¼");
             }
 
             File topicFile = null;
@@ -77,15 +77,15 @@ public class CorpusPreHandler {
                 topicFile = new File(outputTopicDir);
                 if(!topicFile.exists()) {
                     if(!topicFile.mkdirs())
-                        throw new Exception("´´½¨Ö÷ÌâÊä³öÎÄ¼şÄ¿Â¼Ê§°Ü£¡");
+                        throw new Exception("åˆ›å»ºä¸»é¢˜è¾“å‡ºæ–‡ä»¶ç›®å½•å¤±è´¥ï¼");
                 }
             }
             if(outputDir != null && topicFile != null)
-                topicWriter = new OutputStreamWriter(new FileOutputStream(topicFile.getPath()+"//"+topic+"_topic", false), "GBK");
+                topicWriter = new OutputStreamWriter(new FileOutputStream(topicFile.getPath()+"//"+topic+"_topic", false), "UTF-8");
             if(!isEvaluation)
-                labelWriter = new OutputStreamWriter(new FileOutputStream(labelFile.getPath()+"//"+topic+"_label", false), "GBK");
-            sentenceWriter = new OutputStreamWriter(new FileOutputStream(outputDir+"//"+topic+"_sentence", false), "GBK");
-            // »ñÈ¡head½Úµã
+                labelWriter = new OutputStreamWriter(new FileOutputStream(labelFile.getPath()+"//"+topic+"_label", false), "UTF-8");
+            sentenceWriter = new OutputStreamWriter(new FileOutputStream(outputDir+"//"+topic+"_sentence", false), "UTF-8");
+            // è·å–headèŠ‚ç‚¹
             Iterator weiboIterator= root.elementIterator("weibo");
             while(weiboIterator.hasNext()){
                 weiboElement = (Element) weiboIterator.next();
@@ -104,7 +104,7 @@ public class CorpusPreHandler {
                         sentenceId = sentenceElement.attributeValue("id");
                         sentence = sentenceElement.getText();
 
-                        //Èç¹ûÊÇ´¦ÀíÆÀ²âÓïÁÏ¶ÔÆë£¬ĞèÕÒµ½ËùÓĞÇé¸Ğ´ÊÆğÊ¼Î»ÖÃºÍ¼«ĞÔ
+                        //å¦‚æœæ˜¯å¤„ç†è¯„æµ‹è¯­æ–™å¯¹é½ï¼Œéœ€æ‰¾åˆ°æ‰€æœ‰æƒ…æ„Ÿè¯èµ·å§‹ä½ç½®å’Œææ€§
                         if(isEvaluation){
                             int i = 1;
                             while(sentenceElement.attributeValue("target_begin_"+i) != null){
@@ -113,29 +113,29 @@ public class CorpusPreHandler {
                                 ++i;
                             }
                         }else{
-                            // ´¦Àí¾ä×ÓÖĞµÄ(@)
-                            sentence = sentence.replaceAll("[\\(£¨][^\n]*@[^\n]*[\\)£©]", "");
-                            sentence = sentence.replaceAll("£¨[^\n]*@[^\n]*£©", "");
+                            // å¤„ç†å¥å­ä¸­çš„(@)
+                            sentence = sentence.replaceAll("[\\(ï¼ˆ][^\n]*@[^\n]*[\\)ï¼‰]", "");
+                            sentence = sentence.replaceAll("ï¼ˆ[^\n]*@[^\n]*ï¼‰", "");
 
-                            // ´¦Àí¾ä×ÓÖĞµÄhttpºÍÁ´½ÓÖĞ¼äµÄ³É·Ö
+                            // å¤„ç†å¥å­ä¸­çš„httpå’Œé“¾æ¥ä¸­é—´çš„æˆåˆ†
                             sentence = sentence.replaceAll("[^\\s]*:http.*http[^\\s]*","");
                             sentence = sentence.replaceAll("http.*http[^\\s]*","");
                             sentence = sentence.replaceAll("[^\\s]*:http[^\\s]*","");
                             sentence = sentence.replaceAll("http[^\\s]*","");
 
-                            // Ñ°ÕÒ¾ä×ÓÖĞµÄÖ÷Ìâ
+                            // å¯»æ‰¾å¥å­ä¸­çš„ä¸»é¢˜
                             if(topicWriter != null){
                                 Pair<String, String> result = getTopicAndContent(sentence, hashtag);
                                 sentence = result.second;
-                                // ´¦ÀíÖ÷Ìâ¿Õ¸ñÇ°ºó¾ùÎŞ±êµãµÄÇé¿ö
+                                // å¤„ç†ä¸»é¢˜ç©ºæ ¼å‰åå‡æ— æ ‡ç‚¹çš„æƒ…å†µ
                                 hashtag = handleSpaceInSentence(result.first);
                             }
 
-                            // ´¦ÀíÕıÎÄ¿Õ¸ñÇ°ºó¾ùÎŞ±êµãµÄÇé¿ö
+                            // å¤„ç†æ­£æ–‡ç©ºæ ¼å‰åå‡æ— æ ‡ç‚¹çš„æƒ…å†µ
                             sentence = handleSpaceInSentence(sentence);
                         }
 
-                        // Êä³öµ½ÎÄ¼ş
+                        // è¾“å‡ºåˆ°æ–‡ä»¶
                         if(!isEvaluation){
                             if(isAlignFile){
                                 sentenceWriter.write(sentence);
@@ -172,14 +172,14 @@ public class CorpusPreHandler {
         }
     }
 
-    // »ñÈ¡¾ä×ÓÖĞµÄÖ÷ÌâºÍÕıÎÄ
-    /*1£©¡¶XXX¡·ÔÚ¾äÊ×£¨ÆäÇ°¿Éº¬ÆäËû·ûºÅ£©»ò¾äÄ©£¨Æäºó¿Éº¬ÆäËû·ûºÅ£©³öÏÖ£¬ÓëÕıÎÄÒÔ¿Õ¸ñ·Ö¿ª¡£
-      2£©¡¾XXX¡¿ÔÚ¾äÊ×³öÏÖ
-      3£©ÒÔhashtag±ê×¢µÄÖ÷Ìâ¡£*/
+    // è·å–å¥å­ä¸­çš„ä¸»é¢˜å’Œæ­£æ–‡
+    /*1ï¼‰ã€ŠXXXã€‹åœ¨å¥é¦–ï¼ˆå…¶å‰å¯å«å…¶ä»–ç¬¦å·ï¼‰æˆ–å¥æœ«ï¼ˆå…¶åå¯å«å…¶ä»–ç¬¦å·ï¼‰å‡ºç°ï¼Œä¸æ­£æ–‡ä»¥ç©ºæ ¼åˆ†å¼€ã€‚
+      2ï¼‰ã€XXXã€‘åœ¨å¥é¦–å‡ºç°
+      3ï¼‰ä»¥hashtagæ ‡æ³¨çš„ä¸»é¢˜ã€‚*/
     public Pair<String, String> getTopicAndContent(String sentence, String hashtag){
         int startTagIndex, endTagIndex;
         String topic = "";
-        // »ñÈ¡µ±Ç°Ö÷Ìâ
+        // è·å–å½“å‰ä¸»é¢˜
         if(sentence.startsWith("#") && sentence.endsWith("#"))
             sentence = sentence.substring(1, sentence.length()-1);
         else{
@@ -194,11 +194,11 @@ public class CorpusPreHandler {
             }
             sentence = sentence.replaceAll("#.*#", "").trim();
         }
-        topic = (topic=="")? hashtag : topic;
-        // ´¦Àí¾äÊ×»ò¾äÄ©µÄ¡¶¡·
-        startTagIndex = sentence.indexOf('¡¶');
+        topic = (topic.equals(""))? hashtag : topic;
+        // å¤„ç†å¥é¦–æˆ–å¥æœ«çš„ã€Šã€‹
+        startTagIndex = sentence.indexOf('ã€Š');
         if(startTagIndex != -1) {
-            endTagIndex = sentence.indexOf('¡·', startTagIndex+1);
+            endTagIndex = sentence.indexOf('ã€‹', startTagIndex+1);
             int flag = isDependentBookPunctuation(sentence, startTagIndex, endTagIndex+1);
             if(endTagIndex!=-1 && flag!=-1){
                 topic = sentence.substring(startTagIndex, endTagIndex+1).trim();
@@ -209,12 +209,12 @@ public class CorpusPreHandler {
                 return new Pair<String, String>(topic, sentence);
             }
         }
-        // ´¦Àí¾äÊ×µÄ¡¾XXX¡¿
-        startTagIndex = sentence.indexOf('¡¾');
+        // å¤„ç†å¥é¦–çš„ã€XXXã€‘
+        startTagIndex = sentence.indexOf('ã€');
         boolean flag = true;
         StringBuilder tmpTopic = null;
         while(startTagIndex != -1) {
-            // Ç°Ãæ¿ÉÒÔÓĞ±êµã·ûºÅ
+            // å‰é¢å¯ä»¥æœ‰æ ‡ç‚¹ç¬¦å·
             for(int i=0; i<startTagIndex; ++i){
                 if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
                     flag = false;
@@ -223,7 +223,7 @@ public class CorpusPreHandler {
             }
             if(flag) {
                 Pair<Integer, StringBuilder> result = getBlockContent(sentence, startTagIndex);
-                startTagIndex = sentence.indexOf('¡¾', result.first);
+                startTagIndex = sentence.indexOf('ã€', result.first);
                 if(result.first < sentence.length()-1)
                     sentence = sentence.substring(result.first+1);
                 if(result.second.length() > 0)
@@ -233,14 +233,14 @@ public class CorpusPreHandler {
         }
         if(tmpTopic!=null && tmpTopic.length()>0)
             return new Pair<String, String>(tmpTopic.toString(), sentence);
-        // ·µ»Ø¾ä×ÓÖĞ#XXX#·Ö¸îµÄÖ÷Ìâ
+        // è¿”å›å¥å­ä¸­#XXX#åˆ†å‰²çš„ä¸»é¢˜
         return new Pair<String, String>(topic, sentence);
     }
 
-    // ÅĞ¶ÏÊÇ·ñÊÇ¶ÀÁ¢µÄÊéÃûºÅ²¿·Ö(±ØĞë°üº¬¾ä×ÓÆäËû³É·Ö)
+    // åˆ¤æ–­æ˜¯å¦æ˜¯ç‹¬ç«‹çš„ä¹¦åå·éƒ¨åˆ†(å¿…é¡»åŒ…å«å¥å­å…¶ä»–æˆåˆ†)
     public int isDependentBookPunctuation(String sentence, int start, int end) {
         boolean flag = true;
-        // ÊÇ·ñÔÚ¾äÊ×
+        // æ˜¯å¦åœ¨å¥é¦–
         if(end<sentence.length() && sentence.charAt(end)==' ') {
             for(int i=0; i<start; ++i){
                 if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
@@ -251,7 +251,7 @@ public class CorpusPreHandler {
             if(flag)
                 return 0;
         }
-        // ÊÇ·ñÔÚ¾äÄ©
+        // æ˜¯å¦åœ¨å¥æœ«
         if(start>0 && sentence.charAt(start-1)==' ') {
             for(int i=end; i<sentence.length(); ++i){
                 if(PunctuationUtil.PUNCTUATION.indexOf(sentence.charAt(i)) == -1) {
@@ -265,24 +265,24 @@ public class CorpusPreHandler {
         return -1;
     }
 
-    // »ñÈ¡·½À¨ºÅÄÚµÄÄÚÈİ
+    // è·å–æ–¹æ‹¬å·å†…çš„å†…å®¹
     public Pair<Integer, StringBuilder> getBlockContent(String sentence, int start){
         char c;
         boolean match;
         Stack<Character> stack = new Stack<Character>();
         StringBuilder tmpTopic = new StringBuilder();
-        stack.push('¡¾');
+        stack.push('ã€');
         int i = start + 1;
         for(; i<sentence.length(); ++i){
             c=sentence.charAt(i);
-            if( c!= '¡¿'){
+            if( c!= 'ã€‘'){
                 stack.push(c);
             }else{
                 match = true;
                 tmpTopic.delete(0, tmpTopic.length());
                 while(match && !stack.empty()){
                     c = stack.pop();
-                    if(c != '¡¾')
+                    if(c != 'ã€')
                         tmpTopic.insert(0, c);
                     else{
                         match = false;
@@ -295,26 +295,26 @@ public class CorpusPreHandler {
         return new Pair<Integer, StringBuilder>(i, tmpTopic);
     }
 
-    // ´¦Àí¾äÖĞ¿Õ¸ñÇ°ºóÈ¥±êµãµÄÇé¿ö
+    // å¤„ç†å¥ä¸­ç©ºæ ¼å‰åå»æ ‡ç‚¹çš„æƒ…å†µ
     public String handleSpaceInSentence(String sentence){
         String lastSen;
         do{
             lastSen = sentence;
-            String pattern = "(.*[^\\s,£¬¡¢\\.¡£;£»:!£¡\\?£¿\\-¡ª_=+<>£¨£©(){}|\\/\\*&\\^'\"¡±¡°¡¯¡®\\$%@#])(\\s+)([^\\s,£¬¡¢\\.¡£;£»:!£¡\\?£¿\\-¡ª_=+<>£¨£©(){}|\\/\\*&\\^'\"¡±¡°¡¯¡®\\$%@#].*)";
+            String pattern = "(.*[^\\s,ï¼Œã€\\.ã€‚;ï¼›:!ï¼\\?ï¼Ÿ\\-â€”_=+<>ï¼ˆï¼‰(){}|\\/\\*&\\^'\"â€â€œâ€™â€˜\\$%@#])(\\s+)([^\\s,ï¼Œã€\\.ã€‚;ï¼›:!ï¼\\?ï¼Ÿ\\-â€”_=+<>ï¼ˆï¼‰(){}|\\/\\*&\\^'\"â€â€œâ€™â€˜\\$%@#].*)";
             Pattern p = Pattern.compile(pattern);
             Matcher m = p.matcher(sentence);
             StringBuffer sb = new StringBuffer();
             StringBuffer sb0 = new StringBuffer();
             int i=0;
-            //Ê¹ÓÃfind()·½·¨²éÕÒµÚÒ»¸öÆ¥ÅäµÄ¶ÔÏó
+            //ä½¿ç”¨find()æ–¹æ³•æŸ¥æ‰¾ç¬¬ä¸€ä¸ªåŒ¹é…çš„å¯¹è±¡
             boolean result = m.find();
-            //Ê¹ÓÃÑ­»·½«¾ä×ÓÀïËùÓĞµÄÆ¥ÅäÕÒ³ö²¢Ìæ»»ÔÙ½«ÄÚÈİ¼Óµ½sbÀï
+            //ä½¿ç”¨å¾ªç¯å°†å¥å­é‡Œæ‰€æœ‰çš„åŒ¹é…æ‰¾å‡ºå¹¶æ›¿æ¢å†å°†å†…å®¹åŠ åˆ°sbé‡Œ
             if(result) {
                 i++;
                 sb.append(m.group(1)+"OOOO"+m.group(3));
                 m.appendReplacement(sb0, " ");
             }
-            //×îºóµ÷ÓÃappendTail()·½·¨½«×îºóÒ»´ÎÆ¥ÅäºóµÄÊ£Óà×Ö·û´®¼Óµ½sbÀï£»
+            //æœ€åè°ƒç”¨appendTail()æ–¹æ³•å°†æœ€åä¸€æ¬¡åŒ¹é…åçš„å‰©ä½™å­—ç¬¦ä¸²åŠ åˆ°sbé‡Œï¼›
             m.find();
             m.appendTail(sb);
             sentence = sb.toString();
@@ -324,7 +324,7 @@ public class CorpusPreHandler {
 
     public static  void main(String args[]){
         CorpusPreHandler p = new CorpusPreHandler();
-       Pair<String,String> a = p.getTopicAndContent("¿´¹ı¡¶Ğ¦°Á½­ºş¡·£ºÁ¦¼ö´Ë¾çµÄÎ¨Ò»Ô­Òò¾ÍÊÇ¶«·½²»°Ü£¡","");
+        Pair<String,String> a = p.getTopicAndContent("çœ‹è¿‡ã€Šç¬‘å‚²æ±Ÿæ¹–ã€‹ï¼šåŠ›èæ­¤å‰§çš„å”¯ä¸€åŸå› å°±æ˜¯ä¸œæ–¹ä¸è´¥ï¼","");
         System.out.println(a);
     }
 }

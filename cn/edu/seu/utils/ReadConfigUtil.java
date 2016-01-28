@@ -35,7 +35,7 @@ public class ReadConfigUtil {
 		}
 	}
 
-	// 根据key读取value
+	// 镙规嵁key璇诲彇value
 	public static String getValue(String key) {
 		// Properties props = new Properties();
 		try {

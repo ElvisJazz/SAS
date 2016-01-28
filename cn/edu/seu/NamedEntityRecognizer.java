@@ -16,7 +16,7 @@ import java.util.List;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 16-1-20
- * Time: ÉÏÎç11:56
+ * Time: ä¸Šåˆ11:56
  * To change this template use File | Settings | File Templates.
  */
 public class NamedEntityRecognizer {
@@ -28,18 +28,18 @@ public class NamedEntityRecognizer {
         return true;
     }
 
-    // ÇåÀí
+    // æ¸…ç†
     public void destroy(){
         NER.release();
     }
 
-    // ÅúÁ¿·ÖÎö
+    // æ‰¹é‡åˆ†æ
     public void parseAll( String posDir, String outputDir){
         File[] fileArray = (new File(posDir)).listFiles();
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -49,23 +49,21 @@ public class NamedEntityRecognizer {
         }
     }
 
-    // µ¥¸öÎÄ¼ş·ÖÎö
+    // å•ä¸ªæ–‡ä»¶åˆ†æ
     public void parse(String filePath, String fileName, String outputDir){
-        FileReader reader = null;
-        FileWriter writer = null;
+        BufferedWriter writer = null;
         BufferedReader br = null;
         try{
-            // ÎÄ¼şÊä³ö±äÁ¿
+            // æ–‡ä»¶è¾“å‡ºå˜é‡
             File file = new File(outputDir+"//"+fileName);
             /*if(file.exists()) {
-                System.out.println(fileName+"ÒÑ´æÔÚ£¡");
+                System.out.println(fileName+"å·²å­˜åœ¨ï¼");
                 return;
             }*/
-            writer = new FileWriter(file);
-            reader = new FileReader(new File(filePath));
-            br = new BufferedReader(reader);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath)),"UTF-8"));
             String line;
-            // ÎÄ¼şÃüÃûÊµÌåÊ¶±ğ
+            // æ–‡ä»¶å‘½åå®ä½“è¯†åˆ«
             List<String> words = new ArrayList<String>();
             List<String> tags = new ArrayList<String>();
             List<String> ners = new ArrayList<String>();
@@ -73,8 +71,10 @@ public class NamedEntityRecognizer {
             while((line=br.readLine()) != null) {
                 ++num;
                 line = line.trim();
-                if(line.equals(""))
+                if(line.equals("")) {
+                    writer.write("\n");
                     continue;
+                }
                 String[] trunks = line.split(" ");
                 words.clear();
                 tags.clear();
@@ -95,17 +95,15 @@ public class NamedEntityRecognizer {
                 System.out.print(String.valueOf(num) + "\r");
             }
 
-            System.out.println(fileName+"ÃüÃûÊµÌåÊ¶±ğÍê³É");
+            System.out.println(fileName+"å‘½åå®ä½“è¯†åˆ«å®Œæˆ");
         }catch (Exception e){
             e.printStackTrace();
         }
         finally {
-            // ¹Ø±ÕĞ´ÎÄ¼ş
+            // å…³é—­å†™æ–‡ä»¶
             try {
                 if(writer != null)
                     writer.close();
-                if(reader != null)
-                    reader.close();
                 if(br != null)
                     br.close();
                 Runtime.getRuntime().gc();

@@ -4,11 +4,11 @@ package cn.edu.seu.utils;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 16-1-25
- * Time: ÏÂÎç8:31
+ * Time: ä¸‹åˆ8:31
  * To change this template use File | Settings | File Templates.
  */
 public class PunctuationUtil {
-    // ±êµã·ûºÅ
-    public static String PUNCTUATION = "$% ,£¬¡¢.¡£;£»:!£¡?£¿-¡ª_=+<>£¨£©(){}|\\/*&^'\"¡±¡°¡¯¡®@#";
+    // æ ‡ç‚¹ç¬¦å·
+    public static String PUNCTUATION = "$% ,ï¼Œã€.ã€‚;ï¼›:!ï¼?ï¼Ÿ-â€”_=+<>ï¼ˆï¼‰(){}|\\/*&^'\"â€â€œâ€™â€˜@#";
 
 }

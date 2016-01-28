@@ -4,7 +4,7 @@ package cn.edu.seu.ltp;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 16-1-18
- * Time: ÏÂÎç4:09
+ * Time: é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·4:09
  * To change this template use File | Settings | File Templates.
  */
 import java.util.ArrayList;
@@ -13,41 +13,31 @@ import edu.hit.ir.ltp4j.*;
 
 public class Segment {
     public static void main(String[] args) {
-        SRL.create("ltp_data/srl");
-        ArrayList<String> words = new ArrayList<String>();
-        words.add("Ò»°ÑÊÖ");
-        words.add("Ç××Ô");
-        words.add("¹ýÎÊ");
-        words.add("¡£");
-        ArrayList<String> tags = new ArrayList<String>();
-        tags.add("n");
-        tags.add("d");
-        tags.add("v");
-        tags.add("wp");
-        ArrayList<String> ners = new ArrayList<String>();
-        ners.add("O");
-        ners.add("O");
-        ners.add("O");
-        ners.add("O");
-        ArrayList<Integer> heads = new ArrayList<Integer>();
-        heads.add(2);
-        heads.add(2);
-        heads.add(-1);
-        heads.add(2);
-        ArrayList<String> deprels = new ArrayList<String>();
-        deprels.add("SBV");
-        deprels.add("ADV");
-        deprels.add("HED");
-        deprels.add("WP");
-        List<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>> srls = new ArrayList<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>>();
-        SRL.srl(words, tags, ners, heads, deprels, srls);
-        for (int i = 0; i < srls.size(); ++i) {
-            System.out.println(srls.get(i).first + ":");
-            for (int j = 0; j < srls.get(i).second.size(); ++j) {
-                System.out.println("   tpye = "+ srls.get(i).second.get(j).first + " beg = "+ srls.get(i).second.get(j).second.first + " end = "+ srls.get(i).second.get(j).second.second);
+        if(Parser.create("../../../ltp_data/parser.model")<0) {
+            System.err.println("load failed");
+            return;
+        }
+        List<String> words = new ArrayList<String>();
+        List<String> tags = new ArrayList<String>();
+        words.add("ä¸€æŠŠæ‰‹");tags.add("n");
+        words.add("äº²è‡ª");tags.add("d");
+        words.add("è¿‡é—®");tags.add("v");
+        words.add("ã€‚");tags.add("wp");
+        List<Integer> heads = new ArrayList<Integer>();
+        List<String> deprels = new ArrayList<String>();
+
+        int size = Parser.parse(words,tags,heads,deprels);
+
+        for(int i = 0;i<size;i++) {
+            System.out.print(heads.get(i)+":"+deprels.get(i));
+            if(i==size-1) {
+                System.out.println();
+            }
+            else{
+                System.out.print("        ");
             }
         }
-        SRL.release();
-    }
 
+        Parser.release();
+    }
 }

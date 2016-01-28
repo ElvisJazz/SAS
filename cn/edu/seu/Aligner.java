@@ -13,16 +13,16 @@ import java.util.TreeMap;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-16
- * Time: ÏÂÎç10:31
+ * Time: ä¸‹åˆ10:31
  * To change this template use File | Settings | File Templates.
  */
 public class Aligner {
-    // ¶ÔÇé¸ĞÊä³ö½á¹û½øĞĞ¸ñÊ½µ÷ÕûÊä³ö
+    // å¯¹æƒ…æ„Ÿè¾“å‡ºç»“æœè¿›è¡Œæ ¼å¼è°ƒæ•´è¾“å‡º
     public void alignAllResult(String alignCorpusDir, String objectCorpusDir, String alignLabelCorpusDir, String objectLabelCorpusDir, String outputDir){
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -32,7 +32,7 @@ public class Aligner {
         File[] alignLabelCorpusArray = (new File(alignLabelCorpusDir)).listFiles();
         File[] objectLabelCorpusArray = (new File(objectLabelCorpusDir)).listFiles();
         if(alignLabelCorpusArray.length!=objectLabelCorpusArray.length){
-            System.out.println("¶ÔÆäÄ¿Â¼ÎÄ¼şÊıÄ¿²»Æ¥Åä£¡");
+            System.out.println("å¯¹å…¶ç›®å½•æ–‡ä»¶æ•°ç›®ä¸åŒ¹é…ï¼");
             return;
         }
 
@@ -42,7 +42,7 @@ public class Aligner {
                     outputDir + "//" + objectCorpusArray[i].getName(), objectCorpusArray[i].getName());
         }
     }
-    // ¶ÔÆë½á¹ûÎÄ¼ş
+    // å¯¹é½ç»“æœæ–‡ä»¶
     public void alignResultFile(String alignFilePath, String objectFilePath,String alignLabelFilePath, String objectLabelFilePath, String outputFilePath, String fileName){
         FileReader alignFileReader = null;
         FileReader objectFileReader = null;
@@ -54,7 +54,7 @@ public class Aligner {
         BufferedReader objectLabelFileBufferReader = null;*/
         FileWriter writer = null;
         try{
-            // ³õÊ¼»¯¶ÁĞ´ÎÄ¼ş±äÁ¿
+            // åˆå§‹åŒ–è¯»å†™æ–‡ä»¶å˜é‡
             File alignFile = new File(alignFilePath);
             File objectFile = new File(objectFilePath);
             File alignLabelFile = new File(alignLabelFilePath);
@@ -72,29 +72,29 @@ public class Aligner {
             objectLabelFileBufferReader = new BufferedReader(objectLabelFileReader);*/
             writer = new FileWriter(outputFile);
 
-            // ¶ÁÈ¡¶ÔÆëÎÄ¼şÎ¢²©ºÅ
+            // è¯»å–å¯¹é½æ–‡ä»¶å¾®åšå·
             int length = (int)alignLabelFile.length();
             char[] alignLabelBuffer = new char[length];
             alignLabelFileReader.read(alignLabelBuffer);
             String alignLabelStr = String.valueOf(alignLabelBuffer);
             String[] alignLabelArray = alignLabelStr.split("\n");
-            // ¶ÁÈ¡½á¹ûÎÄ¼şÎ¢²©ºÅ
+            // è¯»å–ç»“æœæ–‡ä»¶å¾®åšå·
             length = (int)objectLabelFile.length();
             char[] objectLabelBuffer = new char[length];
             objectLabelFileReader.read(objectLabelBuffer);
             String objectLabelStr = String.valueOf(objectLabelBuffer);
             String[] objectLabelArray = objectLabelStr.split("\n");
 
-            // ´æ´¢ÁÙÊ±½á¹û
+            // å­˜å‚¨ä¸´æ—¶ç»“æœ
             Map<Integer, Pair<Integer, String>> tmpResultMap = new TreeMap<Integer, Pair<Integer, String>>();
             int index1 = 0, index2 = 0, index3 = 0;
             int startIndex = 0, endIndex = 0;
             String tmpWord = "", tmpLabel = "";
             String objectSentence = "", objectLabel = "", alignSentence = "", alignLabel = "";
             int i = 0, j = 0;
-            // ¸ù¾İ¶ÔÆëÎÄ¼ş¶Ô½á¹û½øĞĞ¶ÔÆë²¢Êä³ö
+            // æ ¹æ®å¯¹é½æ–‡ä»¶å¯¹ç»“æœè¿›è¡Œå¯¹é½å¹¶è¾“å‡º
             while(true){
-                // ¶ÁÈ¡Ã¿ĞĞ
+                // è¯»å–æ¯è¡Œ
                 objectSentence = objectFileBufferReader.readLine();
                 if(i >= objectLabelArray.length)
                     break;
@@ -112,7 +112,7 @@ public class Aligner {
                     writer.write("\n");
                     continue;
                 }
-                // Ñ­»·¶ÁÈ¡¾ä×ÓÖĞµÄÇé¸Ğ´Ê¶Ô
+                // å¾ªç¯è¯»å–å¥å­ä¸­çš„æƒ…æ„Ÿè¯å¯¹
                 while(true){
                     index1 = objectSentence.indexOf("[", index3);
                     index2 = objectSentence.indexOf(", ", index1);
@@ -120,7 +120,7 @@ public class Aligner {
                     if(index1!=-1 && index2!=-1 && index3!=-1){
                         tmpWord = objectSentence.substring(index1+1, index2);
                         tmpLabel = objectSentence.substring(index2+2, index3);
-                        // ´¦ÀíÎŞÆÀ¼Û¶ÔÏóµÄÇé¿ö
+                        // å¤„ç†æ— è¯„ä»·å¯¹è±¡çš„æƒ…å†µ
                         if("#".equals(tmpWord)){
                             tmpWord = getTargetObjectFormNeighborhood(alignSentence);
                             if(tmpWord == null)
@@ -128,8 +128,8 @@ public class Aligner {
                         }
                         startIndex = alignSentence.indexOf(tmpWord);
                         endIndex = startIndex + tmpWord.length() - 1;
-                        // ÎÊºÅ·´×ª
-                        if(alignSentence.contains("£¿") || alignSentence.contains("?")){
+                        // é—®å·åè½¬
+                        if(alignSentence.contains("ï¼Ÿ") || alignSentence.contains("?")){
                             if(tmpLabel.equals("POS"))
                                 tmpLabel = "NEG";
                             else
@@ -147,7 +147,7 @@ public class Aligner {
                     }
                 }
             }
-            System.out.println(fileName + "¶ÔÆëÍê³É£¡");
+            System.out.println(fileName + "å¯¹é½å®Œæˆï¼");
         } catch (Exception e){
             e.printStackTrace();
         } finally {
@@ -174,16 +174,16 @@ public class Aligner {
         }
     }
 
-    // ´ÓÉÏÏÂÎÄÓï¾äÖĞ»ñÈ¡ÆÀ¼Û¶ÔÏó
+    // ä»ä¸Šä¸‹æ–‡è¯­å¥ä¸­è·å–è¯„ä»·å¯¹è±¡
     public String getTargetObjectFormNeighborhood(String sentence){
         String word = null;
-        // ·Ö´Ê´¦Àí
+        // åˆ†è¯å¤„ç†
         CorpusSegmenter segmenter = new CorpusSegmenter();
         String segSentence = segmenter.segmentSentence(sentence, true);
-        // ½«¶ÌÓïºÏ²¢
+        // å°†çŸ­è¯­åˆå¹¶
         PhraseProducer producer = new PhraseProducer();
         StringBuffer buffer = producer.produceLine(segSentence);
-        // Ñ°ÕÒµÚÒ»¸öÃû´Ê»òÃû´Ê¶ÌÓï
+        // å¯»æ‰¾ç¬¬ä¸€ä¸ªåè¯æˆ–åè¯çŸ­è¯­
         int index = buffer.indexOf("/n");
         int index0 = -1;
         if(index != -1){

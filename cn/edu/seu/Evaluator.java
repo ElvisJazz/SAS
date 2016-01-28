@@ -11,45 +11,45 @@ import java.util.ArrayList;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-16
- * Time: ÏÂÎç9:42
+ * Time: ä¸‹åˆ9:42
  * To change this template use File | Settings | File Templates.
  */
 public class Evaluator {
-    // ´æ´¢¾«È·ÆÀ¼ÛÏÂÌá½»½á¹ûÖĞÕıÈ·µÄÑùÀıÊı
+    // å­˜å‚¨ç²¾ç¡®è¯„ä»·ä¸‹æäº¤ç»“æœä¸­æ­£ç¡®çš„æ ·ä¾‹æ•°
     private ArrayList<Integer> seriousCorrectSet = new ArrayList<Integer>();
-    // ´æ´¢¿íËÉÆÀ¼ÛÏÂÌá½»½á¹ûÖĞÕıÈ·µÄ¸²¸ÇÂÊ
+    // å­˜å‚¨å®½æ¾è¯„ä»·ä¸‹æäº¤ç»“æœä¸­æ­£ç¡®çš„è¦†ç›–ç‡
     private ArrayList<Double> softCorrectForPSet = new ArrayList<Double>();
     private ArrayList<Double> softCorrectForRSet = new ArrayList<Double>();
-    //Ìá½»½á¹ûÖĞ×ÜµÄÑùÀıÊı£»ÆÀ²âÎÄ±¾ÖĞËùÓĞÑùÀıÊı
+    //æäº¤ç»“æœä¸­æ€»çš„æ ·ä¾‹æ•°ï¼›è¯„æµ‹æ–‡æœ¬ä¸­æ‰€æœ‰æ ·ä¾‹æ•°
     private ArrayList<Integer> allPostSet = new ArrayList<Integer>();
     private ArrayList<Integer> allSystemSet = new ArrayList<Integer>();
 
-    // Í³¼Æ¸÷¸öÎÄ±¾ÖĞ´íÎó¸ĞÇéÊı
+    // ç»Ÿè®¡å„ä¸ªæ–‡æœ¬ä¸­é”™è¯¯æ„Ÿæƒ…æ•°
     private ArrayList<Integer> wrongSentimentSet = new ArrayList<Integer>();
 
-    // ¾«È·ºÍ¿íËÉÆÀ¼ÛÏÂÌá½»½á¹ûÖĞÕıÈ·µÄÑùÀıÊıÁÙÊ±±äÁ¿
+    // ç²¾ç¡®å’Œå®½æ¾è¯„ä»·ä¸‹æäº¤ç»“æœä¸­æ­£ç¡®çš„æ ·ä¾‹æ•°ä¸´æ—¶å˜é‡
     private int seriousCount = 0;
     private double softCountForP = 0.0;
     private double softCountForR = 0.0;
     private int wrongSentimentCount = 0;
 
-    // ÆÀ¹ÀËùÓĞÎÄ¼ş
+    // è¯„ä¼°æ‰€æœ‰æ–‡ä»¶
     public void evaluateAll(String evaluateCorpusDir, String resultCorpusDir, boolean isSentiment){
         File[] evaluateCorpusArray = (new File(evaluateCorpusDir)).listFiles();
         File[] resultCorpusArray = (new File(resultCorpusDir)).listFiles();
         if(evaluateCorpusArray.length != resultCorpusArray.length){
-            System.out.println("¶ÔÆäÄ¿Â¼ÎÄ¼şÊıÄ¿²»Æ¥Åä£¡");
+            System.out.println("å¯¹å…¶ç›®å½•æ–‡ä»¶æ•°ç›®ä¸åŒ¹é…ï¼");
             return;
         }
 
         for(int i=0; i<resultCorpusArray.length; ++i){
             evaluate(evaluateCorpusArray[i].getAbsolutePath(), resultCorpusArray[i].getAbsolutePath(), isSentiment);
-            System.out.println(resultCorpusArray[i].getName()+"ÆÀ²âÍê³É£¡");
+            System.out.println(resultCorpusArray[i].getName()+"è¯„æµ‹å®Œæˆï¼");
         }
 
     }
 
-    // ÆÀ¹Àµ¥¸öÎÄ¼ş
+    // è¯„ä¼°å•ä¸ªæ–‡ä»¶
     public void evaluate(String evaluateFilePath, String resultFilePath, boolean isSentiment){
         FileReader evaluateFileReader = null;
         FileReader resultFileReader = null;
@@ -61,20 +61,20 @@ public class Evaluator {
             evaluateFileReader = new FileReader(evaluateFile);
             resultFileReader = new FileReader(resultFile);
 
-            //¼ÆËãÆÀ²âÎÄ±¾ÖĞËùÓĞÑùÀıÊı
+            //è®¡ç®—è¯„æµ‹æ–‡æœ¬ä¸­æ‰€æœ‰æ ·ä¾‹æ•°
             int length = (int)evaluateFile.length();
             char[] content = new char[length];
             evaluateFileReader.read(content);
             String evaluateStr = String.valueOf(content);
             allSystemSet.add(new Integer(count(evaluateStr, "[")));
-            // ¼ÆËãÌá½»½á¹ûÖĞ×ÜµÄÑùÀıÊı
+            // è®¡ç®—æäº¤ç»“æœä¸­æ€»çš„æ ·ä¾‹æ•°
             length = (int)resultFile.length();
             char[] content1 = new char[length];
             resultFileReader.read(content1);
             String resultStr = String.valueOf(content1);
             allPostSet.add(new Integer(count(resultStr, "[")));
 
-            // ¼ÆËã´ıÆÀ¹ÀÓïÁÏÓëÆÀ²âÓïÁÏÃ¿Ò»ĞĞµÄÌá½»½á¹ûÖĞÕıÈ·µÄÑùÀıÊı
+            // è®¡ç®—å¾…è¯„ä¼°è¯­æ–™ä¸è¯„æµ‹è¯­æ–™æ¯ä¸€è¡Œçš„æäº¤ç»“æœä¸­æ­£ç¡®çš„æ ·ä¾‹æ•°
             evaluateBufferReader = new BufferedReader(evaluateFileReader);
             resultBufferReader = new BufferedReader(resultFileReader);
             String postLine[]  = resultStr.split("\n");
@@ -113,7 +113,7 @@ public class Evaluator {
         }
     }
 
-    // Í³¼Æ×Ö·û´®ÖĞÖ¸¶¨×Ö·û´®³öÏÖµÄ´ÎÊı
+    // ç»Ÿè®¡å­—ç¬¦ä¸²ä¸­æŒ‡å®šå­—ç¬¦ä¸²å‡ºç°çš„æ¬¡æ•°
     public int count(String str, String target){
         int count = 0;
         int index = str.indexOf(target);
@@ -125,7 +125,7 @@ public class Evaluator {
         return count;
     }
 
-    // ¼ÆËã¾«È·ºÍ¿íËÉ±ê×¼ÏÂÑùÀıµÄ×¼È·Çé¿ö
+    // è®¡ç®—ç²¾ç¡®å’Œå®½æ¾æ ‡å‡†ä¸‹æ ·ä¾‹çš„å‡†ç¡®æƒ…å†µ
     public void computeCorrect(String postLine, String systemLine, boolean isSentiment){
         int postIndex1 = 0, postIndex2 = 0;
         int systemIndex1 = 0, systemIndex2 = 0;
@@ -134,7 +134,7 @@ public class Evaluator {
         String postSentiment = null, systemSentiment = null;
         double matchLength = 0.0, allLengthForP = 0.0, allLengthForR = 0.0;
         Integer startPostIndexValue, endPostIndexValue,startSystemIndexValue,endSystemIndexValue;
-        // ·Ö±ğ»ñÈ¡Ìá½»ºÍÏµÍ³ĞĞÖĞµÄÆğÊ¼Î»ÖÃºÍÇé¸Ğ´Ê
+        // åˆ†åˆ«è·å–æäº¤å’Œç³»ç»Ÿè¡Œä¸­çš„èµ·å§‹ä½ç½®å’Œæƒ…æ„Ÿè¯
        while(true){
            systemIndex1 = systemLine.indexOf('[', systemIndex2);
            if(systemIndex1 == -1)
@@ -173,11 +173,11 @@ public class Evaluator {
                        return;
                    postSentiment = postLine.substring(postIndex1+1, postIndex2);
 
-                   // Ìá½»²¿·ÖÒÑ±éÀúÍê
+                   // æäº¤éƒ¨åˆ†å·²éå†å®Œ
                    if(startPostIndex==null || endPostIndex==null || postSentiment==null)
                        return;
 
-                   // ÅĞ¶Ï±ê×¢²¿·ÖÊÇ·ñÓëÏµÍ³µ±Ç°µÄ±ê×¢²¿·ÖÓĞÖØµş
+                   // åˆ¤æ–­æ ‡æ³¨éƒ¨åˆ†æ˜¯å¦ä¸ç³»ç»Ÿå½“å‰çš„æ ‡æ³¨éƒ¨åˆ†æœ‰é‡å 
                    startPostIndexValue = Integer.valueOf(startPostIndex);
                    endPostIndexValue = Integer.valueOf(endPostIndex);
 
@@ -188,14 +188,14 @@ public class Evaluator {
                            if(isSentiment)
                                 break;
                        }
-                       // ¾«È·Æ¥Åä
+                       // ç²¾ç¡®åŒ¹é…
                        if(startPostIndexValue.equals(startSystemIndexValue) && endPostIndexValue.equals(endSystemIndexValue)) {
                            ++seriousCount;
                            ++softCountForP;
                            ++softCountForR;
                            break;
                        }
-                       // ¸²¸ÇÂÊÆ¥Åä¼ÆËã
+                       // è¦†ç›–ç‡åŒ¹é…è®¡ç®—
                        else{
                            if(startPostIndexValue>=startSystemIndexValue){
                                if(endPostIndexValue > endSystemIndexValue)
@@ -233,7 +233,7 @@ public class Evaluator {
         File file = new File(evaluationResultFilePath);
         if(!file.getParentFile().exists()) {
             if(!file.getParentFile().mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -258,14 +258,14 @@ public class Evaluator {
             int fileNum = seriousCorrectSet.size();
 
             writer= new FileWriter(file);
-            // Êä³öÃ¿¸öÎÄ¼şµÄ¾«È·ÆÀ¼ÛÏÂµÄÕıÈ·ÑùÀıÊı¡¢¿íËÉÆÀ¼ÛÏÂµÄÕıÈ·ÑùÀıÊı¡¢Ê¶±ğµÄÑùÀıÊı¡¢ÏµÍ³µÄÑùÀıÊı
-            writer.write("¡¾ĞòºÅ¡¿\t¾«È·ÕıÈ·ÑùÀıÊı\t¿íËÉÕıÈ·ÑùÀıÊı\tÊ¶±ğµÄÑùÀıÊı\tÏµÍ³µÄÑùÀıÊı\t¸ĞÇé´íÎóµÄÑùÀıÊı\n");
+            // è¾“å‡ºæ¯ä¸ªæ–‡ä»¶çš„ç²¾ç¡®è¯„ä»·ä¸‹çš„æ­£ç¡®æ ·ä¾‹æ•°ã€å®½æ¾è¯„ä»·ä¸‹çš„æ­£ç¡®æ ·ä¾‹æ•°ã€è¯†åˆ«çš„æ ·ä¾‹æ•°ã€ç³»ç»Ÿçš„æ ·ä¾‹æ•°
+            writer.write("ã€åºå·ã€‘\tç²¾ç¡®æ­£ç¡®æ ·ä¾‹æ•°\tå®½æ¾æ­£ç¡®æ ·ä¾‹æ•°\tè¯†åˆ«çš„æ ·ä¾‹æ•°\tç³»ç»Ÿçš„æ ·ä¾‹æ•°\tæ„Ÿæƒ…é”™è¯¯çš„æ ·ä¾‹æ•°\n");
             for(int i=0; i<fileNum; ++i){
                 writer.write(i+"\t"+String.valueOf(seriousCorrectSet.get(i))+"\t"+df.format(softCorrectForPSet.get(i))+"\t"+String.valueOf(allPostSet.get(i))+"\t"+String.valueOf(allSystemSet.get(i))+"\t"+String.valueOf(wrongSentimentSet.get(i))+"\r\n");
             }
             writer.write("\r\n\r\n");
-            // Êä³öÃ¿¸öÎÄ¼şµÄ¾«È·ÆÀ¼ÛÏÂµÄ×¼È·ÂÊ¡¢¿íËÉÆÀ¼ÛÏÂµÄ×¼È·ÂÊ¡¢¾«È·ÆÀ¼ÛÏÂµÄÕÙ»ØÂÊ¡¢¿íËÉÆÀ¼ÛÏÂµÄÕÙ»ØÂÊ¡¢¾«È·ÆÀ¼ÛÏÂµÄFÖµ¡¢¿íËÉÆÀ¼ÛÏÂµÄFÖµ
-            writer.write("¡¾ĞòºÅ¡¿\t¾«È·×¼È·ÂÊ\t¾«È·ÕÙ»ØÂÊ\t¾«È·FÖµ\t¿íËÉ×¼È·ÂÊ\t¿íËÉÕÙ»ØÂÊ\t¿íËÉFÖµ\r\n");
+            // è¾“å‡ºæ¯ä¸ªæ–‡ä»¶çš„ç²¾ç¡®è¯„ä»·ä¸‹çš„å‡†ç¡®ç‡ã€å®½æ¾è¯„ä»·ä¸‹çš„å‡†ç¡®ç‡ã€ç²¾ç¡®è¯„ä»·ä¸‹çš„å¬å›ç‡ã€å®½æ¾è¯„ä»·ä¸‹çš„å¬å›ç‡ã€ç²¾ç¡®è¯„ä»·ä¸‹çš„Få€¼ã€å®½æ¾è¯„ä»·ä¸‹çš„Få€¼
+            writer.write("ã€åºå·ã€‘\tç²¾ç¡®å‡†ç¡®ç‡\tç²¾ç¡®å¬å›ç‡\tç²¾ç¡®Få€¼\tå®½æ¾å‡†ç¡®ç‡\tå®½æ¾å¬å›ç‡\tå®½æ¾Få€¼\r\n");
             for(int i=0; i<fileNum; ++i){
                 macroSeriousPN += seriousCorrectSet.get(i);
                 macroSoftPN += softCorrectForPSet.get(i);
@@ -296,27 +296,27 @@ public class Evaluator {
                 writer.write("\t"+df.format(tmpP)+"\t"+df.format(tmpR)+"\t"+df.format(tmpF)+"\r\n");
             }
             writer.write("\r\n\r\n");
-            // Êä³ö¾«È·ÆÀ¼ÛÏÂµÄ×¼È·ÂÊ¡¢¾«È·ÆÀ¼ÛÏÂµÄÕÙ»ØÂÊ¡¢¾«È·ÆÀ¼ÛÏÂµÄFÖµ
-            writer.write("¾«È·±ê×¼\t×¼È·ÂÊ\tÕÙ»ØÂÊ\tFÖµ\r\n");
+            // è¾“å‡ºç²¾ç¡®è¯„ä»·ä¸‹çš„å‡†ç¡®ç‡ã€ç²¾ç¡®è¯„ä»·ä¸‹çš„å¬å›ç‡ã€ç²¾ç¡®è¯„ä»·ä¸‹çš„Få€¼
+            writer.write("ç²¾ç¡®æ ‡å‡†\tå‡†ç¡®ç‡\tå¬å›ç‡\tFå€¼\r\n");
             tmpP = (double)macroSeriousPN / allPostInstance;
             tmpR = (double)macroSeriousPN / allSystemInstance;
             tmpF = (double)2*tmpP*tmpR/(tmpP+tmpR);
-            writer.write("Î¢Æ½¾ù\t"+df.format(tmpP)+"\t"+df.format(tmpR)+"\t"+df.format(tmpF)+"\r\n");
+            writer.write("å¾®å¹³å‡\t"+df.format(tmpP)+"\t"+df.format(tmpR)+"\t"+df.format(tmpF)+"\r\n");
             microSeriousP /= fileNum;
             microSeriousR /= fileNum;
             microSeriousF /= fileNum;
-            writer.write("ºêÆ½¾ù\t"+df.format(microSeriousP)+"\t"+df.format(microSeriousR)+"\t"+df.format(microSeriousF)+"\r\n");
+            writer.write("å®å¹³å‡\t"+df.format(microSeriousP)+"\t"+df.format(microSeriousR)+"\t"+df.format(microSeriousF)+"\r\n");
 
-            // Êä³ö¿íËÉÆÀ¼ÛÏÂµÄ×¼È·ÂÊ¡¢¿íËÉÆÀ¼ÛÏÂµÄÕÙ»ØÂÊ¡¢¿íËÉÆÀ¼ÛÏÂµÄFÖµ
-            writer.write("¿íËÉ±ê×¼\t×¼È·ÂÊ\tÕÙ»ØÂÊ\tFÖµ\r\n");
+            // è¾“å‡ºå®½æ¾è¯„ä»·ä¸‹çš„å‡†ç¡®ç‡ã€å®½æ¾è¯„ä»·ä¸‹çš„å¬å›ç‡ã€å®½æ¾è¯„ä»·ä¸‹çš„Få€¼
+            writer.write("å®½æ¾æ ‡å‡†\tå‡†ç¡®ç‡\tå¬å›ç‡\tFå€¼\r\n");
             tmpP = macroSoftPN / allPostInstance;
             tmpR = macroSoftRN / allSystemInstance;
             tmpF = (double)2*tmpP*tmpR/(tmpP+tmpR);
-            writer.write("Î¢Æ½¾ù\t"+df.format(tmpP)+"\t"+df.format(tmpR)+"\t"+df.format(tmpF)+"\r\n");
+            writer.write("å¾®å¹³å‡\t"+df.format(tmpP)+"\t"+df.format(tmpR)+"\t"+df.format(tmpF)+"\r\n");
             microSoftP /= fileNum;
             microSoftR /= fileNum;
             microSoftF /= fileNum;
-            writer.write("ºêÆ½¾ù\t"+df.format(microSoftP)+"\t"+df.format(microSoftR)+"\t"+df.format(microSoftF)+"\r\n");
+            writer.write("å®å¹³å‡\t"+df.format(microSoftP)+"\t"+df.format(microSoftR)+"\t"+df.format(microSoftF)+"\r\n");
         }catch (Exception e){
             e.printStackTrace();
         }finally {

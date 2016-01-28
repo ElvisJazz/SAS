@@ -2,17 +2,14 @@ package cn.edu.seu.extractor;
 
 import com.google.common.collect.HashMultimap;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.HashMap;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-13
- * Time: ÏÂÎç4:37
+ * Time: ä¸‹åˆ4:37
  * To change this template use File | Settings | File Templates.
  */
 public class CorpusExtractor {
@@ -20,16 +17,16 @@ public class CorpusExtractor {
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
-                System.out.println("´´½¨Ä¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
 
         File[] readPhraseFileArray = (new File(readPhraseDir)).listFiles();
         File[] readDepFileArray = (new File(readDepDir)).listFiles();
-        // ÈôÊıÁ¿²»¶ÔµÈ£¬Ôò·µ»Ø
+        // è‹¥æ•°é‡ä¸å¯¹ç­‰ï¼Œåˆ™è¿”å›
         if(readPhraseFileArray.length !=  readDepFileArray.length) {
-            System.out.println("´Ê×éºÍÒÀ´æ¹ØÏµÎÄ¼şÊıÄ¿²»Æ¥Åä£¡");
+            System.out.println("è¯ç»„å’Œä¾å­˜å…³ç³»æ–‡ä»¶æ•°ç›®ä¸åŒ¹é…ï¼");
             return;
         }
 
@@ -39,50 +36,43 @@ public class CorpusExtractor {
     }
 
     public void extractorFile(String readPhraseFilePath, String readDepFilePath, String outputFilePath, String fileName){
-        FileReader phraseReader = null, depReader = null;
-        FileWriter writer = null;
+        BufferedWriter writer = null;
         BufferedReader bufferPhraseReader = null, bufferDepReader = null;
         try{
             File phraseFile = new File(readPhraseFilePath);
             File depFile = new File(readDepFilePath);
             File outputFile = new File(outputFilePath);
-            phraseReader = new FileReader(phraseFile);
-            depReader = new FileReader(depFile);
-            writer = new FileWriter(outputFile);
-            bufferPhraseReader = new BufferedReader(phraseReader);
-            bufferDepReader = new BufferedReader(depReader);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+            bufferPhraseReader = new BufferedReader(new InputStreamReader(new FileInputStream(phraseFile), "UTF-8"));
+            bufferDepReader = new BufferedReader(new InputStreamReader(new FileInputStream(depFile), "UTF-8"));
 
             String phraseSentence="", depSentence="";
             int i = 0;
             HashMap<Integer, HashMultimap<String, String>> outputMap = new HashMap();
             while((phraseSentence=bufferPhraseReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null){
-                // ·Ö±ğ¶ÁÈ¡´Ê×é¾ä×ÓºÍ¹ØÏµ¾ä×Ó£¬Êä³öÄ¿±êÔª×é£¨ÆÀ¼Û¶ÔÏó£¬Çé¸Ğ´Ê£©
+                // åˆ†åˆ«è¯»å–è¯ç»„å¥å­å’Œå…³ç³»å¥å­ï¼Œè¾“å‡ºç›®æ ‡å…ƒç»„ï¼ˆè¯„ä»·å¯¹è±¡ï¼Œæƒ…æ„Ÿè¯ï¼‰
                 TargetExtractor extractor = new TargetExtractor();
                 extractor.extractPotentialWords(phraseSentence);
                 extractor.readRelation(depSentence);
                 outputMap.put(i, extractor.extract());
                 i++;
             }
-            // Êä³öÃû´Ê-Çé¸Ğ´Ê¹ØÏµ¶Ô£¬ÒÔ¿Õ¸ñ¸ô¿ª
+            // è¾“å‡ºåè¯-æƒ…æ„Ÿè¯å…³ç³»å¯¹ï¼Œä»¥ç©ºæ ¼éš”å¼€
             HashMultimap<String, String> subMap = null;
             for(HashMap.Entry entry : outputMap.entrySet()){
                 subMap = (HashMultimap<String, String>)entry.getValue();
-                // Êä³öÃ¿¾äµÄ¹ØÏµ¶Ô
+                // è¾“å‡ºæ¯å¥çš„å…³ç³»å¯¹
                 for(HashMap.Entry entry1 : subMap.entries()){
                     writer.write("["+entry1.getKey()+", "+entry1.getValue()+"]");
                 }
                 writer.write("\n");
             }
-            System.out.println(fileName+"Ç±ÔÚ¶ÔÏóºÍÇé¸Ğ´Ê³éÈ¡Íê³É£¡");
+            System.out.println(fileName+"æ½œåœ¨å¯¹è±¡å’Œæƒ…æ„Ÿè¯æŠ½å–å®Œæˆï¼");
         }catch (Exception e){
             e.printStackTrace();
         }
         finally {
             try{
-                if(phraseReader != null)
-                    phraseReader.close();
-                if(depReader != null)
-                    depReader.close();
                 if(writer != null)
                     writer.close();
                 if(bufferPhraseReader != null)

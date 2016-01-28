@@ -17,11 +17,11 @@ import java.util.List;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 16-1-20
- * Time: ÉÏÎç12:47
+ * Time: ä¸Šåˆ12:47
  * To change this template use File | Settings | File Templates.
  */
 public class SemanticParser {
-    // ³õÊ¼»¯
+    // åˆå§‹åŒ–
     public boolean init(){
         if(SRL.create("ltp_data/srl") < 0){
             System.err.println("load failed");
@@ -30,12 +30,12 @@ public class SemanticParser {
          return true;
     }
 
-    // ÇåÀí
+    // æ¸…ç†
     public void destroy(){
         SRL.release();
     }
 
-    // ÅúÁ¿·ÖÎö
+    // æ‰¹é‡åˆ†æ
     public void parseAll(String segDir,String depDir, String nerDir, String outputDir){
         File[] segFileArray = (new File(segDir)).listFiles();
         File[] nerFileArray = (new File(nerDir)).listFiles();
@@ -43,7 +43,7 @@ public class SemanticParser {
         File outputFile = new File(outputDir);
         if(!outputFile.exists()) {
             if(!outputFile.mkdirs()){
-                System.out.println("´´½¨ÓïÒå·ÖÎö½á¹ûÄ¿Â¼Ê§°Ü£¡");
+                System.out.println("åˆ›å»ºè¯­ä¹‰åˆ†æç»“æœç›®å½•å¤±è´¥ï¼");
                 return;
             }
         }
@@ -57,27 +57,21 @@ public class SemanticParser {
         }
     }
 
-    // µ¥¸öÎÄ¼ş·ÖÎö
+    // å•ä¸ªæ–‡ä»¶åˆ†æ
     public void parse(String fileName, String segFilePath, String depFilePath, String nerFilePath, String outputDir){
-        FileReader segReader = null;
-        FileReader nerReader = null;
-        FileReader depReader = null;
-        FileWriter writer = null;
+        BufferedWriter writer = null;
         BufferedReader segBr = null;
         BufferedReader depBr = null;
         BufferedReader nerBr = null;
         try{
-            // ÎÄ¼şÊä³ö±äÁ¿
+            // æ–‡ä»¶è¾“å‡ºå˜é‡
             File file = new File(outputDir+"//"+fileName);
-            writer = new FileWriter(file);
-            segReader = new FileReader(new File(segFilePath));
-            nerReader = new FileReader(new File(nerFilePath));
-            depReader = new FileReader(new File(depFilePath));
-            segBr = new BufferedReader(segReader);
-            depBr = new BufferedReader(depReader);
-            nerBr = new BufferedReader(nerReader);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            segBr = new BufferedReader(new InputStreamReader(new FileInputStream(new File(segFilePath)), "UTF-8"));
+            depBr = new BufferedReader(new InputStreamReader(new FileInputStream(new File(depFilePath)), "UTF-8"));
+            nerBr = new BufferedReader(new InputStreamReader(new FileInputStream(new File(nerFilePath)), "UTF-8"));
             String segLine, nerLine, depLine;
-            // ÎÄ¼şÓïÒå·ÖÎö
+            // æ–‡ä»¶è¯­ä¹‰åˆ†æ
             List<String> words = new ArrayList<String>();
             List<String> tags = new ArrayList<String>();
             List<String> ners = new ArrayList<String>();
@@ -87,7 +81,14 @@ public class SemanticParser {
             String tmp = "";
             while((segLine=segBr.readLine()) != null) {
                 ++num;
-                // ¶ÁÈ¡·Ö´ÊºÍ´ÊĞÔ
+                System.out.print(num+"\r");
+                if(segLine.equals("")) {
+                    writer.write("\n");
+                    nerBr.readLine();
+                    depBr.readLine();
+                    continue;
+                }
+                // è¯»å–åˆ†è¯å’Œè¯æ€§
                 String[] trunks = segLine.split(" ");
                 words.clear();
                 tags.clear();
@@ -95,20 +96,18 @@ public class SemanticParser {
                 deps.clear();
                 heads.clear();
                 for(String t : trunks){
-                    if(t.equals(""))
-                        continue;
                     index = t.lastIndexOf('/');
                     words.add(t.substring(0, index));
                     tags.add(t.substring(index+1));
                 }
-                // ¶ÁÈ¡ÃüÃûÊµÌå
+                // è¯»å–å‘½åå®ä½“
                 nerLine = nerBr.readLine();
                 String[] nerTrunks = nerLine.split(" ");
                 for(String ner : nerTrunks){
                     ner = ner.replaceAll("[^/]*/", "");
                     ners.add(ner);
                 }
-                // ¶ÁÈ¡ÒÀ´æ¹ØÏµ
+                // è¯»å–ä¾å­˜å…³ç³»
                 depLine = depBr.readLine();
                 depLine = depLine.substring(1, depLine.length()-1);
                 String[] depTrunks = depLine.split("\\), ");
@@ -120,7 +119,7 @@ public class SemanticParser {
                     n = Integer.valueOf(dep.substring(index+1, index2)) - 1;
                     heads.add(n);
                 }
-                // ÓïÒå·ÖÎö
+                // è¯­ä¹‰åˆ†æ
                 List<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>> srls = new ArrayList<Pair<Integer, List<Pair<String, Pair<Integer, Integer>>>>>();
                 SRL.srl(words, tags, ners, heads, deps, srls);
                 int start, end, preIndex;
@@ -141,21 +140,15 @@ public class SemanticParser {
                 }
                 writer.write("\n");
             }
-            System.out.println(fileName+"ÓïÒå·ÖÎöÍê³É");
+            System.out.println(fileName+"è¯­ä¹‰åˆ†æå®Œæˆ");
         }catch (Exception e){
             e.printStackTrace();
         }
         finally {
-            // ¹Ø±ÕĞ´ÎÄ¼ş
+            // å…³é—­å†™æ–‡ä»¶
             try {
                 if(writer != null)
                     writer.close();
-                if(segReader != null)
-                    segReader.close();
-                if(nerReader != null)
-                    nerReader.close();
-                if(depReader != null)
-                    depReader.close();
                 if(segBr != null)
                     segBr.close();
                 if(nerBr != null)

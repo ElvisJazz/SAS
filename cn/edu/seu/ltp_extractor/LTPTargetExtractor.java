@@ -15,62 +15,65 @@ import java.util.*;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-13
- * Time: ÏÂÎç4:22
+ * Time: ä¸‹åˆ4:22
  * To change this template use File | Settings | File Templates.
  */
 
 public class LTPTargetExtractor {
-    // ÓïÒå½ÇÉ«½ÚµãÀà
+    // è¯­ä¹‰è§’è‰²èŠ‚ç‚¹ç±»
     class SRNode{
-        // Î½´Ê beg, seq
+        // è°“è¯ beg, seq
         public Pair<Integer,String> predication = null;
-        // ¸±´Ê beg,seq
+        // å‰¯è¯ beg,seq
         public Pair<Pair<Integer,Integer>,String> adverb = null;
-        // Ê©ÊÂÕß beg,seq
+        // æ–½äº‹è€… beg,seq
         public Pair<Pair<Integer,Integer>,String> A0 = null;
-        // ÊÜÊÂÕß beg,seq
+        // å—äº‹è€… beg,seq
         public Pair<Pair<Integer,Integer>,String> A1 = null;
-        // ¼ä½ÓÊÜÊÂÕß beg,seq
+        // é—´æ¥å—äº‹è€… beg,seq
         public Pair<Pair<Integer,Integer>,String> A2 = null;
-        // ÕûÌå³É·Ö beg,end
+        // æ•´ä½“æˆåˆ† beg,end
         public int beg;
         public int end;
     }
 
-    // ÌØÊâÃû´Ê
+    // ç‰¹æ®Šåè¯
     public String[] specialNoun = {"nh", "ni", "nl", "ns", "nz"};
-    // Ö÷ÌâÏà¹Ø¾ä×Ó»º´æ
+    // ä¸»é¢˜ç›¸å…³å¥å­ç¼“å­˜
     private String segTopicSentence;
     private String depTopicSentence;
     private String srTopicSentence;
 
-    // ÕıÎÄÒÀ´æ¹ØÏµ³éÈ¡¶ÔÏó
+    // æ­£æ–‡ä¾å­˜å…³ç³»æŠ½å–å¯¹è±¡
     private TargetExtractor depTargetExtractor;
-    // Ö÷ÌâÒÀ´æ¹ØÏµ³éÈ¡¶ÔÏó
+    // ä¸»é¢˜ä¾å­˜å…³ç³»æŠ½å–å¯¹è±¡
     private TargetExtractor topicDepTargetExtractor;
 
-    // ´æ´¢´ÊĞÔÁĞ±í£ºÎ»ÖÃ£¬<±ê×¢£¬´Ê>
+    // å­˜å‚¨è¯æ€§åˆ—è¡¨ï¼šä½ç½®ï¼Œ<æ ‡æ³¨ï¼Œè¯>
     private Map<Integer, Pair<String,String>> segMap;
-    // Ö÷Ìâ´æ´¢´ÊĞÔÁĞ±í£ºÎ»ÖÃ£¬<±ê×¢£¬´Ê>
+    // ä¸»é¢˜å­˜å‚¨è¯æ€§åˆ—è¡¨ï¼šä½ç½®ï¼Œ<æ ‡æ³¨ï¼Œè¯>
     private Map<Integer, Pair<String,String>> topicSegMap;
 
-    // ´æ´¢ÕıÎÄÖĞÓïÒå½ÇÉ«ÁĞ±í:ÊÇ·ñ´¦Àí¹ı£¬ÓïÒå½ÇÉ«½Úµã
+    // å­˜å‚¨æ­£æ–‡ä¸­è¯­ä¹‰è§’è‰²åˆ—è¡¨:æ˜¯å¦å¤„ç†è¿‡ï¼Œè¯­ä¹‰è§’è‰²èŠ‚ç‚¹
     private List<SRNode> srList;
-    // ´æ´¢Ö÷ÌâÖĞÓïÒå½ÇÉ«ÁĞ±í:ÊÇ·ñ´¦Àí¹ı£¬ÓïÒå½ÇÉ«½Úµã
+    // å­˜å‚¨ä¸»é¢˜ä¸­è¯­ä¹‰è§’è‰²åˆ—è¡¨:æ˜¯å¦å¤„ç†è¿‡ï¼Œè¯­ä¹‰è§’è‰²èŠ‚ç‚¹
     private List<SRNode> topicSrList;
 
-    // ´æ´¢³éÈ¡µÄÃû´ÊºÍ¶ÔÓ¦µÄÇé¸Ğ´Ê£¨¿ÉÎª¶¯´Ê¡¢ĞÎÈİ´Êa,Ãû´ÊĞÔ¹ßÓÃÓïnl, Ãû´ÊĞÔÓïËØng£©
+    // å­˜å‚¨æŠ½å–çš„åè¯å’Œå¯¹åº”çš„æƒ…æ„Ÿè¯ï¼ˆå¯ä¸ºåŠ¨è¯ã€å½¢å®¹è¯a,åè¯æ€§æƒ¯ç”¨è¯­nl, åè¯æ€§è¯­ç´ ngï¼‰
     private HashMultimap<String, String> targetPairMap = HashMultimap.create();
     private Pair<String, String> lastTargetPair = new Pair<>();
 
-    // Ö÷ÌâÓïÁÏÏà¹ØĞÅÏ¢ÊÇ·ñÒÑ¾­³õÊ¼»¯
-    boolean isInit = false;
-    // µ±Ç°ÊÇ·ñÔÚ²Ù×÷Ö÷ÌâÓïÁÏ
-    boolean isHandleTopic = false;
+    // ä¸»é¢˜è¯­æ–™ç›¸å…³ä¿¡æ¯æ˜¯å¦å·²ç»åˆå§‹åŒ–
+    private boolean isInit = false;
+    // å½“å‰æ˜¯å¦åœ¨æ“ä½œä¸»é¢˜è¯­æ–™
+    private boolean isHandleTopic = false;
 
-    // ¶ÁÈ¡ÎÄ±¾ÓïÁÏ¾ä×ÓµÄÃüÃûÊµÌå¡¢ÒÀ´æ¹ØÏµ¡¢ÓïÒå½ÇÉ«
+    // å½“å‰å·²åˆ†æè¿‡çš„A0,A1ç»“æ„èŒƒå›´
+    private List<Pair<Integer,Integer>> analyseRangeList;
+
+    // è¯»å–æ–‡æœ¬è¯­æ–™å¥å­çš„å‘½åå®ä½“ã€ä¾å­˜å…³ç³»ã€è¯­ä¹‰è§’è‰²
     public void readContentCorpusSentence(String segSentence, String depSentence, String srSentence) throws Exception {
-        // ¼ÇÂ¼´ÊĞÔ±ê×¢µÈĞÅÏ¢
+        // è®°å½•è¯æ€§æ ‡æ³¨ç­‰ä¿¡æ¯
         segMap = new HashMap();
         String[] segs = segSentence.split(" ");
         int index;
@@ -81,24 +84,24 @@ public class LTPTargetExtractor {
             if(index != -1)
                 segMap.put(i, new Pair<String, String>(segs[i].substring(index+1), segs[i].substring(0,index)));
         }
-        // ¼ÇÂ¼ÒÀ´æ¹ØÏµ
+        // è®°å½•ä¾å­˜å…³ç³»
         depTargetExtractor = new TargetExtractor();
         depTargetExtractor.setExtractType(TargetExtractor.EXTRACT_TYPE.LTP);
         depTargetExtractor.extractPotentialWords(segSentence);
         depTargetExtractor.readRelation(depSentence);
-        // ¼ÇÂ¼ÓïÒå½ÇÉ«
+        // è®°å½•è¯­ä¹‰è§’è‰²
         srList = new ArrayList();
         readSR(srSentence, false);
     }
 
-    // ¶ÁÈ¡Ö÷ÌâÓïÁÏ¾ä×ÓµÄÃüÃûÊµÌå¡¢ÒÀ´æ¹ØÏµ¡¢ÓïÒå½ÇÉ«
+    // è¯»å–ä¸»é¢˜è¯­æ–™å¥å­çš„å‘½åå®ä½“ã€ä¾å­˜å…³ç³»ã€è¯­ä¹‰è§’è‰²
     public void readTopicCorpusSentence(String segTopicSentence, String depTopicSentence, String srTopicSentence){
         this.segTopicSentence = segTopicSentence;
         this.depTopicSentence = depTopicSentence;
         this.srTopicSentence = srTopicSentence;
     }
 
-    // ¶ÁÈ¡ÓïÒå½ÇÉ«
+    // è¯»å–è¯­ä¹‰è§’è‰²
     public void readSR(String srSentence, boolean isCorpus){
         String[] srs = srSentence.split(";");
         int index1, index2;
@@ -109,6 +112,8 @@ public class LTPTargetExtractor {
             SRNode node = new SRNode();
             index1 = sr.indexOf('(');
             index2 = sr.indexOf(')', index1+1);
+            if(index1==-1 || index2==-1)
+                continue;
             node.predication = new Pair<>(Integer.valueOf(sr.substring(0, index1)), sr.substring(index1+1, index2));
             sr = sr.substring(index2+3);
             String[] seqs = sr.split(" ");
@@ -122,9 +127,9 @@ public class LTPTargetExtractor {
                 seq =  seqs[i+3].replaceAll("seq=", "");
                 minBeg = (minBeg<beg)? minBeg : beg;
                 maxEnd = (maxEnd>end)? maxEnd : end;
-                // Èç¹ûÉÏÒ»´ÎtypeÎª¸±´Ê»òA0»òA1£¬ÇÒÕâÒ»´ÎÒ²ÊÇÍ¬ÑùµÄ±ê×¢£¬ÔòÑ¡ÔñÆäÒ»»òºÏ²¢
+                // å¦‚æœä¸Šä¸€æ¬¡typeä¸ºå‰¯è¯æˆ–A0æˆ–A1ï¼Œä¸”è¿™ä¸€æ¬¡ä¹Ÿæ˜¯åŒæ ·çš„æ ‡æ³¨ï¼Œåˆ™é€‰æ‹©å…¶ä¸€æˆ–åˆå¹¶
                 if(lastType.equals(type)) {
-                    // ¸±´Ê
+                    // å‰¯è¯
                     if(type.equals("ADV")){
                         if(SentimentSorter.getSentimentWordType(seq) != 0){
                             if(node.adverb != null){
@@ -134,7 +139,7 @@ public class LTPTargetExtractor {
                              }
                         }
                     }
-                    // Á¬ĞøA0»òA1»òA2
+                    // è¿ç»­A0æˆ–A1æˆ–A2
                     else if(beg-lastEnd == 1){
                         if(type.equals("A0")){
                             if(node.A0 != null){
@@ -178,9 +183,9 @@ public class LTPTargetExtractor {
     }
 
 
-    //  ³õÊ¼»¯Ö÷ÌâÓïÁÏ¾ä×ÓµÄÃüÃûÊµÌå¡¢ÒÀ´æ¹ØÏµ¡¢ÓïÒå½ÇÉ«
+    //  åˆå§‹åŒ–ä¸»é¢˜è¯­æ–™å¥å­çš„å‘½åå®ä½“ã€ä¾å­˜å…³ç³»ã€è¯­ä¹‰è§’è‰²
     public void initTopicInfo()  throws Exception {
-        // ¼ÇÂ¼´ÊĞÔ±ê×¢µÈĞÅÏ¢
+        // è®°å½•è¯æ€§æ ‡æ³¨ç­‰ä¿¡æ¯
         topicSegMap = new HashMap();
         String[] segs = segTopicSentence.split(" ");
         int index;
@@ -191,39 +196,42 @@ public class LTPTargetExtractor {
             if(index != -1)
                 segMap.put(i, new Pair<String, String>(segs[i].substring(index+1), segs[i].substring(0,index)));
         }
-        // ¼ÇÂ¼ÒÀ´æ¹ØÏµ
+        // è®°å½•ä¾å­˜å…³ç³»
         topicDepTargetExtractor = new TargetExtractor();
         topicDepTargetExtractor.setExtractType(TargetExtractor.EXTRACT_TYPE.LTP);
         topicDepTargetExtractor.extractPotentialWords(segTopicSentence);
         topicDepTargetExtractor.readRelation(depTopicSentence);
-        // ¼ÇÂ¼ÓïÒå½ÇÉ«
+        // è®°å½•è¯­ä¹‰è§’è‰²
         topicSrList = new ArrayList();
         readSR(srTopicSentence, true);
     }
 
-    // Ìî³äÆÀ¼Û¶ÔÏóºÍÆÀ¼Û´Êmap
+    // å¡«å……è¯„ä»·å¯¹è±¡å’Œè¯„ä»·è¯map
     public void putTargetAndOpinion(String target, String opinion){
-        String startWord = ""+target.charAt(0);
-        String endWord = ""+target.charAt(target.length()-1);
-        if(PunctuationUtil.PUNCTUATION.contains(startWord) && startWord!="¡¶")
+        if(target==null || target.trim().equals("") || opinion==null || opinion.trim().equals(""))
+            return;
+        char startWord = target.charAt(0);
+        char endWord = target.charAt(target.length()-1);
+        if(startWord!='ã€Š' && PunctuationUtil.PUNCTUATION.contains(""+startWord))
             target = target.substring(1);
-        if(PunctuationUtil.PUNCTUATION.contains(endWord) && endWord!="¡·")
+        if(target.length()!=0 && endWord!='ã€‹' && PunctuationUtil.PUNCTUATION.contains(""+endWord))
             target = target.substring(0, target.length()-1);
+
         targetPairMap.put(target, opinion);
         lastTargetPair.first = target;
         lastTargetPair.second = opinion;
     }
 
-    // ·ÖÎö²¢ÌáÈ¡³öÄ¿±êÔª×é£¬Êä³ö
+    // åˆ†æå¹¶æå–å‡ºç›®æ ‡å…ƒç»„ï¼Œè¾“å‡º
     public HashMultimap<String, String> extract(){
         extractByA0A1();
-        extractByATT();
+        /*extractByATT();
         extractByNE();
-        extractByDO();
+        extractByDO();*/
         return targetPairMap ;
     }
 
-    // Ä³Ò»·¶Î§ÄÚÊÇ·ñº¬ÓĞÆÀ¼Û´Ê
+    // æŸä¸€èŒƒå›´å†…æ˜¯å¦å«æœ‰è¯„ä»·è¯
     public boolean hasOpinionWord(int beg, int end, List list){
         String word;
         int code;
@@ -238,17 +246,17 @@ public class LTPTargetExtractor {
         return false;
     }
 
-    // ÊÇ·ñÔÚ¡¶¡·ÖĞ
+    // æ˜¯å¦åœ¨ã€Šã€‹ä¸­
     public boolean isInBookQuotation(int start, int end){
         int start1=-1,end1=-1, start2=-1, end2=-1;
         for(int i=1; i<segMap.size(); ++i){
-            if(start-i>0 && segMap.get(start-i).equals("¡¶"))
+            if(start-i>0 && segMap.get(start-i).equals("ã€Š"))
                 start1 = start-i;
-            else if(start-i>0 && segMap.get(start-i).equals("¡·"))
+            else if(start-i>0 && segMap.get(start-i).equals("ã€‹"))
                 end1 = start-i;
-            else if(end+i<segMap.size() && segMap.get(end+i).equals("¡¶"))
+            else if(end+i<segMap.size() && segMap.get(end+i).equals("ã€Š"))
                 start2 = end+i;
-            else if(end+i<segMap.size() && segMap.get(end+i).equals("¡·"))
+            else if(end+i<segMap.size() && segMap.get(end+i).equals("ã€‹"))
                 end2 = end+i;
         }
         if(start1>end1 && end2<start2 && end2!=-1)
@@ -256,17 +264,17 @@ public class LTPTargetExtractor {
         return false;
     }
 
-    // ÅĞ¶ÏÊéÃûºÅ³É·ÖÊÇ·ñºÍÖ¸¶¨´Ê¿éÖØµş£¬·µ»ØÔ­´Ê¿é»òÖØµşºÏ²¢²¿·Ö
+    // åˆ¤æ–­ä¹¦åå·æˆåˆ†æ˜¯å¦å’ŒæŒ‡å®šè¯å—é‡å ï¼Œè¿”å›åŸè¯å—æˆ–é‡å åˆå¹¶éƒ¨åˆ†
     public Pair<Integer,Integer> getCombinationBlock(int start, int end){
-        int _start = -1, _end = -1; // ÊéÃûºÅ¿ªÊ¼½áÊøindex
+        int _start = -1, _end = -1; // ä¹¦åå·å¼€å§‹ç»“æŸindex
         int rStart = -1, rEnd = -1;
         int reStart = -1, reEnd = -1;
         for(int i=0; i<segMap.size(); ++i){
-            if(segMap.get(i).equals("¡¶") && _start==-1)
+            if(segMap.get(i).equals("ã€Š") && _start==-1)
                 _start = i;
-            else if(segMap.get(i).equals("¡·") && start!=-1){
+            else if(segMap.get(i).equals("ã€‹") && start!=-1){
                 _end = i;
-                // ÅĞ¶Ï
+                // åˆ¤æ–­
                 if(_start>=start && _start<=end){
                     rStart = start;
                     if(_end > end)
@@ -295,7 +303,7 @@ public class LTPTargetExtractor {
         return new Pair<>(reStart, reEnd);
     }
 
-    // Ñ°ÕÒATTÏà¹ØµÄÒÀÀµ¹ØÏµ¸²¸Ç·¶Î§ start-end²¿·Ö: 0-(N-1)
+    // å¯»æ‰¾ATTç›¸å…³çš„ä¾èµ–å…³ç³»è¦†ç›–èŒƒå›´ start-endéƒ¨åˆ†: 0-(N-1)
     public List<Pair<Integer, Integer>> getATTDepRangeList(int start, int end){
         Set<Pair<Integer, Integer>> ATTDepSet;
         if(isHandleTopic)
@@ -315,7 +323,7 @@ public class LTPTargetExtractor {
                     ATTNodeSet.add(i);
             }
         }
-        // ±éÀú½Úµã£¬¼ÆËã¸²¸Ç·¶Î§
+        // éå†èŠ‚ç‚¹ï¼Œè®¡ç®—è¦†ç›–èŒƒå›´
         for(int i : ATTNodeSet){
             if(i-end > 1){
                 if(_end != -1)
@@ -330,25 +338,28 @@ public class LTPTargetExtractor {
         return resultList;
     }
 
-    // ´Ó»°ÌâÖĞÑ°ÕÒÆÀ¼Û¶ÔÏó
+    // ä»è¯é¢˜ä¸­å¯»æ‰¾è¯„ä»·å¯¹è±¡
     public String getTopicTarget(){
         if(!isInit){
             try{
                 initTopicInfo();
             }catch (Exception e){
-                System.err.println("Ö÷ÌâÓïÁÏÏà¹ØĞÅÏ¢³õÊ¼»¯Ê§°Ü£¡");
+                System.err.println("ä¸»é¢˜è¯­æ–™ç›¸å…³ä¿¡æ¯åˆå§‹åŒ–å¤±è´¥ï¼");
                 e.printStackTrace();
                 return "";
             }
         }
-        isHandleTopic = true;
-        Pair<Pair<Integer,Integer>,String> pair = new Pair<>(new Pair<>(0,topicSegMap.size()-1), segTopicSentence.replaceAll("/[a-z ]*", ""));
-        String result = getPotentialTargetAndOpionion(pair).get(0).first;
-        isHandleTopic = false;
-        return result;
+        if(topicSegMap.size() > 0){
+            isHandleTopic = true;
+            Pair<Pair<Integer,Integer>,String> pair = new Pair<>(new Pair<>(0,topicSegMap.size()-1), segTopicSentence.replaceAll("/[a-z ]*", ""));
+            String result = getPotentialTargetAndOpinion(pair).get(0).first;
+            isHandleTopic = false;
+            return result;
+        }
+        return "";
     }
 
-    // Ö¸´ú¼°ÒşĞÔËÑË÷£¬Ñ°ÕÒÉÏÒ»¸ö
+    // æŒ‡ä»£åŠéšæ€§æœç´¢ï¼Œå¯»æ‰¾ä¸Šä¸€ä¸ª
     public String getReferenceWord(){
         int size = targetPairMap.size();
         if(size > 0){
@@ -357,8 +368,17 @@ public class LTPTargetExtractor {
         return getTopicTarget();
     }
 
-    // ´ÓÄ³Ò»³É·ÖÖĞ³é³öÇ±ÔÚÆÀ¼Û¶ÔÏóºÍÆÀ¼Û´Ê
-    public List<Pair<String,String>> getPotentialTargetAndOpionion(Pair<Pair<Integer,Integer>,String> nodeAPair){
+    // ä»æŒ‡å®šèŒƒå›´å†…åœ¨åˆ†è¯åºåˆ—ä¸­å¯»æ‰¾æŒ‡å®šè¯çš„ä¸‹æ ‡
+    public int findIndexFromSeg(Map<Integer, Pair<String,String>> map, int start, String word) {
+        for(int i=start; i<map.size(); ++i){
+            if(map.get(i).second.equals(word))
+                return i;
+        }
+        return -1;
+    }
+
+    // ä»æŸä¸€æˆåˆ†ä¸­æŠ½å‡ºæ½œåœ¨è¯„ä»·å¯¹è±¡å’Œè¯„ä»·è¯
+    public List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair){
         String block = "";
         Map<Integer, Pair<String,String>> tmpSegMap;
         if(isHandleTopic)
@@ -373,14 +393,14 @@ public class LTPTargetExtractor {
             end = nodeAPair.first.second;
         }
         List list = new ArrayList<Pair<String,String>>();
-        // ´ú´Ê»òÒşĞÔA0»òA1Ö¸´úËÑÑ°
+        // ä»£è¯æˆ–éšæ€§A0æˆ–A1æŒ‡ä»£æœå¯»
         if(!isHandleTopic && block=="" || (block.length()==1 && tmpSegMap.get(start).first.equals("r")))
             list.add(new Pair<String, String>(getReferenceWord(), ""));
-        // ¿¼ÂÇÊÇ·ñ±»¡¶¡·°ü¹ü
-        if(block.startsWith("¡¶") && block.endsWith("¡·"))
+        // è€ƒè™‘æ˜¯å¦è¢«ã€Šã€‹åŒ…è£¹
+        if(block.startsWith("ã€Š") && block.endsWith("ã€‹"))
             list.add(new Pair<String, String>(block,""));
         else{
-            // ATT²¿·Ö°üÀ¨adj
+            // ATTéƒ¨åˆ†åŒ…æ‹¬adj
             List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end);
             String target = "", opinion = "";
             String tmp1, tmp2;
@@ -406,40 +426,68 @@ public class LTPTargetExtractor {
                     opinion = "";
                 }
             }
-            // º¬¡¶¡·ÇÒ²»ÔÚÖ®Ç°µÄATTÖĞ
-            int index1 = block.indexOf("¡¶");
+            // å«ã€Šã€‹ä¸”ä¸åœ¨ä¹‹å‰çš„ATTä¸­
+            List<Pair<Integer,Integer>> bookQuotationList = new ArrayList<>();
+            int index1 =  findIndexFromSeg(tmpSegMap, start, "ã€Š"); //block.indexOf("ã€Š");
             int index2;
             while(index1 != -1){
-                index2 = block.indexOf("¡·", index1+1);
+                index2 = findIndexFromSeg(tmpSegMap, index1+1, "ã€‹"); //block.indexOf("ã€‹", index1+1);
                 if(index2 != -1){
-                    for(Pair<Integer, Integer> pair : targetRangeList){
-                        if(index2<pair.first || index1>pair.second){
-                            for(int i=index1; i<=index2; ++i){
-                                target += tmpSegMap.get(i).second;
+                    if(targetRangeList.size() > 0){
+                        for(Pair<Integer, Integer> pair : targetRangeList){
+                            if(index2<pair.first || index1>pair.second){
+                                for(int i=index1; i<=index2; ++i){
+                                    target += tmpSegMap.get(i).second;
+                                }
+                                bookQuotationList.add(new Pair<>(index1, index2));
+                                list.add(new Pair<>(target,""));
+                                target = "";
                             }
-                            list.add(new Pair<>(target,""));
-                            target = "";
                         }
+                    }else{
+                        for(int i=index1; i<=index2; ++i){
+                            target += tmpSegMap.get(i).second;
+                        }
+                        bookQuotationList.add(new Pair<>(index1, index2));
+                        list.add(new Pair<>(target,""));
+                        target = "";
                     }
                 }else{
                     break;
                 }
-                index1 = block.indexOf("¡·", index2+1);
+                index1 = findIndexFromSeg(tmpSegMap, index2+1, "ã€Š"); //block.indexOf("ã€‹", index2+1);
             }
-            // Ñ°ÕÒ²»ÔÚATTÇÒ²»ÔÚ¡¶¡·ÖĞµÄÃüÃûÊµÌå
+            // å¯»æ‰¾ä¸åœ¨ATTä¸”ä¸åœ¨ã€Šã€‹ä¸­çš„å‘½åå®ä½“
             List<Pair<Integer,String>> nrList = new ArrayList<>();
+            boolean step = false;
             for(int i=start; i<=end; ++i){
                 for(String noun : specialNoun){
                     if(tmpSegMap.get(i).first.equals(noun)){
-                        for(Pair<Integer,Integer> pair : targetRangeList){
-                            if(i>=pair.first && i<=pair.second){
-                                nrList.add(new Pair<>(i,tmpSegMap.get(i).second));
+                        // åˆ¤æ–­ä¸åœ¨ã€Šã€‹ä¸­
+                        for(Pair<Integer,Integer> bPair : bookQuotationList){
+                            if(i>=bPair.first && i<=bPair.second){
+                                step = true;
+                                break;
                             }
+                        }
+                        if(step){
+                            step = false;
+                            break;
+                        }
+                        // åˆ¤æ–­ä¸åœ¨ATTä¸­
+                        if(targetRangeList.size() > 0){
+                            for(Pair<Integer,Integer> pair : targetRangeList){
+                                if(i<pair.first || i>pair.second){
+                                    nrList.add(new Pair<>(i,tmpSegMap.get(i).second));
+                                }
+                            }
+                        }else{
+                            nrList.add(new Pair<>(i,tmpSegMap.get(i).second));
                         }
                     }
                 }
             }
-            // ºÏ²¢ÁÙ½üµÄÊµÌå
+            // åˆå¹¶ä¸´è¿‘çš„å®ä½“
             Pair<Integer,String> lastPair = null;
             for(Pair<Integer,String> pair : nrList){
                 if(lastPair!=null && pair.first-lastPair.first==1){
@@ -448,17 +496,21 @@ public class LTPTargetExtractor {
                 }else{
                     if(lastPair != null)
                         list.add(new Pair<>(lastPair.second, ""));
+                    else
+                        lastPair = new Pair<>();
                     lastPair.first = pair.first;
                     lastPair.second = pair.second;
                 }
             }
+            if(lastPair != null)
+                list.add(new Pair<>(lastPair.second, ""));
         }
         if(list.size() == 0)
-            list.add(block);
+            list.add(new Pair<>(block, ""));
         return list;
     }
 
-    // ÅĞ¶Ïµ±Ç°ÓïÒå½ÚµãÖĞµÄA0ºÍA1ÖĞÊÇ·ñº¬ÓĞÆäËûA0»òA1½á¹¹
+    // åˆ¤æ–­å½“å‰è¯­ä¹‰èŠ‚ç‚¹ä¸­çš„A0å’ŒA1ä¸­æ˜¯å¦å«æœ‰å…¶ä»–A0æˆ–A1ç»“æ„
     public boolean hasA0OrA1(SRNode currentNode, SRNode node){
         if(node.A0!=null && currentNode.A0!=null && node.A0.first.first>=currentNode.A0.first.first && node.A0.first.second<=currentNode.A0.first.second)
             return true;
@@ -471,18 +523,18 @@ public class LTPTargetExtractor {
         return false;
     }
 
-    // ÀûÓÃA0A1¹æÔò´ÓÓïÒå½ÇÉ«½ÚµãÖĞ³éÈ¡ÆÀ¼Û¶ÔÏóºÍÆÀ¼Û´Ê£¬·µ»Ø³éÈ¡µÄÆÀ¼Û¶ÔÏóÁĞ±í
+    // åˆ©ç”¨A0A1è§„åˆ™ä»è¯­ä¹‰è§’è‰²èŠ‚ç‚¹ä¸­æŠ½å–è¯„ä»·å¯¹è±¡å’Œè¯„ä»·è¯ï¼Œè¿”å›æŠ½å–çš„è¯„ä»·å¯¹è±¡åˆ—è¡¨
     public void extractNodeByA0A1(SRNode node, int index){
-        // Èç¹ûÕû¸öÓïÒå³É·Ö°üº¬ÔÚ¡¶¡·ÖĞ£¬Ôò²»½âÎö
+        // å¦‚æœæ•´ä¸ªè¯­ä¹‰æˆåˆ†åŒ…å«åœ¨ã€Šã€‹ä¸­ï¼Œåˆ™ä¸è§£æ
         if(isInBookQuotation(node.beg, node.end))
             return;
-        // Ñ°ÕÒÆÀ¼Û´Ê
+        // å¯»æ‰¾è¯„ä»·è¯
         int opinionCode;
-        // ´æ·ÅÎ½´Ê+¸±´Ê£¬A0,A1ÖĞµÄÆÀ¼Û´Ê
+        // å­˜æ”¾è°“è¯+å‰¯è¯ï¼ŒA0,A1ä¸­çš„è¯„ä»·è¯
         List<Pair<Integer, String>> opinion = new ArrayList<>();
         List<Pair<Integer, String>> opinion0 = new ArrayList<>();
         List<Pair<Integer, String>> opinion1 = new ArrayList<>();
-        // ´¦ÀíA0»òA1ÖĞµ¥¶ÀÒ»¸öÖú´Ê´æÔÚµÄÇé¿ö£º¹ØÁªÇ°ÃæµÄÇ±ÔÚÇé¸Ğ´Ê
+        // å¤„ç†A0æˆ–A1ä¸­å•ç‹¬ä¸€ä¸ªåŠ©è¯å­˜åœ¨çš„æƒ…å†µï¼šå…³è”å‰é¢çš„æ½œåœ¨æƒ…æ„Ÿè¯
         if(node.A0!=null && node.A0.second.length()==1 && segMap.get(node.A0.first.first).first.equals("u") && node.A0.first.first>0){
             node.A0.first.first--;
             node.A0.first.second--;
@@ -493,38 +545,40 @@ public class LTPTargetExtractor {
             node.A1.first.second--;
             node.A1.second = segMap.get(node.A1.first.first).second;
         }
-        // Î½´ÊºÍ¸±´ÊÊÇ·ñÊÇÇé¸Ğ´Ê
+        // è°“è¯å’Œå‰¯è¯æ˜¯å¦æ˜¯æƒ…æ„Ÿè¯
         boolean preHasOpinion = hasOpinionWord(node.predication.first, node.predication.first, opinion);
         boolean advHasOpinion = (node.adverb!=null && hasOpinionWord(node.adverb.first.first, node.adverb.first.second, opinion));
-        // ÅĞ¶ÏA0ºÍA1µÄ¸±´Ê¡¢Î½´ÊÊÇ·ñÊÇÇé¸Ğ´Ê£¬Èô²»ÊÇÇÒA0ºÍA1ÖĞº¬ÓĞ¸´ºÏA0A1½á¹¹£¬ÔòÌø³ö
+        // åˆ¤æ–­A0å’ŒA1çš„å‰¯è¯ã€è°“è¯æ˜¯å¦æ˜¯æƒ…æ„Ÿè¯ï¼Œè‹¥ä¸æ˜¯ä¸”A0å’ŒA1ä¸­å«æœ‰å¤åˆA0A1ç»“æ„ï¼Œåˆ™è·³å‡º
         if(!preHasOpinion && !advHasOpinion && index<srList.size()-1 && hasA0OrA1(node, srList.get(index+1)))
             return;
-        // A0,A1ÖÁÉÙÒª´æÔÚÒ»¸ö
-        if((node.A0!=null || node.A1!=null) && (preHasOpinion || advHasOpinion ||
-                (node.A0!=null && hasOpinionWord(node.A0.first.first, node.A0.first.second, opinion0)) ||
-                (node.A1!=null && hasOpinionWord(node.A1.first.first, node.A1.first.second, opinion1)) ||
-                (node.A2!=null && hasOpinionWord(node.A2.first.first, node.A2.first.second, opinion0)))) {
+        // A0æˆ–A1æˆ–A2æ˜¯å¦æœ‰æƒ…æ„Ÿè¯
+        boolean A0HasOpinion = (node.A0!=null && hasOpinionWord(node.A0.first.first, node.A0.first.second, opinion0));
+        boolean A1hasOpinion = (node.A1!=null && hasOpinionWord(node.A1.first.first, node.A1.first.second, opinion1));
+        boolean A2HasOpinion = (node.A2!=null && hasOpinionWord(node.A2.first.first, node.A2.first.second, opinion0));
 
-            // Î½´ÊÇé¸Ğ
+        // A0,A1è‡³å°‘è¦å­˜åœ¨ä¸€ä¸ª
+        if((node.A0!=null || node.A1!=null) && (preHasOpinion || advHasOpinion || A0HasOpinion || A1hasOpinion || A2HasOpinion)) {
+
+            // è°“è¯æƒ…æ„Ÿ
             if((opinionCode=opinion.get(0).first) !=  0){
                 if(Math.abs(opinionCode) == 1){
-                    for(Pair<String,String> pair : getPotentialTargetAndOpionion(node.A0))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0))
                         putTargetAndOpinion(pair.first, opinion.get(0).second);
                 }else{
-                    for(Pair<String,String> pair : getPotentialTargetAndOpionion(node.A1))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1))
                         putTargetAndOpinion(pair.first, opinion.get(0).second);
                 }
             }
-            // ¸±´ÊÇé¸Ğ
+            // å‰¯è¯æƒ…æ„Ÿ
             else if(node.adverb!=null && opinion.get(1).first != 0){
-                for(Pair<String,String> pair : getPotentialTargetAndOpionion(node.A0))
+                for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0))
                     putTargetAndOpinion(pair.first, opinion.get(1).second);
             }
             else{
                 List<Pair<String,String>> potentialPairList;
-                // ÓĞA0A1»òÎŞA0ÓĞA1£ºA0ÖĞÑ°ÕÒÆÀ¼Û¶ÔÏó£¬ÓÅÏÈA1ÖĞÑ°ÕÒÆÀ¼Û´Ê£¬Æä´ÎÊÇ×ÔÉí
+                // æœ‰A0A1æˆ–æ— A0æœ‰A1ï¼šA0ä¸­å¯»æ‰¾è¯„ä»·å¯¹è±¡ï¼Œä¼˜å…ˆA1ä¸­å¯»æ‰¾è¯„ä»·è¯ï¼Œå…¶æ¬¡æ˜¯è‡ªèº«
                 if(node.A1 != null){
-                    potentialPairList = getPotentialTargetAndOpionion(node.A0);
+                    potentialPairList = getPotentialTargetAndOpinion(node.A0);
                     if(opinion1.get(0).first != 0) {
                         for(Pair<String,String> pair : potentialPairList)
                             putTargetAndOpinion(pair.first, opinion1.get(0).second);
@@ -533,12 +587,12 @@ public class LTPTargetExtractor {
                             putTargetAndOpinion(pair.first, pair.second);
                     }
                 }
-                // ÓĞA0A1»òÎŞA1ÓĞA0£ºÈôÓĞA1Ôò´ÓA1ÖĞÑ°ÕÒÆÀ¼Û¶ÔÏó£¬ÓÅÏÈA0ÖĞÑ°ÕÒÆÀ¼Û´Ê£¬Æä´ÎÊÇ×ÔÉí£»ÈôÎŞA1Ôò´ÓA0ÖĞÑ°ÕÒÆÀ¼Û¶ÔÏóºÍÆÀ¼Û´Ê
+                // æœ‰A0A1æˆ–æ— A1æœ‰A0ï¼šè‹¥æœ‰A1åˆ™ä»A1ä¸­å¯»æ‰¾è¯„ä»·å¯¹è±¡ï¼Œä¼˜å…ˆA0ä¸­å¯»æ‰¾è¯„ä»·è¯ï¼Œå…¶æ¬¡æ˜¯è‡ªèº«ï¼›è‹¥æ— A1åˆ™ä»A0ä¸­å¯»æ‰¾è¯„ä»·å¯¹è±¡å’Œè¯„ä»·è¯
                 if(node.A0 != null){
                     if(node.A1 != null)
-                        potentialPairList = getPotentialTargetAndOpionion(node.A1);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A1);
                     else
-                        potentialPairList = getPotentialTargetAndOpionion(node.A0);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A0);
                     if(opinion0.get(0).first != 0) {
                         for(Pair<String,String> pair : potentialPairList)
                             putTargetAndOpinion(pair.first, opinion0.get(0).second);
@@ -551,7 +605,7 @@ public class LTPTargetExtractor {
         }
     }
 
-    // A0-A1³éÈ¡¹æÔò
+    // A0-A1æŠ½å–è§„åˆ™
     public void extractByA0A1(){
         for(int i=0; i<srList.size(); ++i){
             SRNode node = srList.get(i);
@@ -559,23 +613,23 @@ public class LTPTargetExtractor {
         }
     }
 
-    // NR³éÈ¡¹æÔò
+    // NRæŠ½å–è§„åˆ™
     public void extractByNE(){
 
     }
 
-    // ATT³éÈ¡¹æÔò
+    // ATTæŠ½å–è§„åˆ™
     public void extractByATT(){
 
     }
 
-    // DOµ¥¶ÀÇé¸Ğ´Ê³éÈ¡¹æÔò
+    // DOå•ç‹¬æƒ…æ„Ÿè¯æŠ½å–è§„åˆ™
     public void extractByDO(){
 
     }
 
     public static void main(String args[]){
-        String s = "¶¯²ú/v µÇ¼Ç/v ÌõÀı/n Ã÷Äê/nt ³öÌ¨/v ,/wp »ò/c Îª/p ¿ªÕ÷/v ·¿²úË°/n ×ö/v ÆÌµæ/n";
+        String s = "åŠ¨äº§/v ç™»è®°/v æ¡ä¾‹/n æ˜å¹´/nt å‡ºå°/v ,/wp æˆ–/c ä¸º/p å¼€å¾/v æˆ¿äº§ç¨/n åš/v é“ºå«/n";
         s = s.replaceAll("/[a-z ]*", "");
         System.out.println(s);
 

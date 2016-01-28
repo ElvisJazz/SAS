@@ -9,7 +9,7 @@ import java.util.*;
  * Created with IntelliJ IDEA.
  * User: Jazz
  * Date: 15-3-13
- * Time: ÏÂÎç4:22
+ * Time: ä¸‹åˆ4:22
  * To change this template use File | Settings | File Templates.
  */
 class Node{
@@ -22,43 +22,43 @@ class Node{
 }
 
 public class TargetExtractor {
-    // Ãû´ÊĞÔ¹ßÓÃÓï,Ãû´ÊĞÔÓïËØ,¸±¶¯´Ê,Ãû¶¯´Ê,²»¼°Îï¶¯´Ê£¨ÄÚ¶¯´Ê£©,¶¯´ÊĞÔ¹ßÓÃÓï,¶¯´ÊĞÔÓïËØ,ĞÎÈİ´Ê
+    // åè¯æ€§æƒ¯ç”¨è¯­,åè¯æ€§è¯­ç´ ,å‰¯åŠ¨è¯,ååŠ¨è¯,ä¸åŠç‰©åŠ¨è¯ï¼ˆå†…åŠ¨è¯ï¼‰,åŠ¨è¯æ€§æƒ¯ç”¨è¯­,åŠ¨è¯æ€§è¯­ç´ ,å½¢å®¹è¯
     public final static String[] OPINION_SET_FOR_STF = {"/nl", "/ng", "/a"};
     public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v"};
-    // ¶¯´ÊĞÔÇé¸Ğ´ÊºÚÃûµ¥
+    // åŠ¨è¯æ€§æƒ…æ„Ÿè¯é»‘åå•
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
-    // »ù±¾Ä¿±êÒÀÀµ¹ØÏµÀàĞÍ
+    // åŸºæœ¬ç›®æ ‡ä¾èµ–å…³ç³»ç±»å‹
     public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
     public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "COO", "nn", "conj"};
-    // ·ñ¶¨´Ê
-    public final static String[] NOT_SET = {"²»", "Ã»", "·Ç", "ÎŞ"};
-    // ·ñ¶¨´Ê°×Ãûµ¥
-    public final static String[] NOT_WHITE_SET = {"²»ÂÛ", "²»µÃ²»", "²»¹ı", "·Ç³£",  "ÎŞ·Ç", "ÎŞÂÛ","Ã»×¼"};
-    // ´æ´¢³éÈ¡µÄÃû´ÊºÍ¶ÔÓ¦µÄÇé¸Ğ´Ê£¨¿ÉÎª¶¯´Ê¡¢ĞÎÈİ´Êa,Ãû´ÊĞÔ¹ßÓÃÓïnl, Ãû´ÊĞÔÓïËØng£©
+    // å¦å®šè¯
+    public final static String[] NOT_SET = {"ä¸", "æ²¡", "é", "æ— "};
+    // å¦å®šè¯ç™½åå•
+    public final static String[] NOT_WHITE_SET = {"ä¸è®º", "ä¸å¾—ä¸", "ä¸è¿‡", "éå¸¸",  "æ— é", "æ— è®º","æ²¡å‡†"};
+    // å­˜å‚¨æŠ½å–çš„åè¯å’Œå¯¹åº”çš„æƒ…æ„Ÿè¯ï¼ˆå¯ä¸ºåŠ¨è¯ã€å½¢å®¹è¯a,åè¯æ€§æƒ¯ç”¨è¯­nl, åè¯æ€§è¯­ç´ ngï¼‰
     private HashMultimap<String, String> targetPairMap = HashMultimap.create();
-    // ºòÑ¡Ãû´Ê
+    // å€™é€‰åè¯
     private HashMap<Integer, String> potentialNounMap = new HashMap<Integer, String>();
-    // ºòÑ¡Çé¸Ğ´Ê
+    // å€™é€‰æƒ…æ„Ÿè¯
     private HashMap<Integer, String> potentialSentimentMap = new HashMap<Integer, String>();
-    // ¸±´Ê
+    // å‰¯è¯
     private HashMap<Integer, String> adverbMap = new HashMap<Integer, String>();
 
-    // ËùÓĞ´Ê¿é½Úµã´æ´¢
+    // æ‰€æœ‰è¯å—èŠ‚ç‚¹å­˜å‚¨
     private HashMap<Integer, Node> nodeMap = new HashMap<Integer, Node>();
-    // ÒÀ´æ¹ØÏµ´æ´¢   rel,head->tail
+    // ä¾å­˜å…³ç³»å­˜å‚¨   rel,head->tail
     private HashMultimap<String, Pair<Integer,Integer>> depMap = HashMultimap.create();
-    // ÒÔÖ§Åä´ÊÎª¼üÖµµÄÒÀ´æ¹ØÏµ´æ´¢
+    // ä»¥æ”¯é…è¯ä¸ºé”®å€¼çš„ä¾å­˜å…³ç³»å­˜å‚¨
     //private HashMap<Integer, Set<Pair<Integer, String>>> headDepMap = new HashMap();
-    // ³éÈ¡ÀàĞÍ
+    // æŠ½å–ç±»å‹
     public enum EXTRACT_TYPE{ STF, LTP};
     private EXTRACT_TYPE type = EXTRACT_TYPE.STF;
 
-    // ÉèÖÃ³éÈ¡ÀàĞÍ
+    // è®¾ç½®æŠ½å–ç±»å‹
     public void setExtractType(EXTRACT_TYPE type){
         this.type = type;
     }
 
-    // ÉèÖÃÇ±ÔÚÆÀ¼Û¶ÔÏóÊı×é
+    // è®¾ç½®æ½œåœ¨è¯„ä»·å¯¹è±¡æ•°ç»„
     public void setPotentialNounMap(HashMap<Integer, String> potentialNounMap){
         this.potentialNounMap = potentialNounMap;
     }
@@ -67,7 +67,7 @@ public class TargetExtractor {
         return depMap;
     }
 
-    // ´Ó·Ö´ÊºóºÏ²¢´Ê×éµÄÒÑ±ê×¢¾ä×ÓÖĞÌáÈ¡Ä¿±ê´Ê
+    // ä»åˆ†è¯ååˆå¹¶è¯ç»„çš„å·²æ ‡æ³¨å¥å­ä¸­æå–ç›®æ ‡è¯
     public void extractPotentialWords(String sentence){
         if(sentence.length() <= 0)
             return;
@@ -75,20 +75,20 @@ public class TargetExtractor {
         Node node = new Node(0);
         nodeMap.put(new Integer(0), node);
         for(int i=0; i<blockArray.length; ++i){
-            // ³õÊ¼»¯½Úµã
+            // åˆå§‹åŒ–èŠ‚ç‚¹
             node = new Node(i+1);
             nodeMap.put(new Integer(i+1), node);
-            // ÊÇ·ñÊÇÇé¸Ğ´Ê
+            // æ˜¯å¦æ˜¯æƒ…æ„Ÿè¯
             if(isContainsSentiment(blockArray[i])){
                 blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                 potentialSentimentMap.put(new Integer(i+1), blockArray[i]);
             }
-            // ÊÇ·ñÊÇÃû´Ê¶ÔÏó
+            // æ˜¯å¦æ˜¯åè¯å¯¹è±¡
             else if(isContainsTargetObject(blockArray[i])){
                 blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                 potentialNounMap.put(new Integer(i+1), blockArray[i]);
             }
-            // ¸±´Ê
+            // å‰¯è¯
             else if(blockArray[i].contains("/d")){
                 blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
                 adverbMap.put(new Integer(i+1), blockArray[i]);
@@ -96,8 +96,10 @@ public class TargetExtractor {
         }
     }
 
-    // ¶ÁÈ¡¾ä×ÓµÄ¾ä·¨·ÖÎöºóµÄ¹ØÏµ
+    // è¯»å–å¥å­çš„å¥æ³•åˆ†æåçš„å…³ç³»
     public void readRelation(String depSentence) throws Exception{
+        if(depSentence==null || depSentence.trim().equals(""))
+            return;
         depSentence = depSentence.substring(1, depSentence.length()-1);
         depSentence += ", ";
         String[] blockArray = depSentence.split("\\), ");
@@ -107,19 +109,19 @@ public class TargetExtractor {
         for(String block : blockArray){
             if(block!=null && block.length() <= 3)
                 continue;
-            // »ñÈ¡Ã¿¸ö½ÚµãËùÓĞÖ¸ÕëµÄºóĞø½Úµã
+            // è·å–æ¯ä¸ªèŠ‚ç‚¹æ‰€æœ‰æŒ‡é’ˆçš„åç»­èŠ‚ç‚¹
             try{
-                // »ñÈ¡¹ØÏµÀàĞÍ
+                // è·å–å…³ç³»ç±»å‹
                 index = block.indexOf('(');
                 relation = block.substring(0, index);
-                // »ñÈ¡Í·½Úµã
+                // è·å–å¤´èŠ‚ç‚¹
                 index2 = block.indexOf(", ", index);
                 index = block.lastIndexOf('-', index2);
                 head = new Integer(block.substring(index+1, index2));
-                // »ñÈ¡Î²°Í½Úµã
+                // è·å–å°¾å·´èŠ‚ç‚¹
                 index = block.lastIndexOf('-');
                 tail = new Integer(block.substring(index+1));
-                // ´æ´¢ÒÀ´æ¹ØÏµ
+                // å­˜å‚¨ä¾å­˜å…³ç³»
                 Node node = nodeMap.get(tail);
                 nodeMap.get(head).nextNodeArray.add(new Pair<String, Node>(relation, node));
                 depMap.put(relation, new Pair<Integer, Integer>(head,tail));
@@ -129,27 +131,27 @@ public class TargetExtractor {
         }
     }
 
-    // Root¹æÔò³éÈ¡ £ºÇé¸Ğ´ÊÓëÖ÷Ìâ¹ØÁª
+    // Rootè§„åˆ™æŠ½å– ï¼šæƒ…æ„Ÿè¯ä¸ä¸»é¢˜å…³è”
     public void extractByRootRule(){
         Set<Pair<Integer, Integer>> set = depMap.get("root");
         Iterator<Pair<Integer,Integer>> iterator = set.iterator();
         if(iterator.hasNext()){
             Pair<Integer,Integer> pair = iterator.next();
-            // ÅĞ¶Ï»ñÈ¡µÄpairÖĞÊÇ·ñ´æÔÚÇ±ÔÚÇé¸Ğ´Ê
+            // åˆ¤æ–­è·å–çš„pairä¸­æ˜¯å¦å­˜åœ¨æ½œåœ¨æƒ…æ„Ÿè¯
             if(potentialSentimentMap.containsKey(pair.second)){
-                // »ñÈ¡ºÍ¸Ã´Ê´æÔÚÒÀ´æ¹ØÏµµÄ´Ê
+                // è·å–å’Œè¯¥è¯å­˜åœ¨ä¾å­˜å…³ç³»çš„è¯
                 HashMap<Integer, String> depWordMap = getDepPairMap(pair.second);
                 for(Integer index : depWordMap.keySet()){
-                    // ¹ØÁªµÄ´ÊÊÇ·ñÊôÓÚÇ±ÔÚÆÀ¼Û¶ÔÏó
+                    // å…³è”çš„è¯æ˜¯å¦å±äºæ½œåœ¨è¯„ä»·å¯¹è±¡
                     if(!potentialNounMap.containsKey(index)){
                         targetPairMap.put("#", potentialSentimentMap.get(pair.second));
                     }
                 }
             }
-            // ÊÇ·ñ¼ä½Ó´æÔÚÇé¸Ğ´Ê
+            // æ˜¯å¦é—´æ¥å­˜åœ¨æƒ…æ„Ÿè¯
            HashMap<Integer, String> depWordMap = getDepPairMap(pair.second);
            for(Integer index : depWordMap.keySet()){
-               // ¹ØÁªµÄ´ÊÊÇ·ñÊôÓÚÇ±ÔÚÆÀ¼Û¶ÔÏó
+               // å…³è”çš„è¯æ˜¯å¦å±äºæ½œåœ¨è¯„ä»·å¯¹è±¡
                if(potentialSentimentMap.containsKey(index)){
                    targetPairMap.put("#", potentialSentimentMap.get(index));
                }
@@ -157,22 +159,22 @@ public class TargetExtractor {
         }
     }
 
-    //  Ö±½Ó¹æÔò³éÈ¡ £ºÇé¸Ğ´ÊÓë¶ÔÏóÖ±½Ó¹ØÁª
+    //  ç›´æ¥è§„åˆ™æŠ½å– ï¼šæƒ…æ„Ÿè¯ä¸å¯¹è±¡ç›´æ¥å…³è”
     void extractByDirectRule(){
         for(Map.Entry entry : depMap.entries()){
-            // »ñÈ¡¹ØÏµÀàĞÍ
+            // è·å–å…³ç³»ç±»å‹
             String rel = (String)entry.getKey();
             Integer index1 = 0, index2 = 0;
-            // ¹ØÏµÊÇ·ñÊôÓÚÇé¸Ğ¹ØÏµÀàĞÍsubj, obj, mod, ccomp
+            // å…³ç³»æ˜¯å¦å±äºæƒ…æ„Ÿå…³ç³»ç±»å‹subj, obj, mod, ccomp
             if(isContainsTargetRel(rel, false)){
                 index1 = ((Pair<Integer, Integer>)entry.getValue()).first;
                 index2 = ((Pair<Integer, Integer>)entry.getValue()).second;
 
-                // µÚÒ»¸ö´ÊÊÇÇé¸Ğ´Ê£¬²¢ÇÒµÚ¶ş¸ö´ÊÊÇÇ±ÔÚÃû´Ê¶ÔÏó
+                // ç¬¬ä¸€ä¸ªè¯æ˜¯æƒ…æ„Ÿè¯ï¼Œå¹¶ä¸”ç¬¬äºŒä¸ªè¯æ˜¯æ½œåœ¨åè¯å¯¹è±¡
                 if(potentialSentimentMap.containsKey(index1) && potentialNounMap.containsKey(index2)){
                     targetPairMap.put(potentialNounMap.get(index2), potentialSentimentMap.get(index1));
                 }
-                // µÚ¶ş¸ö´ÊÊÇÇé¸Ğ´Ê£¬²¢ÇÒµÚÒ»¸ö´ÊÊÇÇ±ÔÚÃû´Ê¶ÔÏó
+                // ç¬¬äºŒä¸ªè¯æ˜¯æƒ…æ„Ÿè¯ï¼Œå¹¶ä¸”ç¬¬ä¸€ä¸ªè¯æ˜¯æ½œåœ¨åè¯å¯¹è±¡
                 else if(potentialSentimentMap.containsKey(index2) && potentialNounMap.containsKey(index1)){
                     targetPairMap.put(potentialNounMap.get(index1), potentialSentimentMap.get(index2));
                 }
@@ -180,17 +182,17 @@ public class TargetExtractor {
         }
     }
 
-    // ¼ä½Ó¹æÔò³éÈ¡:1) H->T,H->O 2) O->H->T  3) T->H->O
+    // é—´æ¥è§„åˆ™æŠ½å–:1) H->T,H->O 2) O->H->T  3) T->H->O
     public void extractByIndirectRule(){
         // 1) H->T,H->O
         for(Node node : nodeMap.values()){
             Integer nounIndex = 0, sentimentIndex = 0;
             if(node.nextNodeArray.size() >= 2){
                 for(Pair<String, Node> pair : node.nextNodeArray){
-                    // »ñÈ¡Çé¸Ğ´Ê
+                    // è·å–æƒ…æ„Ÿè¯
                     if(isContainsTargetRel(pair.first, true) && potentialSentimentMap.containsKey(pair.second.index)){
                         sentimentIndex = pair.second.index;
-                        // »ñÈ¡Ãû´Ê
+                        // è·å–åè¯
                         for(Pair<String, Node> pair1 : node.nextNodeArray){
                             if(isContainsTargetRel(pair1.first, true) && potentialNounMap.containsKey(pair1.second.index)){
                                 nounIndex = pair1.second.index;
@@ -202,30 +204,30 @@ public class TargetExtractor {
             }
         }
 
-        // ¹æÔò 2) 3)
+        // è§„åˆ™ 2) 3)
         for(Node node : nodeMap.values()){
-            // Ãû´Ê£¬Çé¸Ğ´ÊĞòºÅ
+            // åè¯ï¼Œæƒ…æ„Ÿè¯åºå·
             Integer nounIndex = 0, sentimentIndex = 0;
             boolean isFirstWordOpinion = false;
-            // µ±Ç°½ÚµãÊÇ·ñÊÇÇé¸Ğ´Ê
+            // å½“å‰èŠ‚ç‚¹æ˜¯å¦æ˜¯æƒ…æ„Ÿè¯
             if(potentialSentimentMap.containsKey(node.index)){
                 isFirstWordOpinion = true;
                 sentimentIndex = new Integer(node.index);
             }
-            // µ±Ç°½ÚµãÊÇ·ñÊÇÃû´Ê
+            // å½“å‰èŠ‚ç‚¹æ˜¯å¦æ˜¯åè¯
             else if(potentialNounMap.containsKey(node.index)){
                 isFirstWordOpinion = false;
                 nounIndex = new Integer(node.index);
             }else{
                 continue;
             }
-            // ±éÀúµ±Ç°½ÚµãµÄËùÓĞºóĞø½Úµã
+            // éå†å½“å‰èŠ‚ç‚¹çš„æ‰€æœ‰åç»­èŠ‚ç‚¹
             for(Pair<String, Node> pair : node.nextNodeArray){
-                // ÊÇ·ñÕÒµ½Ä¿±êÒÀÀµ¹ØÏµ
+                // æ˜¯å¦æ‰¾åˆ°ç›®æ ‡ä¾èµ–å…³ç³»
                 if(isContainsTargetRel(pair.first, true)) {
-                    // ±éÀúºóĞø½ÚµãµÄËùÓĞºóĞø½Úµã
+                    // éå†åç»­èŠ‚ç‚¹çš„æ‰€æœ‰åç»­èŠ‚ç‚¹
                     for(Pair<String, Node> pair1 : pair.second.nextNodeArray){
-                        // ÊÇ·ñºóĞø½ÚµãÕÒµ½Ä¿±êÒÀÀµ¹ØÏµ
+                        // æ˜¯å¦åç»­èŠ‚ç‚¹æ‰¾åˆ°ç›®æ ‡ä¾èµ–å…³ç³»
                         if(isContainsTargetRel(pair1.first, true)) {
                             if(isFirstWordOpinion && potentialNounMap.containsKey(pair1.second.index)) {
                                 nounIndex =  new Integer(pair1.second.index);
@@ -241,16 +243,16 @@ public class TargetExtractor {
         }
     }
 
-    // ·ñ¶¨·´×ª
+    // å¦å®šåè½¬
     public void negReverse(){
-        // ´ıÌæ»»ÈİÆ÷
+        // å¾…æ›¿æ¢å®¹å™¨
         Set<Pair<String,String>> replaceSet = new HashSet<Pair<String, String>>();
-        // ÁÙ½ü´Ê·´×ª
-        boolean isWhiteWord = false; // ÊÇ·ñÔÚ°×Ãûµ¥ÖĞ
+        // ä¸´è¿‘è¯åè½¬
+        boolean isWhiteWord = false; // æ˜¯å¦åœ¨ç™½åå•ä¸­
         String tmpW = null;
         for(Integer key : adverbMap.keySet()){
             String adverb = adverbMap.get(key);
-            // ¼ì²âÊÇ·ñÔÚ°×Ãûµ¥ÖĞ
+            // æ£€æµ‹æ˜¯å¦åœ¨ç™½åå•ä¸­
             for(String whiteWord : NOT_WHITE_SET){
                 if(whiteWord.equals(adverb)){
                     isWhiteWord = true;
@@ -262,11 +264,11 @@ public class TargetExtractor {
                 isWhiteWord = false;
                 continue;
             }
-            // ¼ì²âÊÇ·ñÊÇ·ñ¶¨´Ê
+            // æ£€æµ‹æ˜¯å¦æ˜¯å¦å®šè¯
             else{
                 for(String notWord : NOT_SET){
                     if(adverb.contains(notWord)){
-                        // Ñ°ÕÒÊÇ·ñÁÙ½üĞŞÊÎÇé¸Ğ´Ê
+                        // å¯»æ‰¾æ˜¯å¦ä¸´è¿‘ä¿®é¥°æƒ…æ„Ÿè¯
                         for(int i=1; i<4; ++i){
                             if(potentialSentimentMap.containsKey(key-i)){
                                 tmpW = potentialSentimentMap.get(key-i);
@@ -292,7 +294,7 @@ public class TargetExtractor {
                 }
             }
         }
-        // ÒÀ´æ¹ØÏµ·´×ª
+        // ä¾å­˜å…³ç³»åè½¬
         Set<Pair<Integer,Integer>> negSet = depMap.get("neg");
         String sentimentStr = null;
         Iterator iterator = negSet.iterator();
@@ -312,7 +314,7 @@ public class TargetExtractor {
         }
     }
 
-    // ·ÖÎö²¢ÌáÈ¡³öÄ¿±êÔª×é£¬Êä³ö
+    // åˆ†æå¹¶æå–å‡ºç›®æ ‡å…ƒç»„ï¼Œè¾“å‡º
     public HashMultimap<String, String> extract(){
         extractByRootRule();
         extractByDirectRule();
@@ -321,7 +323,7 @@ public class TargetExtractor {
         return targetPairMap;
     }
 
-    // ÊÇ·ñ°üº¬Ç±ÔÚÇé¸Ğ´Ê
+    // æ˜¯å¦åŒ…å«æ½œåœ¨æƒ…æ„Ÿè¯
     public boolean isContainsSentiment(String word){
         String[] set;
         if(type == EXTRACT_TYPE.STF)
@@ -345,7 +347,7 @@ public class TargetExtractor {
         return false;
     }
 
-    // ÊÇ·ñ°üº¬Ç±ÔÚÆÀ¼Û¶ÔÏó
+    // æ˜¯å¦åŒ…å«æ½œåœ¨è¯„ä»·å¯¹è±¡
     public boolean isContainsTargetObject(String word){
         if(type == EXTRACT_TYPE.STF)
             return word.contains("/n") && !word.contains("/nl") && !word.contains("/ng");
@@ -353,7 +355,7 @@ public class TargetExtractor {
             return false;
     }
 
-    // ÊÇ·ñ°üº¬ÔÚÄ¿±ê»ù±¾ÒÀÀµ¹ØÏµ
+    // æ˜¯å¦åŒ…å«åœ¨ç›®æ ‡åŸºæœ¬ä¾èµ–å…³ç³»
     public boolean isContainsTargetRel(String word, boolean extendLabel){
         String extendLabelStr;
         String[] set;
@@ -373,7 +375,7 @@ public class TargetExtractor {
         return false;
     }
 
-    // »ñÈ¡ºÍÄ¿±ê´Ê´æÔÚÒÀ´æ¹ØÏµµÄ´ÊÒÔ¼°¹ØÏµ
+    // è·å–å’Œç›®æ ‡è¯å­˜åœ¨ä¾å­˜å…³ç³»çš„è¯ä»¥åŠå…³ç³»
     public HashMap<Integer, String> getDepPairMap(Integer targetIndex){
         HashMap<Integer, String> depWordMap = new HashMap<Integer, String>();
         for(Map.Entry entry : depMap.entries()){
