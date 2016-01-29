@@ -38,7 +38,7 @@ public class Evaluator {
         File[] evaluateCorpusArray = (new File(evaluateCorpusDir)).listFiles();
         File[] resultCorpusArray = (new File(resultCorpusDir)).listFiles();
         if(evaluateCorpusArray.length != resultCorpusArray.length){
-            System.out.println("对其目录文件数目不匹配！");
+            System.out.println("对齐目录文件数目不匹配！");
             return;
         }
 
@@ -210,6 +210,10 @@ public class Evaluator {
                            }
                            allLengthForP = endPostIndexValue - startPostIndexValue+1;
                            allLengthForR = endSystemIndexValue - startSystemIndexValue+1;
+
+                           assert matchLength >= 0: "匹配长度应大于等于0！";
+                           assert allLengthForP > 0: "标注数据元素长度应大于0！";
+                           assert allLengthForR > 0: "评估数据元素长度应大于0！";
 
                            softCountForP += (matchLength / allLengthForP);
                            softCountForR += (matchLength / allLengthForR);

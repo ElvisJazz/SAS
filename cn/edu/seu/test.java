@@ -88,7 +88,7 @@ public class test {
         if(a == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
             sentimentSorter.init("corpus//dic//posOpionionDic.txt", "corpus//dic//negOpionionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
-            sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//7_nounSentimentPairCorpus");
+            sentimentSorter.sortAll("corpus//6_targetPairCorpus", "corpus//3_ltp_segmentCorpus_pos", "corpus//7_nounSentimentPairCorpus");
         }
         // 对齐操作
         Aligner aligner = new Aligner();

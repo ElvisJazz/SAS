@@ -120,21 +120,17 @@ public class Aligner {
                     if(index1!=-1 && index2!=-1 && index3!=-1){
                         tmpWord = objectSentence.substring(index1+1, index2);
                         tmpLabel = objectSentence.substring(index2+2, index3);
+                        // 分词处理
+                        CorpusSegmenter segmenter = new CorpusSegmenter();
+                        String segSentence = segmenter.segmentSentence(alignSentence, true);
                         // 处理无评价对象的情况
                         if("#".equals(tmpWord)){
-                            tmpWord = getTargetObjectFormNeighborhood(alignSentence);
+                            tmpWord = getTargetObjectFormNeighborhood(alignSentence, segSentence);
                             if(tmpWord == null)
                                 continue;
                         }
                         startIndex = alignSentence.indexOf(tmpWord);
                         endIndex = startIndex + tmpWord.length() - 1;
-                        // 问号反转
-                        if(alignSentence.contains("？") || alignSentence.contains("?")){
-                            if(tmpLabel.equals("POS"))
-                                tmpLabel = "NEG";
-                            else
-                                tmpLabel = "POS";
-                        }
                         tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
                     }else{
                         for(Integer num1 : tmpResultMap.keySet()) {
@@ -142,7 +138,7 @@ public class Aligner {
                         }
                         writer.write("\n");
                         tmpResultMap.clear();
-                        index1 = index2 = index3 = 0;
+                        index3 = 0;
                         break;
                     }
                 }
@@ -175,11 +171,8 @@ public class Aligner {
     }
 
     // 从上下文语句中获取评价对象
-    public String getTargetObjectFormNeighborhood(String sentence){
+    public String getTargetObjectFormNeighborhood(String sentence, String segSentence){
         String word = null;
-        // 分词处理
-        CorpusSegmenter segmenter = new CorpusSegmenter();
-        String segSentence = segmenter.segmentSentence(sentence, true);
         // 将短语合并
         PhraseProducer producer = new PhraseProducer();
         StringBuffer buffer = producer.produceLine(segSentence);
@@ -190,6 +183,8 @@ public class Aligner {
             index0 = buffer.lastIndexOf(" ", index);
             if(index0 != -1)
                 word = buffer.substring(index0+1, index);
+            else
+                word = buffer.substring(0, index);
         }
         return word;
     }

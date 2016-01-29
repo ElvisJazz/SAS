@@ -113,7 +113,7 @@ public class testLTP {
         // 情感相似度计算
         if(runInAll || (cin.nextInt()) == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
-            sentimentSorter.sortAll("corpus//8_ltp_targetPairCorpus", "corpus//8_ltp_nounSentimentPairCorpus");
+            sentimentSorter.sortAll("corpus//8_ltp_targetPairCorpus", "corpus//3_ltp_segmentCorpus_pos", "corpus//8_ltp_nounSentimentPairCorpus");
         }
         // 对齐操作
         Aligner aligner = new Aligner();

@@ -51,7 +51,7 @@ public class SentimentSorter {
             // 读取词典
             for(int i=0; i<4; ++i){
                 while((tmp=bufVec.get(i).readLine()) != null){
-                    tmp = tmp.substring(0,tmp.length()-1);
+                    tmp = tmp.substring(0,tmp.length()-1).trim();
                     setVec.get(i).add(tmp);
                 }
             }
@@ -68,7 +68,7 @@ public class SentimentSorter {
 
     }
     // 分类指定目录下的文件
-    public void sortAll(String readDir, String outputDir) {
+    public void sortAll(String readDir, String segPosDir, String outputDir) {
 
         File file = new File(outputDir);
         if (!file.exists()) {
@@ -79,44 +79,50 @@ public class SentimentSorter {
         }
 
         File[] readFileArray = (new File(readDir)).listFiles();
+        File[] segFileArray = (new File(segPosDir)).listFiles();
+        if(readFileArray.length != segFileArray.length){
+            System.out.println("目录文件数目不匹配！");
+            return;
+        }
 
         for (int i = 0; i < readFileArray.length; ++i) {
-            sort(readFileArray[i].getAbsolutePath(), outputDir + "//" + readFileArray[i].getName(), readFileArray[i].getName());
+            sort(readFileArray[i].getAbsolutePath(), segFileArray[i].getAbsolutePath(), outputDir + "//" + readFileArray[i].getName(), readFileArray[i].getName());
         }
     }
 
     // 分类单个文件
-    public void sort(String readFilePath, String outputFilePath, String fileName) {
-        FileReader fileReader = null;
+    public void sort(String readFilePath, String segFilePath, String outputFilePath, String fileName) {
         FileWriter fileWriter = null;
         BufferedReader bufferedReader = null;
-        String sentence = null;
+        BufferedReader bufferedSegReader = null;
+        String sentence, segSentence;
         try {
-            File file = new File(readFilePath);
-            fileReader = new FileReader(file);
             fileWriter = new FileWriter(outputFilePath);
-            bufferedReader = new BufferedReader(fileReader);
+            bufferedReader = new BufferedReader(new FileReader(new File(readFilePath)));
+            bufferedSegReader = new BufferedReader(new FileReader(new File(segFilePath)));
             sentence = bufferedReader.readLine();
+            segSentence = bufferedSegReader.readLine();
             while (sentence != null) {
                 // 存储所有名词-情感词对
                 HashMultimap<String, String> nounSentimentMap = readNounSentiment(sentence);
                 // 分析当前句子
                 for (String noun : nounSentimentMap.keySet()) {
-                    String outputTag = compute(nounSentimentMap.get(noun));
+                    String outputTag = compute(nounSentimentMap.get(noun), segSentence);
                     if (!OTHER.equals(outputTag))
                         fileWriter.write("[" + noun + ", " + outputTag + "]");
                 }
                 fileWriter.write("\n");
                 // 获取下一个句子
                 sentence = bufferedReader.readLine();
+                segSentence = bufferedSegReader.readLine();
             }
             System.out.println(fileName + "情感相似度分析完成！");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
-                if (fileReader != null) {
-                    fileReader.close();
+                if (bufferedSegReader != null) {
+                    bufferedSegReader.close();
                 }
                 if (bufferedReader != null) {
                     bufferedReader.close();
@@ -184,7 +190,7 @@ public class SentimentSorter {
     }
 
     // 计算与种子词情感相似度值,返回正满POS，负面NEG,其他OTHER
-    public static String compute(Set<String> wordSet) {
+    public static String compute(Set<String> wordSet, String segSentence) {
         int posScore = 0, negScore = 0;
         int maxPosScore = 0, maxNegScore = 0;
         double tmpPositiveScore, tmpNegativeScore;
@@ -196,9 +202,21 @@ public class SentimentSorter {
                 isNegReverse = true;
                 word = word.substring(3);
             }
+            // 问号反转
+            int index = segSentence.indexOf(word);
+            if(index != -1){
+                index = segSentence.indexOf("/w", index);
+                if(index!=-1 && (segSentence.charAt(index-1)=='？' || segSentence.charAt(index-1)=='?')){
+                    if(isNegReverse)
+                        isNegReverse = false;
+                    else
+                        isNegReverse = true;
+                }
+            }
+
             if(word.length() > 2 && word.contains("的")){
                 //System.out.println(word);
-                int index = word.indexOf("的");
+                index = word.indexOf("的");
                 if(index == word.length()-1)
                     word = word.substring(0, index);
                 else
