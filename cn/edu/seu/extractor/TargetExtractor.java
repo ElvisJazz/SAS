@@ -25,19 +25,19 @@ class Node{
 public class TargetExtractor {
     // 名词性惯用语,名词性语素,副动词,名动词,不及物动词（内动词）,动词性惯用语,动词性语素,形容词
     public final static String[] OPINION_SET_FOR_STF = {"/nl", "/ng", "/a"};
-    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v"};
+    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v", "/n"};
     // 动词性情感词黑名单
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
-    public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn", "conj"};
-    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "FOB", "COO", "ADV", "CMP"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "FOB", "ADV", "CMP"};
     // 根关系
     public final static String ROOT_FOR_STF = "root";
     public final static String ROOT_FOR_LTP = "HED";
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
     // 否定词
-    public final static String[] NOT_SET = {"不", "没", "非", "无"};
+    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","不可","不能","不得"};
     // 否定词白名单
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
@@ -256,6 +256,91 @@ public class TargetExtractor {
         }
     }
 
+    // 四节点间接关系
+    // 间接规则抽取:1) H1->T,H1->H2->O 2) H1->O,H1->H2->T 3) O->H1->H2->T  4) T->H1->H2->O
+    public void extractByIndirectExRule(){
+        // 1) 2)规则
+        for(Node node : nodeMap.values()){
+            Integer nounIndex = 0, sentimentIndex = 0;
+            boolean isFirstWordOpinion = false;
+            if(node.nextNodeArray.size() >= 2){
+                for(Pair<String, Node> pair : node.nextNodeArray){
+                    // 获取情感词或名词
+                    if(isContainsTargetRel(pair.first, true)){
+                        if(potentialSentimentMap.containsKey(pair.second.index)){
+                            sentimentIndex = pair.second.index;
+                            isFirstWordOpinion = true;
+                        }else if(potentialNounMap.containsKey(pair.second.index)){
+                            nounIndex = pair.second.index;
+                            isFirstWordOpinion = false;
+                        }else{
+                            continue;
+                        }
+                        // 获取名词或情感词
+                        for(Pair<String, Node> pair0 : node.nextNodeArray){
+                            if(isContainsTargetRel(pair0.first, true)){
+                                for(Pair<String, Node> pair1 : pair0.second.nextNodeArray){
+                                    if(pair1.first.equals("CMP")){
+                                        if(isFirstWordOpinion && potentialNounMap.containsKey(pair1.second.index)) {
+                                            nounIndex =  new Integer(pair1.second.index);
+                                            targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                                        } else if(!isFirstWordOpinion && potentialSentimentMap.containsKey(pair1.second.index)) {
+                                            sentimentIndex =  new Integer(pair1.second.index);
+                                            targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 规则 2) 3)
+        for(Node node : nodeMap.values()){
+            // 名词，情感词序号
+            Integer nounIndex = 0, sentimentIndex = 0;
+            boolean isFirstWordOpinion = false;
+            // 当前节点是否是情感词
+            if(potentialSentimentMap.containsKey(node.index)){
+                isFirstWordOpinion = true;
+                sentimentIndex = new Integer(node.index);
+            }
+            // 当前节点是否是名词
+            else if(potentialNounMap.containsKey(node.index)){
+                isFirstWordOpinion = false;
+                nounIndex = new Integer(node.index);
+            }else{
+                continue;
+            }
+            // 遍历当前节点的所有后续节点
+            for(Pair<String, Node> pair : node.nextNodeArray){
+                // 是否找到目标依赖关系
+                if(isContainsTargetRel(pair.first, true)) {
+                    for(Pair<String, Node> pair0 : pair.second.nextNodeArray){
+                        // 遍历后续节点的所有后续节点
+                        if(isContainsTargetRel(pair0.first, true)) {
+                            // 遍历后续节点的所有后续节点
+                            for(Pair<String, Node> pair1 : pair0.second.nextNodeArray){
+                                // 是否后续节点找到目标依赖关系
+                                if(pair1.first.equals("CMP")) {
+                                    if(isFirstWordOpinion && potentialNounMap.containsKey(pair1.second.index)) {
+                                        nounIndex =  new Integer(pair1.second.index);
+                                        targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                                    } else if(!isFirstWordOpinion && potentialSentimentMap.containsKey(pair1.second.index)) {
+                                        sentimentIndex =  new Integer(pair1.second.index);
+                                        targetPairMap.put(potentialNounMap.get(nounIndex), potentialSentimentMap.get(sentimentIndex));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // 否定反转
     public void negReverse(){
         // 待替换容器
@@ -335,6 +420,7 @@ public class TargetExtractor {
         extractByRootRule();
         extractByDirectRule();
         extractByIndirectRule();
+        extractByIndirectExRule();
         negReverse();
         return targetPairMap;
     }

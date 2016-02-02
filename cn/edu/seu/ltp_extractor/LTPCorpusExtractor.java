@@ -75,11 +75,20 @@ public class LTPCorpusExtractor {
             }
             // 输出名词-情感词关系对，以空格隔开
             HashMultimap<String, String> subMap = null;
+            String opinion, mark;
+            int index1, index2;
             for(HashMap.Entry entry : outputMap.entrySet()){
                 subMap = (HashMultimap<String, String>)entry.getValue();
                 // 输出每句的关系对
-                for(HashMap.Entry entry1 : subMap.entries()){
-                    writer.write("["+entry1.getKey()+", "+entry1.getValue()+"]");
+                for(HashMap.Entry<String,String> entry1 : subMap.entries()){
+                    opinion = entry1.getValue();
+                    index1 = opinion.lastIndexOf("-%%");
+                    if(index1!=-1){
+                        index2 = opinion.lastIndexOf("%%-", index1);
+                        mark = opinion.substring(index2+3, index1);
+                        opinion = opinion.substring(0, index2);
+                        writer.write("["+entry1.getKey()+", "+opinion+"]("+mark+")");
+                    }
                 }
                 writer.write("\n");
             }

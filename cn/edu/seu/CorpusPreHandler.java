@@ -37,10 +37,8 @@ public class CorpusPreHandler {
         try{
             // 设置读取变量
             Element weiboElement, sentenceElement;
-            String weiboId=null, sentenceId=null, opinionated=null, sentence=null, topic=null, hashtag=null;
+            String weiboId=null, opinionated=null, sentence=null, oSentence=null, topic=null, hashtag=null;
             Iterator sentenceIterator, hashtagIterator;
-            int startTagIndex=0, endTagIndex=0, tmpIndex=0;
-
 
             // 读取文件
             SAXReader reader = new SAXReader();
@@ -100,9 +98,9 @@ public class CorpusPreHandler {
                 while(sentenceIterator.hasNext()){
                     sentenceElement = (Element) sentenceIterator.next();
                     opinionated = sentenceElement.attributeValue("opinionated");
+                    oSentence = sentence = sentenceElement.getText();
                     if(isAlignFile || "Y".equals(opinionated)){
-                        sentenceId = sentenceElement.attributeValue("id");
-                        sentence = sentenceElement.getText();
+                        //sentenceId = sentenceElement.attributeValue("id");
 
                         //如果是处理评测语料对齐，需找到所有情感词起始位置和极性
                         if(isEvaluation){
@@ -138,7 +136,7 @@ public class CorpusPreHandler {
                         // 输出到文件
                         if(!isEvaluation){
                             if(isAlignFile){
-                                sentenceWriter.write(sentence);
+                                sentenceWriter.write(oSentence);
                             }
                             else {
                                 topicWriter.write(hashtag+"\n");
@@ -148,6 +146,11 @@ public class CorpusPreHandler {
                         }else{
                             sentenceWriter.write("\n");
                         }
+                    }
+                    else if(topicWriter != null){
+                        Pair<String, String> result = getTopicAndContent(sentence, hashtag);
+                        // 处理主题空格前后均无标点的情况
+                        hashtag = handleSpaceInSentence(result.first);
                     }
                 }
                 if(!isEvaluation && isAlignFile){

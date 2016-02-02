@@ -13,7 +13,7 @@ import edu.hit.ir.ltp4j.*;
 
 public class Segment {
     public static void main(String[] args) {
-        if(Parser.create("../../../ltp_data/parser.model")<0) {
+        if(Parser.create("ltp_data/parser.model")<0) {
             System.err.println("load failed");
             return;
         }

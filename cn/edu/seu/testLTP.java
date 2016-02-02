@@ -95,8 +95,8 @@ public class testLTP {
             parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_semanticCorpus");
             parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_semanticTopicCorpus");
             parser.destroy();
-        }
-*/
+        }*/
+
         System.out.println("输入0跳过，1继续下一步：潜在对象和情感词抽取");
 
         SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");

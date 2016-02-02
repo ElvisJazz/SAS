@@ -51,7 +51,7 @@ public class SentimentSorter {
             // 读取词典
             for(int i=0; i<4; ++i){
                 while((tmp=bufVec.get(i).readLine()) != null){
-                    tmp = tmp.substring(0,tmp.length()-1).trim();
+                    tmp = tmp.substring(0,tmp.length()).trim();
                     setVec.get(i).add(tmp);
                 }
             }
