@@ -121,6 +121,9 @@ public class CorpusPreHandler {
                             sentence = sentence.replaceAll("[^\\s]*:http[^\\s]*","");
                             sentence = sentence.replaceAll("http[^\\s]*","");
 
+                            // 处理句子中的.
+                            sentence = sentence.replaceAll("\\.","，");
+
                             // 寻找句子中的主题
                             if(topicWriter != null){
                                 Pair<String, String> result = getTopicAndContent(sentence, hashtag);
@@ -204,7 +207,7 @@ public class CorpusPreHandler {
             endTagIndex = sentence.indexOf('》', startTagIndex+1);
             int flag = isDependentBookPunctuation(sentence, startTagIndex, endTagIndex+1);
             if(endTagIndex!=-1 && flag!=-1){
-                topic = sentence.substring(startTagIndex, endTagIndex+1).trim();
+                topic = sentence.substring(startTagIndex+1, endTagIndex).trim();
                 if(flag == 0)
                     sentence = sentence.substring(endTagIndex+1).trim();
                 else
@@ -326,8 +329,8 @@ public class CorpusPreHandler {
     }
 
     public static  void main(String args[]){
-        CorpusPreHandler p = new CorpusPreHandler();
-        Pair<String,String> a = p.getTopicAndContent("看过《笑傲江湖》：力荐此剧的唯一原因就是东方不败！","");
+        String a = "hh.hh";
+        a = a.replaceAll("\\.", "，");
         System.out.println(a);
     }
 }

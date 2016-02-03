@@ -30,14 +30,14 @@ public class TargetExtractor {
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
     public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn"};
-    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "FOB", "ADV", "CMP"};
+    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "FOB", "POB", "IOB", "ADV", "CMP"};
     // 根关系
     public final static String ROOT_FOR_STF = "root";
     public final static String ROOT_FOR_LTP = "HED";
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
     // 否定词
-    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","不可","不能","不得"};
+    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
     // 否定词白名单
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）

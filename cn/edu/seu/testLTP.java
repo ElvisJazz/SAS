@@ -18,7 +18,7 @@ public class testLTP {
         boolean runInAll = false;
         Scanner cin = new Scanner(System.in);
         // 语料预处理，生成纯句子+纯id标注
-       /*CorpusPreHandler cph = new CorpusPreHandler();
+        /*CorpusPreHandler cph = new CorpusPreHandler();
         System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5：run in all" );
         while(cin.hasNext()){
             int a = cin.nextInt();
@@ -95,9 +95,8 @@ public class testLTP {
             parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_semanticCorpus");
             parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_semanticTopicCorpus");
             parser.destroy();
-        }*/
-
-        System.out.println("输入0跳过，1继续下一步：潜在对象和情感词抽取");
+        }
+        */System.out.println("输入0跳过，1继续下一步：潜在对象和情感词抽取");
 
         SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
 

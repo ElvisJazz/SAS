@@ -65,10 +65,10 @@ public class DependencyParser {
         try{
             // 文件输出变量
             File file = new File(outputDir+"//"+fileName);
-            if(file.exists()) {
+            /*if(file.exists()) {
                 System.out.println(fileName+"已存在！");
                 return;
-            }
+            }*/
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
             reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath)), "UTF-8"));
             br = new BufferedReader(reader);

@@ -186,6 +186,9 @@ public class Aligner {
             else
                 word = buffer.substring(0, index);
         }
+        // 处理《》
+        if(word.startsWith("《") && word.endsWith("》"))
+            word = word.substring(1, word.length()-1);
         return word;
     }
 }

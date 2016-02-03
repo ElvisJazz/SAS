@@ -159,7 +159,7 @@ public class SentimentSorter {
         }
         // 处理root情况，如果root对应情感词有其他名词对应，则取消root对应情况
         Set<String> sentimentSet = nounSentenceMap.get("#");
-        Set<String> valueSet = null;
+        Set<String> valueSet;
         Set<String> delSet = new HashSet<String>();
         boolean isOut = false;
         for (String sentiment1 : sentimentSet) {
