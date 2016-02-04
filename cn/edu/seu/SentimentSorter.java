@@ -4,9 +4,7 @@ import com.google.common.collect.HashMultimap;
 import cn.edu.seu.wordSimilarity.WordSimilarity;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -142,11 +140,13 @@ public class SentimentSorter {
         int index1 = 0;
         int index2 = sentence.indexOf(", ", index1);
         int index3 = sentence.indexOf(']', index2);
-        String noun = "", sentiment = "";
-        while (index1 != -1 && index2 != -1 && index3 != -1 && index1 < index2 && index2 < index3) {
+        int index4 = sentence.lastIndexOf("(", index3);
+        String noun, sentiment;
+        HashMap<String, String[]> advMap = new HashMap<>();
+        while (index1 != -1 && index2 != -1 && index3 != -1 && index4 != -1 && index1 < index2 && index2 < index3 && index4 < index3) {
             noun = sentence.substring(index1 + 1, index2);
-            sentiment = sentence.substring(index2 + 2, index3);
-
+            sentiment = sentence.substring(index2 + 2, index4);
+            advMap.put(sentiment, sentence.substring(index4+1, index3-1).split(" "));
             // 处理情感词
             if ('的' == sentiment.charAt(sentiment.length() - 1)) {
                 sentiment = sentiment.substring(0, sentiment.length() - 1);
@@ -155,7 +155,7 @@ public class SentimentSorter {
             index1 = sentence.indexOf("[", index3);
             index2 = sentence.indexOf(", ", index1);
             index3 = sentence.indexOf(']', index2);
-
+            index4 = sentence.lastIndexOf("(", index3);
         }
         // 处理root情况，如果root对应情感词有其他名词对应，则取消root对应情况
         Set<String> sentimentSet = nounSentenceMap.get("#");
@@ -167,9 +167,15 @@ public class SentimentSorter {
                 if (!"#".equals(key)) {
                     valueSet = nounSentenceMap.get(key);
                     for(String sen : valueSet) {
-                        // 移除原来的root情感对
+                        // 移除原来的root情感对(包括副词)
                         if(sentiment1.equals(sen)){
                             delSet.add(sen);
+                            // adv
+                            String[] array = advMap.get(sen);
+                            if(array != null){
+                                for(String adv : array)
+                                    delSet.add(adv);
+                            }
                             isOut = true;
                             break;
                         }

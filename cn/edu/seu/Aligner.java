@@ -131,7 +131,8 @@ public class Aligner {
                         }
                         startIndex = alignSentence.indexOf(tmpWord);
                         endIndex = startIndex + tmpWord.length() - 1;
-                        tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
+                        if(startIndex != -1)
+                            tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
                     }else{
                         for(Integer num1 : tmpResultMap.keySet()) {
                             writer.write("["+String.valueOf(num1)+","+String.valueOf(tmpResultMap.get(num1).first)+","+tmpResultMap.get(num1).second+"]");

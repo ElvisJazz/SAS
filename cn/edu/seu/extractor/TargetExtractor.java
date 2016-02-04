@@ -34,12 +34,15 @@ public class TargetExtractor {
     // 根关系
     public final static String ROOT_FOR_STF = "root";
     public final static String ROOT_FOR_LTP = "HED";
+    // adv
+    public final static String ADV_DEP_FOR_STF = "advmod";
+    public final static String ADV_DEP_FOR_LTP = "ADV";
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
     // 否定词
-    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
+    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
     // 否定词白名单
-    public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "非常",  "无非", "无论","没准"};
+    public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
     private HashMultimap<String, String> targetPairMap = HashMultimap.create();
     // 候选名词
@@ -84,6 +87,7 @@ public class TargetExtractor {
         if(sentence.length() <= 0)
             return;
         String[] blockArray = sentence.split(" ");
+        String tmp;
         Node node = new Node(0);
         nodeMap.put(new Integer(0), node);
         for(int i=0; i<blockArray.length; ++i){
@@ -92,18 +96,18 @@ public class TargetExtractor {
             nodeMap.put(new Integer(i+1), node);
             // 是否是情感词
             if(isContainsSentiment(blockArray[i])){
-                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
-                potentialSentimentMap.put(new Integer(i+1), blockArray[i]);
+                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
+                potentialSentimentMap.put(new Integer(i+1), tmp);
             }
             // 是否是名词对象
             else if(isContainsTargetObject(blockArray[i])){
-                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
-                potentialNounMap.put(new Integer(i+1), blockArray[i]);
+                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
+                potentialNounMap.put(new Integer(i+1), tmp);
             }
             // 副词
-            else if(blockArray[i].contains("/d")){
-                blockArray[i] = blockArray[i].replaceAll("/[^\\s]*", "");
-                adverbMap.put(new Integer(i+1), blockArray[i]);
+            if(blockArray[i].contains("/d")){
+                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
+                adverbMap.put(new Integer(i+1), tmp);
             }
         }
     }
@@ -113,6 +117,7 @@ public class TargetExtractor {
         if(depSentence==null || depSentence.trim().equals(""))
             return;
         depSentence = depSentence.substring(1, depSentence.length()-1);
+        String advType = type.equals(EXTRACT_TYPE.STF)? ADV_DEP_FOR_STF:ADV_DEP_FOR_LTP;
         depSentence += ", ";
         String[] blockArray = depSentence.split("\\), ");
         int index = 0, index2 = 0;
@@ -140,6 +145,20 @@ public class TargetExtractor {
             }catch (Exception e){
                 throw new Exception(e);
             }
+        }
+        // 处理副词标记
+        String adv;
+        for(int i : potentialSentimentMap.keySet()){
+            String sen = potentialSentimentMap.get(i)+"(";
+            for(Pair<Integer,Integer> pair : depMap.get(advType)){
+                if(pair.first == i) {
+                    adv = adverbMap.get(pair.second);
+                    if(adv != null)
+                        sen += (adv+" ");
+                }
+            }
+            sen += ")";
+            potentialSentimentMap.put(i, sen);
         }
     }
 
@@ -347,48 +366,36 @@ public class TargetExtractor {
         Set<Pair<String,String>> replaceSet = new HashSet<Pair<String, String>>();
         // 临近词反转
         boolean isWhiteWord = false; // 是否在白名单中
-        String tmpW = null;
-        for(Integer key : adverbMap.keySet()){
-            String adverb = adverbMap.get(key);
-            // 检测是否在白名单中
-            for(String whiteWord : NOT_WHITE_SET){
-                if(whiteWord.equals(adverb)){
-                    isWhiteWord = true;
-                    break;
-                }
-            }
-
-            if(isWhiteWord){
-                isWhiteWord = false;
-                continue;
-            }
-            // 检测是否是否定词
-            else{
-                for(String notWord : NOT_SET){
-                    if(adverb.contains(notWord)){
-                        // 寻找是否临近修饰情感词
-                        for(int i=1; i<4; ++i){
-                            if(potentialSentimentMap.containsKey(key-i)){
-                                tmpW = potentialSentimentMap.get(key-i);
-                                break;
-                            }
-                            else if(potentialSentimentMap.containsKey(key+i)){
-                                tmpW = potentialSentimentMap.get(key+i);
-                                break;
-                            }
-                        }
-
-                        if(tmpW != null){
-                            for(String noun : targetPairMap.keySet()){
-                                for(String tmpSentiment : targetPairMap.get(noun)) {
-                                    if(tmpSentiment.equals(tmpW)){
-                                        replaceSet.add(new Pair<String,String>(noun, tmpW));
-                                    }
-                                }
-                            }
-                            tmpW = null;
+        boolean flag = false;
+        for(String noun : targetPairMap.keySet()){
+            for(String opinion : targetPairMap.get(noun)){
+                int index1 = opinion.indexOf('(');
+                int index2 = opinion.indexOf(')', index1);
+                for(String adverb : opinion.substring(index1+1, index2).split(" ")){
+                    // 检测是否在白名单中
+                    for(String whiteWord : NOT_WHITE_SET){
+                        if(whiteWord.equals(adverb)){
+                            isWhiteWord = true;
+                            break;
                         }
                     }
+
+                    if(isWhiteWord){
+                        isWhiteWord = false;
+                        continue;
+                    }
+                    // 检测是否是否定词
+                    else{
+                        for(String notWord : NOT_SET){
+                            if(adverb.contains(notWord)){
+                                flag = !flag;
+                            }
+                        }
+                    }
+                }
+                if(flag) {
+                    replaceSet.add(new Pair<>(noun, opinion));
+                    flag = false;
                 }
             }
         }

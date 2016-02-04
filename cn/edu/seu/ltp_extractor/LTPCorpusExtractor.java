@@ -70,6 +70,7 @@ public class LTPCorpusExtractor {
                 LTPTargetExtractor extractor = new LTPTargetExtractor();
                 extractor.readContentCorpusSentence(segSentence, depSentence, srSentence);
                 extractor.readTopicCorpusSentence(segTopicSentence, depTopicSentence, srTopicSentence);
+                //System.out.println(segSentence);
                 outputMap.put(i, extractor.extract());
                 i++;
             }

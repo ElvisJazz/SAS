@@ -263,13 +263,13 @@ public class Evaluator {
 
             writer= new FileWriter(file);
             // 输出每个文件的精确评价下的正确样例数、宽松评价下的正确样例数、识别的样例数、系统的样例数
-            writer.write("【序号】\t精确正确样例数\t宽松正确样例数\t识别的样例数\t系统的样例数\t感情错误的样例数\n");
+            writer.write("【序号】精确正确样例数 宽松正确样例数 识别的样例数 系统的样例数 感情错误的样例数\r\n");
             for(int i=0; i<fileNum; ++i){
                 writer.write(i+"\t"+String.valueOf(seriousCorrectSet.get(i))+"\t"+df.format(softCorrectForPSet.get(i))+"\t"+String.valueOf(allPostSet.get(i))+"\t"+String.valueOf(allSystemSet.get(i))+"\t"+String.valueOf(wrongSentimentSet.get(i))+"\r\n");
             }
             writer.write("\r\n\r\n");
             // 输出每个文件的精确评价下的准确率、宽松评价下的准确率、精确评价下的召回率、宽松评价下的召回率、精确评价下的F值、宽松评价下的F值
-            writer.write("【序号】\t精确准确率\t精确召回率\t精确F值\t宽松准确率\t宽松召回率\t宽松F值\r\n");
+            writer.write("【序号】精确准确率 精确召回率 精确F值 宽松准确率 宽松召回率 宽松F值\r\n");
             for(int i=0; i<fileNum; ++i){
                 macroSeriousPN += seriousCorrectSet.get(i);
                 macroSoftPN += softCorrectForPSet.get(i);

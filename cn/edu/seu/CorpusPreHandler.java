@@ -194,11 +194,11 @@ public class CorpusPreHandler {
                 endTagIndex = sentence.indexOf('#', startTagIndex+1);
                 if(endTagIndex != -1){
                     topic = sentence.substring(startTagIndex+1, endTagIndex).trim();
-                    startTagIndex = sentence.indexOf('#', endTagIndex+1);
+                    break;
                 } else
                     break;
             }
-            sentence = sentence.replaceAll("#.*#", "").trim();
+            sentence = sentence.replaceAll("#", "").trim();
         }
         topic = (topic.equals(""))? hashtag : topic;
         // 处理句首或句末的《》
@@ -304,20 +304,29 @@ public class CorpusPreHandler {
     // 处理句中空格前后去标点的情况
     public String handleSpaceInSentence(String sentence){
         String lastSen;
+        String tmp1, tmp2;
+        String alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String pattern = "(.*[^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#])(\\s+)([^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#].*)";
+        boolean result;
+        int i;
         do{
             lastSen = sentence;
-            String pattern = "(.*[^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#])(\\s+)([^\\s,，、\\.。;；:!！\\?？\\-—_=+<>（）(){}|\\/\\*&\\^'\"”“’‘\\$%@#].*)";
             Pattern p = Pattern.compile(pattern);
             Matcher m = p.matcher(sentence);
             StringBuffer sb = new StringBuffer();
             StringBuffer sb0 = new StringBuffer();
-            int i=0;
+            i=0;
             //使用find()方法查找第一个匹配的对象
-            boolean result = m.find();
+            result = m.find();
             //使用循环将句子里所有的匹配找出并替换再将内容加到sb里
             if(result) {
                 i++;
-                sb.append(m.group(1)+"OOOO"+m.group(3));
+                tmp1 = m.group(1);
+                tmp2 = m.group(3);
+                //if(!alpha.contains(""+tmp1.charAt(tmp1.length()-1)) && !alpha.contains(""+tmp2.charAt(0)))
+                sb.append(tmp1+"OOOO"+tmp2);
+                /*else
+                    sb.append(tmp1+" "+tmp2);*/
                 m.appendReplacement(sb0, " ");
             }
             //最后调用appendTail()方法将最后一次匹配后的剩余字符串加到sb里；
@@ -329,8 +338,8 @@ public class CorpusPreHandler {
     }
 
     public static  void main(String args[]){
-        String a = "hh.hh";
-        a = a.replaceAll("\\.", "，");
+        String a = "hh hh哈哈    哈哈";
+        a = new CorpusPreHandler().handleSpaceInSentence(a);
         System.out.println(a);
     }
 }
