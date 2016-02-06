@@ -25,7 +25,7 @@ class Node{
 public class TargetExtractor {
     // 名词性惯用语,名词性语素,副动词,名动词,不及物动词（内动词）,动词性惯用语,动词性语素,形容词
     public final static String[] OPINION_SET_FOR_STF = {"/nl", "/ng", "/a"};
-    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v", "/n"};
+    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v", "/n", "/i"};
     // 动词性情感词黑名单
     public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
     // 基本目标依赖关系类型
@@ -40,7 +40,7 @@ public class TargetExtractor {
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
     // 否定词
-    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
+    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "不大", "不太", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
     // 否定词白名单
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
@@ -75,6 +75,11 @@ public class TargetExtractor {
     // 获取依存关系映射
     public HashMultimap<String, Pair<Integer, Integer>> getDepMap() {
         return depMap;
+    }
+
+    // 获取潜在情感词映射（包括了副词）
+    public HashMap<Integer, String> getPotentialSentimentMap() {
+        return potentialSentimentMap;
     }
 
     // 清空结果集
@@ -121,7 +126,7 @@ public class TargetExtractor {
         depSentence += ", ";
         String[] blockArray = depSentence.split("\\), ");
         int index = 0, index2 = 0;
-        String relation = "";
+        String relation = "", word = "";
         Integer head = 0, tail = 0;
         for(String block : blockArray){
             if(block!=null && block.length() <= 3)
@@ -138,27 +143,45 @@ public class TargetExtractor {
                 // 获取尾巴节点
                 index = block.lastIndexOf('-');
                 tail = new Integer(block.substring(index+1));
+                word = block.substring(index2+2, index);
                 // 存储依存关系
                 Node node = nodeMap.get(tail);
                 nodeMap.get(head).nextNodeArray.add(new Pair<String, Node>(relation, node));
                 depMap.put(relation, new Pair<Integer, Integer>(head,tail));
+                // 附加的adv关系
+                if(relation.equals(advType))
+                    adverbMap.put(tail, word);
             }catch (Exception e){
                 throw new Exception(e);
             }
         }
-        // 处理副词标记
-        String adv;
+        // 处理副词标记，除了直接v-adv,a-adv还有(v-n)+(v-adv)
+        String adv, sen;
+        HashMultimap<String, String> indirectDepMap = HashMultimap.create();
         for(int i : potentialSentimentMap.keySet()){
-            String sen = potentialSentimentMap.get(i)+"(";
             for(Pair<Integer,Integer> pair : depMap.get(advType)){
                 if(pair.first == i) {
+                    sen = potentialSentimentMap.get(i);
                     adv = adverbMap.get(pair.second);
-                    if(adv != null)
-                        sen += (adv+" ");
+                    if(adv != null){
+                        indirectDepMap.put(sen, adv);
+                        for(Pair<String, Node> nodePair : nodeMap.get(pair.first).nextNodeArray){
+                            if(!nodePair.first.equals(advType) && potentialSentimentMap.containsKey(nodePair.second.index))
+                                indirectDepMap.put(potentialSentimentMap.get(nodePair.second.index), adv);
+                        }
+                    }
                 }
             }
-            sen += ")";
-            potentialSentimentMap.put(i, sen);
+        }
+        for(int i : potentialSentimentMap.keySet()){
+            sen = potentialSentimentMap.get(i);
+            String senStr = sen+"(";
+            for(String adverb : indirectDepMap.get(sen)) {
+                if(adverb != null)
+                    senStr += (adverb+" ");
+            }
+            senStr += ")";
+            potentialSentimentMap.put(i, senStr);
         }
     }
 
@@ -387,7 +410,7 @@ public class TargetExtractor {
                     // 检测是否是否定词
                     else{
                         for(String notWord : NOT_SET){
-                            if(adverb.contains(notWord)){
+                            if(adverb.equals(notWord)){
                                 flag = !flag;
                             }
                         }
@@ -452,7 +475,8 @@ public class TargetExtractor {
                 }
             }
             return true;
-        }
+        }else if(SentimentSorter.getSentimentWordType(word.replaceAll("/[^\\s]*", "")) != 0)
+            return true;
         return false;
         /*Set<String> set = new HashSet<>();
         set.add(word);
