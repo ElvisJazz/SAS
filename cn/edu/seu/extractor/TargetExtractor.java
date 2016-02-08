@@ -39,6 +39,8 @@ public class TargetExtractor {
     public final static String ADV_DEP_FOR_LTP = "ADV";
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
+    // 副词消弱标记
+    public final static String[] WEAK_ADV = {}; // 只是 “仅仅，不过，而已”
     // 否定词
     public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "不大", "不太", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
     // 否定词白名单
@@ -173,14 +175,25 @@ public class TargetExtractor {
                 }
             }
         }
+        boolean hasWeakAdv;
         for(int i : potentialSentimentMap.keySet()){
             sen = potentialSentimentMap.get(i);
             String senStr = sen+"(";
+            hasWeakAdv = false;
             for(String adverb : indirectDepMap.get(sen)) {
-                if(adverb != null)
+                if(adverb != null){
                     senStr += (adverb+" ");
+                    for(String wAdv : WEAK_ADV){
+                        if(wAdv.equals(adverb))
+                            hasWeakAdv = true;
+                    }
+                }
             }
-            senStr += ")";
+            if(hasWeakAdv)
+                senStr += "){w}";
+            else
+                senStr += "){n}";
+
             potentialSentimentMap.put(i, senStr);
         }
     }
@@ -390,11 +403,15 @@ public class TargetExtractor {
         // 临近词反转
         boolean isWhiteWord = false; // 是否在白名单中
         boolean flag = false;
+        String sentiment;
         for(String noun : targetPairMap.keySet()){
             for(String opinion : targetPairMap.get(noun)){
                 int index1 = opinion.indexOf('(');
                 int index2 = opinion.indexOf(')', index1);
+                sentiment = opinion.substring(0, index1);
                 for(String adverb : opinion.substring(index1+1, index2).split(" ")){
+                    if(adverb.equals(sentiment))
+                        continue;
                     // 检测是否在白名单中
                     for(String whiteWord : NOT_WHITE_SET){
                         if(whiteWord.equals(adverb)){
@@ -425,14 +442,14 @@ public class TargetExtractor {
         // 依存关系反转
         if(type.equals(EXTRACT_TYPE.STF)){
             Set<Pair<Integer,Integer>> negSet = depMap.get(NEG_FOR_STF);
-            String sentimentStr = null;
+            String sentimentStr;
             Iterator iterator = negSet.iterator();
             while(iterator.hasNext()){
                 sentimentStr = potentialSentimentMap.get(((Pair<Integer, Integer>)iterator.next()).first);
                 for(String key : targetPairMap.keySet()){
                     for(String tmpSentiment : targetPairMap.get(key)) {
                         if(tmpSentiment.equals(sentimentStr)){
-                            replaceSet.add(new Pair<String,String>(key, tmpSentiment));
+                            replaceSet.add(new Pair(key, tmpSentiment));
                         }
                     }
                 }

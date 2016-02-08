@@ -98,7 +98,8 @@ public class CorpusPreHandler {
                 while(sentenceIterator.hasNext()){
                     sentenceElement = (Element) sentenceIterator.next();
                     opinionated = sentenceElement.attributeValue("opinionated");
-                    oSentence = sentence = sentenceElement.getText();
+                    sentence = sentenceElement.getText().replaceAll("[“”＂]", "\"");
+                    oSentence = sentence;
                     if(isAlignFile || "Y".equals(opinionated)){
                         //sentenceId = sentenceElement.attributeValue("id");
 
@@ -114,6 +115,12 @@ public class CorpusPreHandler {
                             // 处理句子中的(@)
                             sentence = sentence.replaceAll("[\\(（][^\n]*@[^\n]*[\\)）]", "");
                             sentence = sentence.replaceAll("（[^\n]*@[^\n]*）", "");
+                            Pattern p = Pattern.compile("@\\S* ");
+                            Matcher m = p.matcher(sentence);
+                            while(m.find()){
+                                String mStr = m.group();
+                                sentence = sentence.replaceAll(mStr, mStr.substring(1, mStr.length()-1));
+                            }
 
                             // 处理句子中的http和链接中间的成分
                             sentence = sentence.replaceAll("[^\\s]*:http.*http[^\\s]*","");
@@ -338,8 +345,13 @@ public class CorpusPreHandler {
     }
 
     public static  void main(String args[]){
-        String a = "hh hh哈哈    哈哈";
-        a = new CorpusPreHandler().handleSpaceInSentence(a);
+        String a = "@央视财经 请您睁大您明亮的双眼+++apos;澄海玩具如是毒玩具 ";
+        Pattern p = Pattern.compile("@\\S* ");
+        Matcher m = p.matcher(a);
+        while(m.find()){
+            String mStr = m.group();
+            a = a.replaceAll(mStr, mStr.substring(1, mStr.length()-1));
+        }
         System.out.println(a);
     }
 }

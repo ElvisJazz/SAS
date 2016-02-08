@@ -17,6 +17,7 @@ public class SentimentSorter {
     public static final String POS = "POS";
     public static final String NEG = "NEG";
     public static final String OTHER = "OTHER";
+
     // 种子情感词积极+消极
     private final static String[] POSITIVE_SENTIMENTS = {"积极", "正确", "快乐", "伟大", "纯洁", "促进"};//
     private final static String[] NEGATIVE_SENTIMENTS = {"消极", "错误", "悲伤", "渺小", "肮脏", "阻碍"};//
@@ -141,12 +142,14 @@ public class SentimentSorter {
         int index2 = sentence.indexOf(", ", index1);
         int index3 = sentence.indexOf(']', index2);
         int index4 = sentence.lastIndexOf("(", index3);
+        int index5 = sentence.indexOf("{", index4);
         String noun, sentiment;
         HashMap<String, String[]> advMap = new HashMap<>();
-        while (index1 != -1 && index2 != -1 && index3 != -1 && index4 != -1 && index1 < index2 && index2 < index3 && index4 < index3) {
+        while (index1 != -1 && index2 != -1 && index3 != -1 && index4 != -1 && index5!=-1 && index1 < index2 && index2 < index3 && index4 < index3) {
             noun = sentence.substring(index1 + 1, index2);
-            sentiment = sentence.substring(index2 + 2, index4);
+            sentiment = sentence.substring(index5, index5+3)+sentence.substring(index2 + 2, index4);
             advMap.put(sentiment, sentence.substring(index4+1, index3-1).split(" "));
+
             // 处理情感词
             if ('的' == sentiment.charAt(sentiment.length() - 1)) {
                 sentiment = sentiment.substring(0, sentiment.length() - 1);
@@ -156,6 +159,7 @@ public class SentimentSorter {
             index2 = sentence.indexOf(", ", index1);
             index3 = sentence.indexOf(']', index2);
             index4 = sentence.lastIndexOf("(", index3);
+            index5 = sentence.indexOf("{", index4);
         }
         // 处理root情况，如果root对应情感词有其他名词对应，则取消root对应情况
         Set<String> sentimentSet = nounSentenceMap.get("#");
@@ -197,12 +201,17 @@ public class SentimentSorter {
 
     // 计算与种子词情感相似度值,返回正满POS，负面NEG,其他OTHER
     public static String compute(Set<String> wordSet, String segSentence) {
-        int posScore = 0, negScore = 0;
-        int maxPosScore = 0, maxNegScore = 0;
+        double posScore = 0, negScore = 0;
+        double maxPosScore = 0, maxNegScore = 0;
         double tmpPositiveScore, tmpNegativeScore;
         boolean isNegReverse = false;
-
+        double rate = 1.0;
         for (String word : wordSet) {
+            if(word.startsWith("{w}"))
+                rate = 0.5;
+            else
+                rate = 1.0;
+            word = word.substring(3);
             // 处理反转情况 ,形如： (-)高兴
             if(word.contains("(-)")){
                 isNegReverse = true;
@@ -239,15 +248,15 @@ public class SentimentSorter {
 
                 if (tmpPositiveScore > tmpNegativeScore) {
                     if(isNegReverse){
-                        negScore++;
+                        negScore += rate;
                     }else{
-                        posScore++;
+                        posScore += rate;
                     }
                 } else if (tmpNegativeScore > tmpPositiveScore) {
                     if(isNegReverse){
-                        posScore++;
+                        posScore += rate;
                     }else{
-                        negScore++;
+                        negScore += rate;
                     }
                 }
             }
@@ -255,15 +264,15 @@ public class SentimentSorter {
                 // 从情感词典中匹配
                 if(posOpinionDic.contains(word) || posEmotionDic.contains(word)) {
                     if(isNegReverse){
-                        negScore++;
+                        negScore += rate;
                     }else{
-                        posScore++;
+                        posScore += rate;
                     }
                 }else if(negOpinionDic.contains(word) || negEmotionDic.contains(word)){
                     if(isNegReverse){
-                        posScore++;
+                        posScore += rate;
                     }else{
-                        negScore++;
+                        negScore += rate;
                     }
                 }
             }
@@ -272,8 +281,8 @@ public class SentimentSorter {
             maxNegScore = negScore > maxNegScore ? negScore : maxNegScore;
 
             isNegReverse = false;
-            posScore = 0;
-            negScore = 0;
+            posScore = 0.0;
+            negScore = 0.0;
         }
         if (maxPosScore > maxNegScore)
             return POS;

@@ -16,10 +16,11 @@ import java.util.Scanner;
 public class testLTP {
     public static void main(String[] args) throws IOException {
         boolean runInAll = false;
+        boolean runInAllExtract = false;
         Scanner cin = new Scanner(System.in);
         // 语料预处理，生成纯句子+纯id标注
-       /* CorpusPreHandler cph = new CorpusPreHandler();
-        System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5：run in all" );
+        CorpusPreHandler cph = new CorpusPreHandler();
+        System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5:run in all; 6:just run all sentiment extract" );
         while(cin.hasNext()){
             int a = cin.nextInt();
             if(a == 1) {
@@ -38,11 +39,16 @@ public class testLTP {
                 runInAll = true;
                 break;
             }
+            else if(a == 6){
+                runInAllExtract = true;
+                break;
+            }
             else
                 break;
             System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5：run in all");
         }
-
+        if(!runInAllExtract){
+//================================================================================================
         System.out.println("输入0跳过，1继续下一步：分词");
 
         // 分词操作
@@ -95,13 +101,15 @@ public class testLTP {
             parser.parseAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus","corpus//6_ltp_nerCorpus", "corpus//7_ltp_semanticCorpus");
             parser.parseAll("corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus","corpus//6_ltp_nerTopicCorpus", "corpus//7_ltp_semanticTopicCorpus");
             parser.destroy();
-        }*/
+        }
+//-----------------------------------------------------------------------------------
+        }
         System.out.println("输入0跳过，1继续下一步：潜在对象和情感词抽取");
 
         SentimentSorter.init("corpus//dic//posOpinionDic.txt", "corpus//dic//negOpinionDic.txt","corpus//dic//posEmotionDic.txt", "corpus//dic//negEmotionDic.txt");
 
         // 潜在对象和情感词抽取
-        if(runInAll || (cin.nextInt()) == 1) {
+        if(runInAllExtract || runInAll || (cin.nextInt()) == 1) {
             LTPCorpusExtractor corpusExtractor = new LTPCorpusExtractor();
             corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_semanticCorpus",
                     "corpus//3_ltp_segmentTopicCorpus_pos", "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_semanticTopicCorpus", "corpus//8_ltp_targetPairCorpus" );
@@ -110,7 +118,7 @@ public class testLTP {
         System.out.println("输入0跳过，1继续下一步：情感相似度计算");
 
         // 情感相似度计算
-        if(runInAll || (cin.nextInt()) == 1) {
+        if(runInAllExtract || runInAll || (cin.nextInt()) == 1) {
             SentimentSorter sentimentSorter = new SentimentSorter();
             sentimentSorter.sortAll("corpus//8_ltp_targetPairCorpus", "corpus//3_ltp_segmentCorpus_pos", "corpus//8_ltp_nounSentimentPairCorpus");
         }
@@ -122,7 +130,7 @@ public class testLTP {
         System.out.println("输入0跳过，1继续下一步：评估计算");
 
         // 评估计算
-        if(runInAll || (cin.nextInt()) == 1) {
+        if(runInAllExtract || runInAll || (cin.nextInt()) == 1) {
             Evaluator evaluator = new Evaluator();
             // 评价对象+情感评估
             evaluator.evaluateAll("corpus//10_evaluationCorpus", "corpus//9_testResult", true);
