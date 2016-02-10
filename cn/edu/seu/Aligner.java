@@ -18,7 +18,7 @@ import java.util.TreeMap;
  */
 public class Aligner {
     // 对情感输出结果进行格式调整输出
-    public void alignAllResult(String alignCorpusDir, String objectCorpusDir, String alignLabelCorpusDir, String objectLabelCorpusDir, String outputDir){
+    public void alignAllResult(String alignCorpusDir, String objectCorpusDir, String alignLabelCorpusDir, String objectLabelCorpusDir, String alignOffsetDir, String outputDir){
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
@@ -31,6 +31,8 @@ public class Aligner {
         File[] objectCorpusArray = (new File(objectCorpusDir)).listFiles();
         File[] alignLabelCorpusArray = (new File(alignLabelCorpusDir)).listFiles();
         File[] objectLabelCorpusArray = (new File(objectLabelCorpusDir)).listFiles();
+        File[] alignOffsetCorpusArray = (new File(alignOffsetDir)).listFiles();
+
         if(alignLabelCorpusArray.length!=objectLabelCorpusArray.length){
             System.out.println("对其目录文件数目不匹配！");
             return;
@@ -39,40 +41,30 @@ public class Aligner {
         for(int i=0; i<objectLabelCorpusArray.length; ++i){
             alignResultFile(alignCorpusArray[i].getAbsolutePath(), objectCorpusArray[i].getAbsolutePath(),
                     alignLabelCorpusArray[i].getAbsolutePath(),objectLabelCorpusArray[i].getAbsolutePath(),
+                    alignOffsetCorpusArray[i].getAbsolutePath(),
                     outputDir + "//" + objectCorpusArray[i].getName(), objectCorpusArray[i].getName());
         }
     }
     // 对齐结果文件
-    public void alignResultFile(String alignFilePath, String objectFilePath,String alignLabelFilePath, String objectLabelFilePath, String outputFilePath, String fileName){
-        FileReader alignFileReader = null;
-        FileReader objectFileReader = null;
+    public void alignResultFile(String alignFilePath, String objectFilePath,String alignLabelFilePath, String objectLabelFilePath,  String alignOffsetFilePath, String outputFilePath, String fileName){
         FileReader alignLabelFileReader = null;
         FileReader objectLabelFileReader = null;
         BufferedReader alignFileBufferReader = null;
         BufferedReader objectFileBufferReader = null;
-        /*BufferedReader alignLabelFileBufferReader = null;
-        BufferedReader objectLabelFileBufferReader = null;*/
+        BufferedReader alignOffsetFileBufferReader = null;
         FileWriter writer = null;
         try{
             // 初始化读写文件变量
-            File alignFile = new File(alignFilePath);
-            File objectFile = new File(objectFilePath);
+            alignFileBufferReader = new BufferedReader(new FileReader(new File(alignFilePath)));
+            objectFileBufferReader = new BufferedReader(new FileReader(new File(objectFilePath)));
+            alignOffsetFileBufferReader = new BufferedReader(new FileReader(new File(alignOffsetFilePath)));
             File alignLabelFile = new File(alignLabelFilePath);
             File objectLabelFile = new File(objectLabelFilePath);
-            File outputFile = new File(outputFilePath);
-
-            alignFileReader = new FileReader(alignFile);
-            objectFileReader = new FileReader(objectFile);
-            alignFileBufferReader = new BufferedReader(alignFileReader);
-            objectFileBufferReader = new BufferedReader(objectFileReader);
-
             alignLabelFileReader = new FileReader(alignLabelFile);
             objectLabelFileReader = new FileReader(objectLabelFile);
-            /*alignLabelFileBufferReader = new BufferedReader(alignLabelFileReader);
-            objectLabelFileBufferReader = new BufferedReader(objectLabelFileReader);*/
-            writer = new FileWriter(outputFile);
+            writer = new FileWriter(new File(outputFilePath));
 
-            // 读取对齐文件微博号
+            // 读取对齐文微博号
             int length = (int)alignLabelFile.length();
             char[] alignLabelBuffer = new char[length];
             alignLabelFileReader.read(alignLabelBuffer);
@@ -91,6 +83,7 @@ public class Aligner {
             int startIndex = 0, endIndex = 0;
             String tmpWord = "", tmpLabel = "";
             String objectSentence = "", objectLabel = "", alignSentence = "", alignLabel = "";
+            int alignOffset;
             int i = 0, j = 0;
             // 根据对齐文件对结果进行对齐并输出
             while(true){
@@ -112,6 +105,7 @@ public class Aligner {
                     writer.write("\n");
                     continue;
                 }
+                alignOffset = Integer.parseInt(alignOffsetFileBufferReader.readLine());
                 // 循环读取句子中的情感词对
                 while(true){
                     index1 = objectSentence.indexOf("[", index3);
@@ -129,7 +123,10 @@ public class Aligner {
                             if(tmpWord == null)
                                 continue;
                         }
-                        startIndex = alignSentence.indexOf(tmpWord);
+                        // 处理偏移问题
+                        startIndex = alignSentence.indexOf(tmpWord, alignOffset);
+                        if(startIndex == -1)
+                            startIndex = alignSentence.indexOf(tmpWord, 0);
                         endIndex = startIndex + tmpWord.length() - 1;
                         if(startIndex != -1)
                             tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
@@ -149,10 +146,6 @@ public class Aligner {
             e.printStackTrace();
         } finally {
             try{
-                if(alignFileReader!=null)
-                    alignFileReader.close();
-                if(objectFileReader!=null)
-                    objectFileReader.close();
                 if(alignFileBufferReader!=null)
                     alignFileBufferReader.close();
                 if(objectFileBufferReader!=null)

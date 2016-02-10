@@ -58,6 +58,8 @@ public class LTPTargetExtractor {
     private List<SRNode> srList;
     // 存储主题中语义角色列表:是否处理过，语义角色节点
     private List<SRNode> topicSrList;
+    // 存储全句分句主语
+    private Map<Pair<Integer,Integer>, String> allSubjectMap;
 
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
     private HashMultimap<String,String> resultTargetPairMap = HashMultimap.create();
@@ -93,6 +95,8 @@ public class LTPTargetExtractor {
         // 记录语义角色
         srList = new ArrayList();
         readSR(srSentence, false);
+        // 读取全句主语
+        readAllSubject();
     }
 
     // 读取主题语料句子的命名实体、依存关系、语义角色
@@ -100,6 +104,24 @@ public class LTPTargetExtractor {
         this.segTopicSentence = segTopicSentence;
         this.depTopicSentence = depTopicSentence;
         this.srTopicSentence = srTopicSentence;
+    }
+
+    // 获取全句的每个子句的主语
+    public void readAllSubject(){
+        allSubjectMap = new LinkedHashMap<>();
+        int index = 0;
+        String target;
+        for(SRNode node : srList){
+            if(node.A0 != null && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
+                target = getPotentialTargetAndOpinion(node.A0).get(0).first;
+                allSubjectMap.put(new Pair<>(node.beg, node.end), target);
+            }
+            else if(node.A1!=null && node.predication.first>node.A1.first.first  && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
+                target = getPotentialTargetAndOpinion(node.A1).get(0).first;
+                allSubjectMap.put(new Pair<>(node.beg, node.end), target);
+            }
+            index++;
+        }
     }
 
     // 读取语义角色
@@ -229,7 +251,7 @@ public class LTPTargetExtractor {
         char endWord = target.charAt(target.length()-1);
         if(startWord!='《' && startWord!='"' && PunctuationUtil.PUNCTUATION.contains(""+startWord))
             target = target.substring(1);
-        if(target.length()!=0 && endWord!='》' && endWord!='"' && PunctuationUtil.PUNCTUATION.contains(""+endWord))
+        if(target.length()!=0 && endWord!='》' && endWord!='"' && endWord!=')' && PunctuationUtil.PUNCTUATION.contains(""+endWord))
             target = target.substring(0, target.length()-1);
         // 获取范围内所有的副词
         Set<String> adverbs = new HashSet<>();
@@ -526,21 +548,51 @@ public class LTPTargetExtractor {
 
     // 指代及隐性搜索，寻找上一个
     public String getReferenceWord(int index){
-        String noun;
-        if(index>0 && !(noun=getContinurousNoun(index-1)).equals(""))
-            return noun;
-        int size = targetPairMap.size();
+        String lastSubject = "";
+        // 本句代词邻近搜索
+        if(index>0 && !(lastSubject=getContinurousNoun(index-1)).equals(""))
+            return lastSubject;
+        /*int size = targetPairMap.size();
         if(size > 0){
             return lastTargetPair.first;
+        }*/
+        // 获取邻近句子的主语，先从上文开始，再从主题，最后下文
+        // 从前文获取
+        Iterator<Pair<Integer,Integer>> iterator = allSubjectMap.keySet().iterator();
+        Pair<Integer,Integer> pair;
+        while(iterator.hasNext()){
+            pair = iterator.next();
+            if(index>=pair.first && index<=pair.second)
+                break;
+            lastSubject = allSubjectMap.get(pair);
         }
-        return getTopicTarget();
+        // 从主题获取
+        if("".equals(lastSubject))
+            lastSubject = getTopicTarget();
+        // 从下文获取
+        if("".equals(lastSubject) && iterator.hasNext()){
+            pair = iterator.next();
+            lastSubject = allSubjectMap.get(pair);
+        }
+        return lastSubject;
     }
 
     // 从指定范围内在分词序列中寻找指定词的下标
-    public int findIndexFromSeg(Map<Integer, Pair<String,String>> map, int start, String word) {
-        for(int i=start; i<map.size(); ++i){
-            if(map.get(i).second.equals(word))
-                return i;
+    public static int findIndexFromSeg(Map<Integer, Pair<String,String>> map, int start, String word, boolean isChar) {
+        if(isChar){
+            int sum = 0;
+            String tmp;
+            for(int i=0; i<map.size(); ++i){
+                tmp = map.get(i).second;
+                if(i>=start && tmp.equals(word))
+                    return sum;
+                sum += tmp.length();
+            }
+        }else{
+            for(int i=start; i<map.size(); ++i){
+                if(map.get(i).second.equals(word))
+                    return i;
+            }
         }
         return -1;
     }
@@ -567,7 +619,7 @@ public class LTPTargetExtractor {
             start = nodeAPair.first.first;
             end = nodeAPair.first.second;
         }
-        List list = new ArrayList<Pair<String,String>>();
+        List<Pair<String,String>> list = new ArrayList<>();
         /*// 一个名词都没有，则跳过
         boolean hasNoNoun = true;
         for(int i=start; i<=end; ++i){
@@ -577,7 +629,7 @@ public class LTPTargetExtractor {
         if(hasNoNoun)
             return list;*/
         // 助词对象缺失
-        if(tmpSegMap.get(end).first.equals("u") && end<tmpSegMap.size()-1){
+        if(end!=-1 && tmpSegMap.get(end).first.equals("u") && end<tmpSegMap.size()-1){
             block += tmpSegMap.get(end+1).second;
             end++;
         }
@@ -619,10 +671,10 @@ public class LTPTargetExtractor {
             }
             // 含《》且不在之前的ATT中
             List<Pair<Integer,Integer>> bookQuotationList = new ArrayList<>();
-            int index1 =  findIndexFromSeg(tmpSegMap, start, "《"); //block.indexOf("《");
+            int index1 =  findIndexFromSeg(tmpSegMap, start, "《", false); //block.indexOf("《");
             int index2;
             while(index1!=-1 && index1>=start && index1<=end){
-                index2 = findIndexFromSeg(tmpSegMap, index1+1, "》"); //block.indexOf("》", index1+1);
+                index2 = findIndexFromSeg(tmpSegMap, index1+1, "》", false); //block.indexOf("》", index1+1);
                 if(index2 != -1){
                     if(targetRangeList.size() > 0){
                         for(Pair<Integer, Integer> pair : targetRangeList){
@@ -646,7 +698,7 @@ public class LTPTargetExtractor {
                 }else{
                     break;
                 }
-                index1 = findIndexFromSeg(tmpSegMap, index2+1, "《"); //block.indexOf("》", index2+1);
+                index1 = findIndexFromSeg(tmpSegMap, index2+1, "《", false); //block.indexOf("》", index2+1);
             }
             // 寻找不在ATT且不在《》中的命名实体
             List<Pair<Integer,String>> nrList = new ArrayList<>();
@@ -694,9 +746,18 @@ public class LTPTargetExtractor {
             if(lastPair != null)
                 list.add(new Pair<>(lastPair.second, ""));
         }
-        if(list.size() == 0 && !isAdj(tmpSegMap.get(end).first))
+        if(list.size() == 0){
+            if(isAdj(tmpSegMap.get(end).first))
+                block = "";
             list.add(new Pair<>(block, ""));
-        return list;
+        }
+        // 添加位置信息
+        /*if(!isHandleTopic){
+            for(Pair<String,String> pair : list){
+                pair.first += ("("+start+")");
+            }
+        }*/
+         return list;
     }
 
     // 判断当前语义节点中的A0和A1中是否含有其他A0或A1结构

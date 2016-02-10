@@ -24,15 +24,15 @@ public class testLTP {
         while(cin.hasNext()){
             int a = cin.nextInt();
             if(a == 1) {
-                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // 预处理标注语料
+                cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", null, false, false);  // 预处理标注语料
                 //break;
             }
             else  if(a == 2){
-                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, true, false);  // 预处理评测语料对齐
-                //break;
+                cph.handleAllOriginalCorpus("corpus//result", "corpus//8_alignCorpus", null, "corpus//8_alignCorpus_offset", true, false);  // 预处理评测语料对齐
+               //break;
             }
             else if(a == 3){
-                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, false, true);  // 预处理评估语料对齐
+                cph.handleAllOriginalCorpus("corpus//evaluate", "corpus//10_evaluationCorpus", null, null, false, true);  // 预处理评估语料对齐
                 //break;
             }
             else if(a == 5){
@@ -124,7 +124,7 @@ public class testLTP {
         }
         // 对齐操作
         Aligner aligner = new Aligner();
-        aligner.alignAllResult("corpus//8_alignCorpus", "corpus//8_ltp_nounSentimentPairCorpus", "corpus//8_alignCorpus_label", "corpus//2_preprocessCorpus_label", "corpus//9_testResult");
+        aligner.alignAllResult("corpus//8_alignCorpus", "corpus//8_ltp_nounSentimentPairCorpus", "corpus//8_alignCorpus_label", "corpus//2_preprocessCorpus_label", "corpus//8_alignCorpus_offset", "corpus//9_testResult");
 
 
         System.out.println("输入0跳过，1继续下一步：评估计算");

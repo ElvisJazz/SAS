@@ -68,8 +68,8 @@ public class LTPCorpusExtractor {
                     && (segTopicSentence=bufferSegTopicReader.readLine())!=null && (depTopicSentence = bufferDepTopicReader.readLine())!=null && (srTopicSentence = bufferSrTopicReader.readLine())!=null){
                 // 分别读取分词（包括了命名实体识别）、依存关系、语义角色文件，输出目标元组（评价对象，情感词）
                 LTPTargetExtractor extractor = new LTPTargetExtractor();
-                extractor.readContentCorpusSentence(segSentence, depSentence, srSentence);
                 extractor.readTopicCorpusSentence(segTopicSentence, depTopicSentence, srTopicSentence);
+                extractor.readContentCorpusSentence(segSentence, depSentence, srSentence);
                 //System.out.println(segSentence);
                 outputMap.put(i, extractor.extract());
                 i++;

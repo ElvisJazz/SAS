@@ -21,19 +21,21 @@ import java.util.regex.Pattern;
  */
 public class CorpusPreHandler {
     // 预处理所有原始语料，生成待分析语料
-    public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation){
+    public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, String alignOffsetDir, boolean isAlignFile, boolean isEvaluation){
         File[] fileArray = (new File(readDir)).listFiles();
         for(int i=0; i<fileArray.length; ++i){
-            readXmlFile(fileArray[i].getAbsolutePath(), fileArray[i].getName(), outputDir, outputTopicDir, isAlignFile, isEvaluation);
+            readXmlFile(fileArray[i].getAbsolutePath(), fileArray[i].getName(), outputDir, outputTopicDir, alignOffsetDir, isAlignFile, isEvaluation);
         }
     }
 
     // 读取并解析xml文件
-    public void readXmlFile(String readFilePath, String fileName, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation) {
+    public void readXmlFile(String readFilePath, String fileName, String outputDir, String outputTopicDir, String alignOffsetDir, boolean isAlignFile, boolean isEvaluation) {
         // 写文件变量
         Writer labelWriter = null;
         Writer sentenceWriter = null;
         Writer topicWriter = null;
+        Writer alignOffsetWriter = null;
+        int offset;
         try{
             // 设置读取变量
             Element weiboElement, sentenceElement;
@@ -65,9 +67,17 @@ public class CorpusPreHandler {
 
             String labelFileName = outputFile.getPath()+"_label//";
             File labelFile = new File(labelFileName);
+            File alignOffsetFile = null;
+            if(alignOffsetDir != null)
+                alignOffsetFile = new File(alignOffsetDir);
+
             if(!labelFile.exists() && !isEvaluation) {
                 if(!labelFile.mkdirs())
                     throw new Exception("创建标签文件目录失败！");
+            }
+            if(isAlignFile && alignOffsetFile!=null && !alignOffsetFile.exists()){
+                if(!alignOffsetFile.mkdirs())
+                    throw new Exception("创建对齐offset文件目录失败！");
             }
 
             File topicFile = null;
@@ -82,10 +92,14 @@ public class CorpusPreHandler {
                 topicWriter = new OutputStreamWriter(new FileOutputStream(topicFile.getPath()+"//"+topic+"_topic", false), "UTF-8");
             if(!isEvaluation)
                 labelWriter = new OutputStreamWriter(new FileOutputStream(labelFile.getPath()+"//"+topic+"_label", false), "UTF-8");
+            if(isAlignFile)
+                alignOffsetWriter = new OutputStreamWriter(new FileOutputStream(alignOffsetFile.getPath()+"//"+topic+"_offset", false), "UTF-8");
             sentenceWriter = new OutputStreamWriter(new FileOutputStream(outputDir+"//"+topic+"_sentence", false), "UTF-8");
+
             // 获取head节点
             Iterator weiboIterator= root.elementIterator("weibo");
             while(weiboIterator.hasNext()){
+                offset = 0;
                 weiboElement = (Element) weiboIterator.next();
                 weiboId = weiboElement.attributeValue("id");
                 sentenceIterator = weiboElement.elementIterator("sentence");
@@ -141,6 +155,10 @@ public class CorpusPreHandler {
 
                             // 处理正文空格前后均无标点的情况
                             sentence = handleSpaceInSentence(sentence);
+
+                            if(alignOffsetWriter != null && "Y".equals(opinionated))
+                                alignOffsetWriter.write(offset+"\n");
+                            offset += oSentence.length();
                         }
 
                         // 输出到文件
@@ -179,6 +197,8 @@ public class CorpusPreHandler {
                     sentenceWriter.close();
                 if(topicWriter != null)
                     topicWriter.close();
+                if(alignOffsetWriter != null)
+                    alignOffsetWriter.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
