@@ -1,5 +1,6 @@
 package cn.edu.seu;
 
+import cn.edu.seu.utils.AlignUtil;
 import edu.stanford.nlp.util.Pair;
 
 import java.io.BufferedReader;
@@ -18,7 +19,9 @@ import java.util.TreeMap;
  */
 public class Aligner {
     // 对情感输出结果进行格式调整输出
-    public void alignAllResult(String alignCorpusDir, String objectCorpusDir, String alignLabelCorpusDir, String objectLabelCorpusDir, String alignOffsetDir, String outputDir){
+    public void alignAllResult(String alignCorpusDir, String objectCorpusDir, String alignLabelCorpusDir, String objectLabelCorpusDir,
+                               String alignOffsetDir, String alignOriginalDir, String preDir, String outputDir){
+        //AlignUtil.init();
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
@@ -32,6 +35,8 @@ public class Aligner {
         File[] alignLabelCorpusArray = (new File(alignLabelCorpusDir)).listFiles();
         File[] objectLabelCorpusArray = (new File(objectLabelCorpusDir)).listFiles();
         File[] alignOffsetCorpusArray = (new File(alignOffsetDir)).listFiles();
+        File[] alignOriginalArray = (new File(alignOriginalDir)).listFiles();
+        File[] preArray = (new File(preDir)).listFiles();
 
         if(alignLabelCorpusArray.length!=objectLabelCorpusArray.length){
             System.out.println("对其目录文件数目不匹配！");
@@ -41,23 +46,29 @@ public class Aligner {
         for(int i=0; i<objectLabelCorpusArray.length; ++i){
             alignResultFile(alignCorpusArray[i].getAbsolutePath(), objectCorpusArray[i].getAbsolutePath(),
                     alignLabelCorpusArray[i].getAbsolutePath(),objectLabelCorpusArray[i].getAbsolutePath(),
-                    alignOffsetCorpusArray[i].getAbsolutePath(),
+                    alignOffsetCorpusArray[i].getAbsolutePath(), alignOriginalArray[i].getAbsolutePath(),preArray[i].getAbsolutePath(),
                     outputDir + "//" + objectCorpusArray[i].getName(), objectCorpusArray[i].getName());
         }
+        //AlignUtil.destroy();
     }
     // 对齐结果文件
-    public void alignResultFile(String alignFilePath, String objectFilePath,String alignLabelFilePath, String objectLabelFilePath,  String alignOffsetFilePath, String outputFilePath, String fileName){
+    public void alignResultFile(String alignFilePath, String objectFilePath,String alignLabelFilePath, String objectLabelFilePath,
+                                String alignOffsetFilePath, String alignOriginalFilePath, String preFilePath, String outputFilePath, String fileName){
         FileReader alignLabelFileReader = null;
         FileReader objectLabelFileReader = null;
         BufferedReader alignFileBufferReader = null;
         BufferedReader objectFileBufferReader = null;
         BufferedReader alignOffsetFileBufferReader = null;
+        BufferedReader alignOriginalFileBufferReader = null;
+        BufferedReader preFileBufferReader = null;
         FileWriter writer = null;
         try{
             // 初始化读写文件变量
             alignFileBufferReader = new BufferedReader(new FileReader(new File(alignFilePath)));
             objectFileBufferReader = new BufferedReader(new FileReader(new File(objectFilePath)));
             alignOffsetFileBufferReader = new BufferedReader(new FileReader(new File(alignOffsetFilePath)));
+            alignOriginalFileBufferReader = new BufferedReader(new FileReader(new File(alignOriginalFilePath)));
+            preFileBufferReader = new BufferedReader(new FileReader(new File(preFilePath)));
             File alignLabelFile = new File(alignLabelFilePath);
             File objectLabelFile = new File(objectLabelFilePath);
             alignLabelFileReader = new FileReader(alignLabelFile);
@@ -82,7 +93,7 @@ public class Aligner {
             int index1 = 0, index2 = 0, index3 = 0;
             int startIndex = 0, endIndex = 0;
             String tmpWord = "", tmpLabel = "";
-            String objectSentence = "", objectLabel = "", alignSentence = "", alignLabel = "";
+            String objectSentence = "", objectLabel = "", alignSentence = "", alignLabel = "", originalSentence = "", preSentence = "";
             int alignOffset;
             int i = 0, j = 0;
             // 根据对齐文件对结果进行对齐并输出
@@ -106,6 +117,8 @@ public class Aligner {
                     continue;
                 }
                 alignOffset = Integer.parseInt(alignOffsetFileBufferReader.readLine());
+                originalSentence  = alignOriginalFileBufferReader.readLine();
+                preSentence = preFileBufferReader.readLine();
                 // 循环读取句子中的情感词对
                 while(true){
                     index1 = objectSentence.indexOf("[", index3);
@@ -119,14 +132,15 @@ public class Aligner {
                         String segSentence = segmenter.segmentSentence(alignSentence, true);
                         // 处理无评价对象的情况
                         if("#".equals(tmpWord)){
-                            tmpWord = getTargetObjectFormNeighborhood(alignSentence, segSentence);
+                            tmpWord = getTargetObjectFormNeighborhood(segSentence);
+                            //tmpWord = AlignUtil.getNeighborTarget(originalSentence, alignOffset, preSentence.length());
                             if(tmpWord == null)
                                 continue;
                         }
                         // 处理偏移问题
                         startIndex = alignSentence.indexOf(tmpWord, alignOffset);
                         if(startIndex == -1)
-                            startIndex = alignSentence.indexOf(tmpWord, 0);
+                            startIndex = alignSentence.lastIndexOf(tmpWord, alignOffset);
                         endIndex = startIndex + tmpWord.length() - 1;
                         if(startIndex != -1)
                             tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
@@ -165,7 +179,7 @@ public class Aligner {
     }
 
     // 从上下文语句中获取评价对象
-    public String getTargetObjectFormNeighborhood(String sentence, String segSentence){
+    public String getTargetObjectFormNeighborhood(String segSentence){
         String word = null;
         // 将短语合并
         PhraseProducer producer = new PhraseProducer();

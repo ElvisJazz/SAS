@@ -1,5 +1,7 @@
 package cn.edu.seu;
 
+import com.google.common.collect.HashMultimap;
+import edu.stanford.nlp.util.Pair;
 import edu.hit.ir.ltp4j.Parser;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.trees.*;
@@ -164,6 +166,19 @@ public class DependencyParser {
                 e.printStackTrace();
             }
         }
+    }
+
+    // 使用LTP获取依存关系
+    public HashMultimap<String, Pair<Integer,Integer>> getDependencyUseLTP(List<String> words, List<String> tags){
+        HashMultimap<String, Pair<Integer,Integer>> depMap = HashMultimap.create();
+        List<Integer> heads = new ArrayList<>();
+        List<String> deprels = new ArrayList<>();
+        int size = Parser.parse(words,tags,heads,deprels);
+
+        for(int i = 0; i<size; i++) {
+            depMap.put(deprels.get(i), new Pair<>(heads.get(i), i+1));
+        }
+        return depMap;
     }
 
     public static void main(String args[]){

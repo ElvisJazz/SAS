@@ -1,9 +1,8 @@
 package cn.edu.seu.ltp_extractor;
 
+import cn.edu.seu.utils.AlignUtil;
 import cn.edu.seu.utils.PunctuationUtil;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.TreeMultimap;
 import edu.stanford.nlp.util.Pair;
 import cn.edu.seu.extractor.TargetExtractor;
 import cn.edu.seu.SentimentSorter;
@@ -38,11 +37,17 @@ public class LTPTargetExtractor {
     }
 
     // 特殊名词
-    public String specialNoun = " nh ni nl ns nz n ";
+    public static String specialNoun = " nh ni nl ns nz n ";
     // 主题相关句子缓存
     private String segTopicSentence;
     private String depTopicSentence;
     private String srTopicSentence;
+
+    // 指代寻找所需参量
+    // 当前句子的长度
+    private int length;
+    // 对齐所需微博句子
+    private String originalSentence;
 
     // 正文依存关系抽取对象
     private TargetExtractor depTargetExtractor;
@@ -68,15 +73,27 @@ public class LTPTargetExtractor {
 
     // 主题语料相关信息是否已经初始化
     private boolean isInit = false;
-    // 当前是否在操作主题语料
-    private boolean isHandleTopic = false;
 
     // 当前已分析过的A0,A1结构范围
     private List<Pair<Integer,Integer>> analyseRangeList = new ArrayList<>();
+    // 当前主题
+    private String topic = null;
+
+    // 初始化
+    public static void init(){
+        //AlignUtil.init();
+    }
+
+    public static void destroy(){
+        //AlignUtil.destroy();
+    }
 
     // 读取文本语料句子的命名实体、依存关系、语义角色
-    public void readContentCorpusSentence(String segSentence, String depSentence, String srSentence) throws Exception {
+    public void readContentCorpusSentence(String segSentence, String depSentence, String srSentence, String originalSentence) throws Exception {
+        this.originalSentence = originalSentence;
         // 记录词性标注等信息
+        String tmp;
+        length = 0;
         segMap = new HashMap();
         String[] segs = segSentence.split(" ");
         int index;
@@ -84,8 +101,11 @@ public class LTPTargetExtractor {
             if(segs[i].equals(""))
                 continue;
             index = segs[i].lastIndexOf('/');
-            if(index != -1)
-                segMap.put(i, new Pair<String, String>(segs[i].substring(index+1), segs[i].substring(0,index)));
+            if(index != -1){
+                tmp = segs[i].substring(0, index);
+                segMap.put(i, new Pair<>(segs[i].substring(index+1), tmp));
+                length += tmp.length();
+            }
         }
         // 记录依存关系
         depTargetExtractor = new TargetExtractor();
@@ -113,11 +133,11 @@ public class LTPTargetExtractor {
         String target;
         for(SRNode node : srList){
             if(node.A0 != null && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
-                target = getPotentialTargetAndOpinion(node.A0).get(0).first;
+                target = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
                 allSubjectMap.put(new Pair<>(node.beg, node.end), target);
             }
             else if(node.A1!=null && node.predication.first>node.A1.first.first  && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
-                target = getPotentialTargetAndOpinion(node.A1).get(0).first;
+                target = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
                 allSubjectMap.put(new Pair<>(node.beg, node.end), target);
             }
             index++;
@@ -224,7 +244,7 @@ public class LTPTargetExtractor {
                 continue;
             index = segs[i].lastIndexOf('/');
             if(index != -1)
-                topicSegMap.put(i, new Pair<String, String>(segs[i].substring(index+1), segs[i].substring(0,index)));
+                topicSegMap.put(i, new Pair<>(segs[i].substring(index+1), segs[i].substring(0,index)));
         }
         // 记录依存关系
         topicDepTargetExtractor = new TargetExtractor();
@@ -430,14 +450,14 @@ public class LTPTargetExtractor {
     }
 
     // 判断书名号成分是否和指定词块重叠，返回原词块或重叠合并部分
-    public Pair<Integer,Integer> getCombinationBlock(int start, int end){
+    public static Pair<Integer,Integer> getCombinationBlock(Map<Integer, Pair<String,String>> segMap, int start, int end){
         int _start = -1, _end = -1; // 书名号开始结束index
         int rStart = -1, rEnd = -1;
         int reStart = -1, reEnd = -1;
         for(int i=0; i<segMap.size(); ++i){
-            if(segMap.get(i).equals("《") && _start==-1)
+            if(segMap.get(i).second.equals("《") && _start==-1)
                 _start = i+1;
-            else if(segMap.get(i).equals("》") && start!=-1){
+            else if(segMap.get(i).second.equals("》") && start!=-1){
                 _end = i-1;
                 // 判断
                 if(_start>=start && _start<=end){
@@ -469,13 +489,7 @@ public class LTPTargetExtractor {
     }
 
     // 寻找ATT相关的依赖关系覆盖范围 start-end部分: 0-(N-1)
-    public List<Pair<Integer, Integer>> getATTDepRangeList(int start, int end){
-        Set<Pair<Integer, Integer>> ATTDepSet;
-        if(isHandleTopic)
-            ATTDepSet = topicDepTargetExtractor.getDepMap().get("ATT");
-        else
-            ATTDepSet = depTargetExtractor.getDepMap().get("ATT");
-
+    public static List<Pair<Integer, Integer>> getATTDepRangeList(int start, int end,  Map<Integer, Pair<String,String>> segMap, Set<Pair<Integer, Integer>> ATTDepSet){
         SortedSet<Float> ATTNodeSet = new TreeSet<Float>();
         List<Pair<Integer, Integer>> resultList = new ArrayList<>();
         float _start=-1, _end=-1;
@@ -493,7 +507,7 @@ public class LTPTargetExtractor {
         for(float i : ATTNodeSet){
             if(i-_end >= 1.0){
                 if(_end != -1.0 && ((_start>=start && _start<=end) || (_end>=start && _end<=end)))
-                    resultList.add(getCombinationBlock((int)_start, (int)_end));
+                    resultList.add(getCombinationBlock(segMap, (int)_start, (int)_end));
                 _start = _end = i;
             }else{
                 if(_end == -1.0)
@@ -502,7 +516,7 @@ public class LTPTargetExtractor {
             }
         }
         if(_start!=-1.0 && _end!=-1.0 && ((_start>=start && _start<=end) || (_end>=start && _end<=end)))
-            resultList.add(getCombinationBlock((int)_start, (int)_end));
+            resultList.add(getCombinationBlock(segMap, (int)_start, (int)_end));
         return resultList;
     }
 
@@ -514,17 +528,18 @@ public class LTPTargetExtractor {
             }catch (Exception e){
                 System.err.println("主题语料相关信息初始化失败！");
                 e.printStackTrace();
+                topic = "";
                 return "";
             }
         }
         if(topicSegMap.size() > 0){
-            isHandleTopic = true;
             Pair<Pair<Integer,Integer>,String> pair = new Pair<>(new Pair<>(0,topicSegMap.size()-1), segTopicSentence.replaceAll("/[a-z ]*", ""));
-            List<Pair<String,String>> list = getPotentialTargetAndOpinion(pair);
+            List<Pair<String,String>> list = getPotentialTargetAndOpinion(pair, topicSegMap, topicDepTargetExtractor.getDepMap(), null);
             String result = list.size()>0 ? list.get(0).first : "";
-            isHandleTopic = false;
+            topic = result;
             return result;
         }
+        topic = "";
         return "";
     }
 
@@ -547,33 +562,39 @@ public class LTPTargetExtractor {
     }
 
     // 指代及隐性搜索，寻找上一个
-    public String getReferenceWord(int index){
+    public static String getReferenceWord(int index, LTPTargetExtractor extractor){
         String lastSubject = "";
         // 本句代词邻近搜索
-        if(index>0 && !(lastSubject=getContinurousNoun(index-1)).equals(""))
+        if(index>0 && !(lastSubject=extractor.getContinurousNoun(index - 1)).equals(""))
             return lastSubject;
-        /*int size = targetPairMap.size();
+        // 获取上一个评价对象
+        int size = extractor.targetPairMap.size();
         if(size > 0){
-            return lastTargetPair.first;
-        }*/
+            return extractor.lastTargetPair.first;
+        }
         // 获取邻近句子的主语，先从上文开始，再从主题，最后下文
         // 从前文获取
-        Iterator<Pair<Integer,Integer>> iterator = allSubjectMap.keySet().iterator();
+        /*Iterator<Pair<Integer,Integer>> iterator = allSubjectMap.keySet().iterator();
         Pair<Integer,Integer> pair;
         while(iterator.hasNext()){
             pair = iterator.next();
             if(index>=pair.first && index<=pair.second)
                 break;
             lastSubject = allSubjectMap.get(pair);
-        }
+        }*/
         // 从主题获取
         if("".equals(lastSubject))
-            lastSubject = getTopicTarget();
+            lastSubject = extractor.getTopicTarget();
         // 从下文获取
-        if("".equals(lastSubject) && iterator.hasNext()){
+       /* if("".equals(lastSubject) && iterator.hasNext()){
             pair = iterator.next();
             lastSubject = allSubjectMap.get(pair);
-        }
+        }*/
+       /*if("".equals(lastSubject)){
+            String result  = AlignUtil.getNeighborTarget(extractor.originalSentence, index, extractor.length);
+            if(result != null)
+                lastSubject = result;
+       }*/
         return lastSubject;
     }
 
@@ -598,20 +619,16 @@ public class LTPTargetExtractor {
     }
 
     // 是否是修饰词
-    public boolean isAdj(String word){
+    public static boolean isAdj(String word){
         if(word.equals("a") || word.equals("i"))
             return true;
         return false;
     }
 
     // 从某一成分中抽出潜在评价对象和评价词
-    public List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair){
+    public static List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair,
+            Map<Integer, Pair<String,String>> tmpSegMap, HashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor){
         String block = "";
-        Map<Integer, Pair<String,String>> tmpSegMap;
-        if(isHandleTopic)
-            tmpSegMap = topicSegMap;
-        else
-            tmpSegMap = segMap;
 
         int start=0, end=0;
         if(nodeAPair != null){
@@ -634,25 +651,25 @@ public class LTPTargetExtractor {
             end++;
         }
         // 代词或隐性A0或A1指代搜寻
-        if(!isHandleTopic && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
-            list.add(new Pair<String, String>(getReferenceWord(start), ""));
+        if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
+            list.add(new Pair<>(getReferenceWord(start, extractor), ""));
         // 考虑是否被《》包裹
         if(block.startsWith("《") && block.endsWith("》"))
-            list.add(new Pair<String, String>(block.substring(1, block.length()-1),""));
+            list.add(new Pair<>(block.substring(1, block.length()-1),""));
         else{
             // ATT部分包括adj
-            List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end);
+            List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end, tmpSegMap, depMap.get("ATT"));
             String target = "", opinion = "";
             String tmp1, tmp2, lastTmp="";
             for(Pair<Integer,Integer> pair : targetRangeList){
                 for(int i=pair.first; i<pair.second; ++i){
                     tmp1 = tmpSegMap.get(i).first;
                     tmp2 = tmpSegMap.get(i+1).first;
-                    if((isAdj(tmp1) || (tmp1.equals("v") && isAdj(lastTmp)) || (!tmp1.equals("n") && SentimentSorter.getSentimentWordType(segMap.get(i).second)!=0)) && tmp2.equals("u") && i+1<pair.second){
+                    if((isAdj(tmp1) || (tmp1.equals("v") && isAdj(lastTmp)) || (!tmp1.equals("n") && SentimentSorter.getSentimentWordType(tmpSegMap.get(i).second)!=0)) && tmp2.equals("u") && i+1<pair.second){
                         pair.first = i+2;
                         opinion = tmpSegMap.get(i).second;
                     }
-                    else if(((tmp1.equals("u") && (isAdj(tmp2) || (!tmp2.equals("n") && SentimentSorter.getSentimentWordType(segMap.get(i+1).second)!=0))) || (isAdj(tmp1) && tmp2.equals("v") && lastTmp.equals("u"))) && i-1>=pair.first){
+                    else if(((tmp1.equals("u") && (isAdj(tmp2) || (!tmp2.equals("n") && SentimentSorter.getSentimentWordType(tmpSegMap.get(i+1).second)!=0))) || (isAdj(tmp1) && tmp2.equals("v") && lastTmp.equals("u"))) && i-1>=pair.first){
                         pair.second = i-1;
                         opinion = tmpSegMap.get(i+1).second;
                     }
@@ -823,18 +840,18 @@ public class LTPTargetExtractor {
             // A0 A1存在
             else */if((opinionCode=opinion.get(0).first) !=  0){
                 if(Math.abs(opinionCode)==1 && (node.A1==null || node.predication.first<node.A1.first.first)){
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this))
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
                 }else{
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this))
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
                 }
             }
             // 副词情感
             else if(node.adverb!=null && opinion.get(1).first != 0){
-                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0);
+                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this);
                 if(node.A0==null && node.A1!=null && node.predication.first>node.A1.first.first)
-                    potentialPairList = getPotentialTargetAndOpinion(node.A1);
+                    potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
                 for(Pair<String,String> pair : potentialPairList){
                     if(pair.second.length() > 0)
                         putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
@@ -844,13 +861,13 @@ public class LTPTargetExtractor {
             }
             else{
                 String blackNoun = "";
-                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0);
+                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this);
                 int num = 0;
                 boolean isA0Pair = true;
                 // 有A0A1或无A0有A1：A0中寻找评价对象，优先A0中寻找评价词，其次是A1
                 while(node.A1!= null && !putOne){
                     if(node.predication.first > node.A1.first.first){
-                        potentialPairList = getPotentialTargetAndOpinion(node.A1);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
                         //isA0Pair = false;
                     }
                     for(Pair<String,String> pair : potentialPairList){
@@ -881,14 +898,14 @@ public class LTPTargetExtractor {
                         break;
                     else{
                         potentialPairList.clear();
-                        potentialPairList = getPotentialTargetAndOpinion(node.A1);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
                         num++;
                     }
                 }
                 // 有A0A1或无A1有A0：若有A1则从A1中寻找评价对象，优先A0中寻找评价词，其次是自身；若无A1则从A0中寻找评价对象和评价词
                 if(node.A0 != null){
                     if(node.A1 != null) {
-                        potentialPairList.addAll(getPotentialTargetAndOpinion(node.A1));
+                        potentialPairList.addAll(getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this));
                     }
                     for(Pair<String,String> pair : potentialPairList){
                         if(!pair.first.equals(blackNoun)){
@@ -976,13 +993,24 @@ public class LTPTargetExtractor {
         }
         depTargetExtractor.clearResult();
         depTargetExtractor.setPotentialNounMap(potentialNounMap);
-        targetPairMap.putAll(depTargetExtractor.extract());
+        HashMultimap<String, String> resultMap = depTargetExtractor.extract();
+        /*if(resultMap.containsKey("#")){
+            if(topic == null){
+                getTopicTarget();
+            }
+            if(!"".equals(topic)){
+                Set<String> values = resultMap.get("#");
+                resultMap.putAll(topic, values);
+                resultMap.removeAll("#");
+            }
+        }*/
+        targetPairMap.putAll(resultMap);
     }
 
     // ATT抽取规则
     public void extractByATT(){
         // 获取所有ATT关系
-        List<Pair<Integer,Integer>> attList = getATTDepRangeList(0, segMap.size()-1);
+        List<Pair<Integer,Integer>> attList = getATTDepRangeList(0, segMap.size()-1, segMap, depTargetExtractor.getDepMap().get("ATT"));
         // 利用依存关系抽取出与ATT短语直接关联的评价词
         HashMap<Integer, String> potentialNounMap = new HashMap<>();
         Map<Integer,String> sentimentMap = depTargetExtractor.getPotentialSentimentMap();
@@ -1039,7 +1067,18 @@ public class LTPTargetExtractor {
         }
         depTargetExtractor.clearResult();
         depTargetExtractor.setPotentialNounMap(potentialNounMap);
-        targetPairMap.putAll(depTargetExtractor.extract());
+        HashMultimap<String, String> resultMap = depTargetExtractor.extract();
+        /*if(resultMap.containsKey("#")){
+            if(topic == null){
+                getTopicTarget();
+            }
+            if(!"".equals(topic)){
+                Set<String> values = resultMap.get("#");
+                resultMap.putAll(topic, values);
+                resultMap.removeAll("#");
+            }
+        }*/
+        targetPairMap.putAll(resultMap);
     }
 
     public static void main(String args[]){

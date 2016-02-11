@@ -21,25 +21,27 @@ import java.util.regex.Pattern;
  */
 public class CorpusPreHandler {
     // 预处理所有原始语料，生成待分析语料
-    public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, String alignOffsetDir, boolean isAlignFile, boolean isEvaluation){
+    public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation){
         File[] fileArray = (new File(readDir)).listFiles();
         for(int i=0; i<fileArray.length; ++i){
-            readXmlFile(fileArray[i].getAbsolutePath(), fileArray[i].getName(), outputDir, outputTopicDir, alignOffsetDir, isAlignFile, isEvaluation);
+            readXmlFile(fileArray[i].getAbsolutePath(), fileArray[i].getName(), outputDir, outputTopicDir, isAlignFile, isEvaluation);
         }
     }
 
     // 读取并解析xml文件
-    public void readXmlFile(String readFilePath, String fileName, String outputDir, String outputTopicDir, String alignOffsetDir, boolean isAlignFile, boolean isEvaluation) {
+    public void readXmlFile(String readFilePath, String fileName, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation) {
         // 写文件变量
         Writer labelWriter = null;
         Writer sentenceWriter = null;
         Writer topicWriter = null;
         Writer alignOffsetWriter = null;
-        int offset;
+        Writer alignOriginalWriter = null;
+        int offset, YNum;
+
         try{
             // 设置读取变量
             Element weiboElement, sentenceElement;
-            String weiboId=null, opinionated=null, sentence=null, oSentence=null, topic=null, hashtag=null;
+            String weiboId=null, opinionated=null, sentence=null, oSentence=null, allSentence=null, topic=null, hashtag=null;
             Iterator sentenceIterator, hashtagIterator;
 
             // 读取文件
@@ -67,9 +69,8 @@ public class CorpusPreHandler {
 
             String labelFileName = outputFile.getPath()+"_label//";
             File labelFile = new File(labelFileName);
-            File alignOffsetFile = null;
-            if(alignOffsetDir != null)
-                alignOffsetFile = new File(alignOffsetDir);
+            File alignOffsetFile = new File(outputFile.getPath()+"_offset//");
+            File alignOriginalFile = new File(outputFile.getPath()+"_original//");
 
             if(!labelFile.exists() && !isEvaluation) {
                 if(!labelFile.mkdirs())
@@ -78,6 +79,10 @@ public class CorpusPreHandler {
             if(isAlignFile && alignOffsetFile!=null && !alignOffsetFile.exists()){
                 if(!alignOffsetFile.mkdirs())
                     throw new Exception("创建对齐offset文件目录失败！");
+            }
+            if(isAlignFile && alignOriginalFile!=null && !alignOriginalFile.exists()){
+                if(!alignOriginalFile.mkdirs())
+                    throw new Exception("创建对齐original文件目录失败！");
             }
 
             File topicFile = null;
@@ -92,14 +97,18 @@ public class CorpusPreHandler {
                 topicWriter = new OutputStreamWriter(new FileOutputStream(topicFile.getPath()+"//"+topic+"_topic", false), "UTF-8");
             if(!isEvaluation)
                 labelWriter = new OutputStreamWriter(new FileOutputStream(labelFile.getPath()+"//"+topic+"_label", false), "UTF-8");
-            if(isAlignFile)
+            if(isAlignFile){
                 alignOffsetWriter = new OutputStreamWriter(new FileOutputStream(alignOffsetFile.getPath()+"//"+topic+"_offset", false), "UTF-8");
+                alignOriginalWriter = new OutputStreamWriter(new FileOutputStream(alignOriginalFile.getPath()+"//"+topic+"_oiginal", false), "UTF-8");
+            }
             sentenceWriter = new OutputStreamWriter(new FileOutputStream(outputDir+"//"+topic+"_sentence", false), "UTF-8");
 
             // 获取head节点
             Iterator weiboIterator= root.elementIterator("weibo");
             while(weiboIterator.hasNext()){
                 offset = 0;
+                YNum = 0;
+                allSentence = "";
                 weiboElement = (Element) weiboIterator.next();
                 weiboId = weiboElement.attributeValue("id");
                 sentenceIterator = weiboElement.elementIterator("sentence");
@@ -114,6 +123,8 @@ public class CorpusPreHandler {
                     opinionated = sentenceElement.attributeValue("opinionated");
                     sentence = sentenceElement.getText().replaceAll("[“”＂]", "\"");
                     oSentence = sentence;
+                    if("Y".equals(opinionated))
+                        YNum++;
                     if(isAlignFile || "Y".equals(opinionated)){
                         //sentenceId = sentenceElement.attributeValue("id");
 
@@ -147,10 +158,14 @@ public class CorpusPreHandler {
 
                             // 寻找句子中的主题
                             if(topicWriter != null){
-                                Pair<String, String> result = getTopicAndContent(sentence, hashtag);
+                                Pair<String, String> result = getTopicAndContent(sentence, hashtag, false);
                                 sentence = result.second;
                                 // 处理主题空格前后均无标点的情况
                                 hashtag = handleSpaceInSentence(result.first);
+                            }
+                            if(isAlignFile){
+                                Pair<String, String> result = getTopicAndContent(sentence, hashtag, false);
+                                sentence = result.second;
                             }
 
                             // 处理正文空格前后均无标点的情况
@@ -159,6 +174,7 @@ public class CorpusPreHandler {
                             if(alignOffsetWriter != null && "Y".equals(opinionated))
                                 alignOffsetWriter.write(offset+"\n");
                             offset += oSentence.length();
+                            allSentence += sentence;
                         }
 
                         // 输出到文件
@@ -176,7 +192,7 @@ public class CorpusPreHandler {
                         }
                     }
                     else if(topicWriter != null){
-                        Pair<String, String> result = getTopicAndContent(sentence, hashtag);
+                        Pair<String, String> result = getTopicAndContent(sentence, hashtag, false);
                         // 处理主题空格前后均无标点的情况
                         hashtag = handleSpaceInSentence(result.first);
                     }
@@ -184,6 +200,12 @@ public class CorpusPreHandler {
                 if(!isEvaluation && isAlignFile){
                     labelWriter.write(weiboId+"\n");
                     sentenceWriter.write("\n");
+                    if(YNum > 0){
+                        for(int i=0; i<YNum; i++){
+                            alignOriginalWriter.write(allSentence);
+                            alignOriginalWriter.write("\n");
+                        }
+                    }
                 }
             }
         }catch(Exception e){
@@ -199,6 +221,8 @@ public class CorpusPreHandler {
                     topicWriter.close();
                 if(alignOffsetWriter != null)
                     alignOffsetWriter.close();
+                if(alignOriginalWriter != null)
+                    alignOriginalWriter.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -209,7 +233,7 @@ public class CorpusPreHandler {
     /*1）《XXX》在句首（其前可含其他符号）或句末（其后可含其他符号）出现，与正文以空格分开。
       2）【XXX】在句首出现
       3）以hashtag标注的主题。*/
-    public Pair<String, String> getTopicAndContent(String sentence, String hashtag){
+    public Pair<String, String> getTopicAndContent(String sentence, String hashtag, boolean isDeleteTopic){
         int startTagIndex, endTagIndex;
         String topic = "";
         // 获取当前主题
@@ -225,7 +249,10 @@ public class CorpusPreHandler {
                 } else
                     break;
             }
+            if(isDeleteTopic)
+                sentence = sentence.replaceAll("#.*#", "").trim();
             sentence = sentence.replaceAll("#", "").trim();
+
         }
         topic = (topic.equals(""))? hashtag : topic;
         // 处理句首或句末的《》

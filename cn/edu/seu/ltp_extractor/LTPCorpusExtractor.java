@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class LTPCorpusExtractor {
     public void extractorAll(String segDir, String depDir, String srDir,
                              String segTopicDir, String depTopicDir, String srTopicDir,
-                             String outputDir){
+                             String alignOriginalDir, String outputDir){
         File file = new File(outputDir);
         if(!file.exists()) {
             if(!file.mkdirs()){
@@ -23,6 +23,7 @@ public class LTPCorpusExtractor {
                 return;
             }
         }
+        LTPTargetExtractor.init();
 
         File[] readSegFileArray = (new File(segDir)).listFiles();
         File[] readDepFileArray = (new File(depDir)).listFiles();
@@ -30,9 +31,11 @@ public class LTPCorpusExtractor {
         File[] readSegTopicFileArray = (new File(segTopicDir)).listFiles();
         File[] readDepTopicFileArray = (new File(depTopicDir)).listFiles();
         File[] readSrTopicFileArray = (new File(srTopicDir)).listFiles();
+        File[] alignOriginalFileArray = (new File(alignOriginalDir)).listFiles();
         // 若数量不对等，则返回
         if(readSegFileArray.length !=  readDepFileArray.length || readDepFileArray.length !=  readSrFileArray.length
-                || readSegTopicFileArray.length !=  readDepTopicFileArray.length || readDepTopicFileArray.length !=  readSrTopicFileArray.length) {
+                || readSegTopicFileArray.length !=  readDepTopicFileArray.length || readDepTopicFileArray.length !=  readSrTopicFileArray.length
+                || readDepTopicFileArray.length !=  alignOriginalFileArray.length) {
             System.out.println("命名实体、依存关系和语义角色文件数目不匹配！");
             return;
         }
@@ -40,15 +43,17 @@ public class LTPCorpusExtractor {
         for(int i=0; i<readSegFileArray.length; ++i){
             extractorFile(readSegFileArray[i].getAbsolutePath(), readDepFileArray[i].getAbsolutePath(), readSrFileArray[i].getAbsolutePath(),
                     readSegTopicFileArray[i].getAbsolutePath(), readDepTopicFileArray[i].getAbsolutePath(), readSrTopicFileArray[i].getAbsolutePath(),
-                    outputDir+"//"+readSegFileArray[i].getName(),readSegFileArray[i].getName());
+                    alignOriginalFileArray[i].getAbsolutePath(), outputDir+"//"+readSegFileArray[i].getName(),readSegFileArray[i].getName());
         }
+
+        LTPTargetExtractor.destroy();
     }
 
     public void extractorFile(String segPath, String depPath, String srPath,
                               String segTopicPath, String depTopicPath, String srTopicPath,
-                              String outputFilePath, String fileName){
+                              String alignOriginalFilePath, String outputFilePath, String fileName){
         BufferedWriter writer = null;
-        BufferedReader bufferSegReader = null, bufferDepReader = null, bufferSrReader = null;
+        BufferedReader bufferSegReader = null, bufferDepReader = null, bufferSrReader = null, bufferOriginalReader = null;
         BufferedReader bufferSegTopicReader = null, bufferDepTopicReader = null, bufferSrTopicReader = null;
         try{
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(outputFilePath)), "UTF-8"));
@@ -59,17 +64,18 @@ public class LTPCorpusExtractor {
             bufferSegTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(segTopicPath)), "UTF-8"));
             bufferDepTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(depTopicPath)), "UTF-8"));
             bufferSrTopicReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srTopicPath)), "UTF-8"));
+            bufferOriginalReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(alignOriginalFilePath)), "UTF-8"));
 
             String segSentence="", depSentence="", srSentence="";
-            String segTopicSentence="", depTopicSentence="", srTopicSentence="";
+            String segTopicSentence="", depTopicSentence="", srTopicSentence="", originalSentence="";
             int i = 0;
             HashMap<Integer, HashMultimap<String, String>> outputMap = new HashMap();
-            while((segSentence=bufferSegReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null && (srSentence = bufferSrReader.readLine())!=null
+            while((segSentence=bufferSegReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null && (srSentence = bufferSrReader.readLine())!=null && (originalSentence=bufferOriginalReader.readLine())!=null
                     && (segTopicSentence=bufferSegTopicReader.readLine())!=null && (depTopicSentence = bufferDepTopicReader.readLine())!=null && (srTopicSentence = bufferSrTopicReader.readLine())!=null){
                 // 分别读取分词（包括了命名实体识别）、依存关系、语义角色文件，输出目标元组（评价对象，情感词）
                 LTPTargetExtractor extractor = new LTPTargetExtractor();
                 extractor.readTopicCorpusSentence(segTopicSentence, depTopicSentence, srTopicSentence);
-                extractor.readContentCorpusSentence(segSentence, depSentence, srSentence);
+                extractor.readContentCorpusSentence(segSentence, depSentence, srSentence, originalSentence);
                 //System.out.println(segSentence);
                 outputMap.put(i, extractor.extract());
                 i++;

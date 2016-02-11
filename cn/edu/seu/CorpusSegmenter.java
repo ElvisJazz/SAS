@@ -183,6 +183,22 @@ public class CorpusSegmenter {
     }
 
     // 分词
+    public String segmentSentenceUseLTP(String sentence){
+        List<String> words = new ArrayList<>();
+        List<String> postags = new ArrayList<>();
+        String nativeBytes = "";
+        int size = Segmentor.segment(sentence, words);
+        Postagger.postag(words, postags);
+        for(int i = 0; i < size; i++) {
+            nativeBytes += (words.get(i)+"/"+postags.get(i));
+            if(i != size-1) {
+                nativeBytes += ' ';
+            }
+        }
+        return nativeBytes;
+    }
+
+    // 分词
     public String segmentSentence(String sentence, boolean isPos){
         try {
                 String argu = "";
