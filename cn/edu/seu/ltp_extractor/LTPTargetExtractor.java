@@ -1,5 +1,6 @@
 package cn.edu.seu.ltp_extractor;
 
+import cn.edu.seu.CorpusSegmenter;
 import cn.edu.seu.utils.AlignUtil;
 import cn.edu.seu.utils.PunctuationUtil;
 import com.google.common.collect.HashMultimap;
@@ -36,8 +37,13 @@ public class LTPTargetExtractor {
         public int end;
     }
 
-    // 特殊名词
-    public static String specialNoun = " nh ni nl ns nz n ";
+    public static CorpusSegmenter segmenter = new CorpusSegmenter();
+   // 特殊名词
+    public static String SPECIAL_NOUN = " nh ni nl ns nz n ";
+    // 人称名词
+    public static String HUMAN_NOUN = " nh ";
+    // 特别处理的人称代词
+    public static String HUMAN_PRONOUN  = " 你 妳 他 她 你们 妳们 他们 她们 ";
     // 主题相关句子缓存
     private String segTopicSentence;
     private String depTopicSentence;
@@ -48,6 +54,7 @@ public class LTPTargetExtractor {
     private int length;
     // 对齐所需微博句子
     private String originalSentence;
+    private Map<Integer, String> originalNHMap = new LinkedHashMap<>();
 
     // 正文依存关系抽取对象
     private TargetExtractor depTargetExtractor;
@@ -81,10 +88,13 @@ public class LTPTargetExtractor {
 
     // 初始化
     public static void init(){
+        segmenter.useLTPSeg = segmenter.useLTPPos = true;
+        segmenter.init();
         //AlignUtil.init();
     }
 
     public static void destroy(){
+        segmenter.destroy();
         //AlignUtil.destroy();
     }
 
@@ -116,7 +126,9 @@ public class LTPTargetExtractor {
         srList = new ArrayList();
         readSR(srSentence, false);
         // 读取全句主语
-        readAllSubject();
+        //readAllSubject();
+        // 读取所有人名
+        readAllNH();
     }
 
     // 读取主题语料句子的命名实体、依存关系、语义角色
@@ -141,6 +153,21 @@ public class LTPTargetExtractor {
                 allSubjectMap.put(new Pair<>(node.beg, node.end), target);
             }
             index++;
+        }
+    }
+
+    // 读取所有人名
+    public void readAllNH(){
+        String segSentence = segmenter.segmentSentenceUseLTP(originalSentence);
+        String[] trunks = segSentence.split(" ");
+        int i = 0, ii = 0;
+        String tag;
+        for(String t : trunks){
+            i = t.lastIndexOf('/');
+            tag = t.substring(i + 1);
+            if(tag.equals(HUMAN_NOUN))
+                originalNHMap.put(ii, t.substring(0, i));
+            ii++;
         }
     }
 
@@ -543,6 +570,17 @@ public class LTPTargetExtractor {
         return "";
     }
 
+    // 获取最近的人名
+    public String getNeighborNH(int index){
+        String lastNH = "";
+        for(int i : originalNHMap.keySet()){
+            if(i > index)
+                break;
+            lastNH = originalNHMap.get(i);
+        }
+        return lastNH;
+    }
+
     // 获得连续名词
     public String getContinurousNoun(int index){
         String s = "";
@@ -651,7 +689,9 @@ public class LTPTargetExtractor {
             end++;
         }
         // 代词或隐性A0或A1指代搜寻
-        if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
+        if(extractor!=null && block.length()==1 && HUMAN_PRONOUN.contains(block+" "))
+            list.add(new Pair<>(extractor.getNeighborNH(start), ""));
+        else if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
             list.add(new Pair<>(getReferenceWord(start, extractor), ""));
         // 考虑是否被《》包裹
         if(block.startsWith("《") && block.endsWith("》"))
@@ -721,7 +761,7 @@ public class LTPTargetExtractor {
             List<Pair<Integer,String>> nrList = new ArrayList<>();
             boolean step = false;
             for(int i=start; i<=end; ++i){
-                if(specialNoun.contains(" "+tmpSegMap.get(i).first+" ")){
+                if(SPECIAL_NOUN.contains(" "+tmpSegMap.get(i).first+" ")){
                     // 判断不在《》中
                     for(Pair<Integer,Integer> bPair : bookQuotationList){
                         if(i>=bPair.first && i<=bPair.second){
@@ -968,7 +1008,7 @@ public class LTPTargetExtractor {
                     lastEntity += segMap.get(i).second;
                 }
             }*/
-            if(specialNoun.contains(" "+segMap.get(i).first+" ")){
+            if(SPECIAL_NOUN.contains(" "+segMap.get(i).first+" ")){
                 inRange = false;
                 for(Pair<Integer,Integer> rangePair : analyseRangeList){
                     if(i>=rangePair.first && i<=rangePair.second){

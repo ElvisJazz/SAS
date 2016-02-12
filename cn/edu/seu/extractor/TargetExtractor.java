@@ -15,10 +15,12 @@ import java.util.*;
  */
 class Node{
     public int index;
+    public String block;
     ArrayList<Pair<String, Node>> nextNodeArray = new ArrayList<Pair<String, Node>>();
 
-    public Node(int index){
+    public Node(int index, String block){
         this.index = index;
+        this.block = block;
     }
 }
 
@@ -37,6 +39,9 @@ public class TargetExtractor {
     // adv
     public final static String ADV_DEP_FOR_STF = "advmod";
     public final static String ADV_DEP_FOR_LTP = "ADV";
+    // coo
+    public final static String COO_DEP_FOR_STF = "conj";
+    public final static String COO_DEP_FOR_LTP = "COO";
     // 反转关系
     public final static String NEG_FOR_STF = "neg";
     // 副词消弱标记
@@ -95,27 +100,26 @@ public class TargetExtractor {
             return;
         String[] blockArray = sentence.split(" ");
         String tmp;
-        Node node = new Node(0);
+        Node node = new Node(0, "root");
         nodeMap.put(new Integer(0), node);
         for(int i=0; i<blockArray.length; ++i){
-            // 初始化节点
-            node = new Node(i+1);
-            nodeMap.put(new Integer(i+1), node);
+            tmp = blockArray[i].replaceAll("/[^\\s]*", "");
             // 是否是情感词
             if(isContainsSentiment(blockArray[i])){
-                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
                 potentialSentimentMap.put(new Integer(i+1), tmp);
             }
             // 是否是名词对象
             else if(isContainsTargetObject(blockArray[i])){
-                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
                 potentialNounMap.put(new Integer(i+1), tmp);
             }
             // 副词
             if(blockArray[i].contains("/d")){
-                tmp = blockArray[i].replaceAll("/[^\\s]*", "");
                 adverbMap.put(new Integer(i+1), tmp);
             }
+
+            // 初始化节点
+            node = new Node(i+1, tmp);
+            nodeMap.put(new Integer(i+1), node);
         }
     }
 
@@ -462,6 +466,19 @@ public class TargetExtractor {
         }
     }
 
+    // 并列评价对象搜索
+    public void cooRule(){
+        String coo = type.equals(EXTRACT_TYPE.LTP)? COO_DEP_FOR_LTP : COO_DEP_FOR_STF;
+        String target;
+        for(Pair<Integer,Integer> pair : depMap.get(coo)){
+            if(potentialNounMap.containsKey(pair.first) && targetPairMap.containsKey(target = potentialNounMap.get(pair.first))){
+                targetPairMap.putAll(nodeMap.get(pair.second).block, targetPairMap.get(target));
+            }else if(potentialNounMap.containsKey(pair.second) && targetPairMap.containsKey(target = potentialNounMap.get(pair.second))){
+                targetPairMap.putAll(nodeMap.get(pair.first).block, targetPairMap.get(target));
+            }
+        }
+    }
+
     // 分析并提取出目标元组，输出
     public HashMultimap<String, String> extract(){
         extractByRootRule();
@@ -469,6 +486,8 @@ public class TargetExtractor {
         extractByIndirectRule();
         extractByIndirectExRule();
         negReverse();
+        //cooRule();
+
         return targetPairMap;
     }
 
@@ -513,10 +532,10 @@ public class TargetExtractor {
         String extendLabelStr;
         String[] set;
         if(type == EXTRACT_TYPE.STF) {
-            extendLabelStr = "conj";
+            extendLabelStr = COO_DEP_FOR_STF;
             set = BASIC_TARGET_REL_SET_FOR_STF;
         }else {
-            extendLabelStr = "COO";
+            extendLabelStr = COO_DEP_FOR_LTP;
             set = BASIC_TARGET_REL_SET_FOR_LTP;
         }
         if(extendLabel && word.contains(extendLabelStr))
