@@ -225,6 +225,9 @@ public class TargetExtractor {
                 }
                 // 第二个词是情感词，并且第一个词是潜在名词对象
                 else if(potentialSentimentMap.containsKey(index2) && potentialNounMap.containsKey(index1)){
+                    // 若评价词是情感词后指，则忽略该评价对象
+                    if(Math.abs(SentimentSorter.getSentimentWordType(nodeMap.get(index2).block)) == 2)
+                        continue;
                     targetPairMap.put(potentialNounMap.get(index1), potentialSentimentMap.get(index2));
                 }
             }

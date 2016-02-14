@@ -256,6 +256,9 @@ public class CorpusPreHandler {
             }
             if(isDeleteTopic)
                 sentence = sentence.replaceAll("#.*#", "").trim();
+
+            sentence = sentence.replaceFirst("#", "").trim();
+            sentence = sentence.replaceFirst("#", ",").trim();
             sentence = sentence.replaceAll("#", "").trim();
 
         }
@@ -397,13 +400,9 @@ public class CorpusPreHandler {
     }
 
     public static  void main(String args[]){
-        String a = "@央视财经 请您睁大您明亮的双眼+++apos;澄海玩具如是毒玩具 ";
-        Pattern p = Pattern.compile("@\\S* ");
-        Matcher m = p.matcher(a);
-        while(m.find()){
-            String mStr = m.group();
-            a = a.replaceAll(mStr, mStr.substring(1, mStr.length()-1));
-        }
-        System.out.println(a);
+        String sentence = "#央视财经# ### 请您睁大您明亮的双眼+++apos;澄海玩具如是毒玩具 ";
+
+        sentence = sentence.replace("#", "").trim();
+        System.out.println(sentence);
     }
 }
