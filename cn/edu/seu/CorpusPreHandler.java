@@ -7,7 +7,9 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +21,9 @@ import java.util.regex.Pattern;
  * Time: 上午11:00
  * To change this template use File | Settings | File Templates.
  */
+
 public class CorpusPreHandler {
+
     // 预处理所有原始语料，生成待分析语料
     public void handleAllOriginalCorpus(String readDir, String outputDir, String outputTopicDir, boolean isAlignFile, boolean isEvaluation){
         File[] fileArray = (new File(readDir)).listFiles();
@@ -137,6 +141,7 @@ public class CorpusPreHandler {
                                 ++i;
                             }
                         }else{
+
                             // 处理句子中的(@)
                             sentence = sentence.replaceAll("[\\(（][^\n]*@[^\n]*[\\)）]", "");
                             sentence = sentence.replaceAll("（[^\n]*@[^\n]*）", "");
@@ -294,7 +299,7 @@ public class CorpusPreHandler {
         if(tmpTopic!=null && tmpTopic.length()>0)
             return new Pair<String, String>(tmpTopic.toString(), sentence);
         // 返回句子中#XXX#分割的主题
-        return new Pair<String, String>(topic, sentence);
+        return new Pair<>(topic, sentence);
     }
 
     // 判断是否是独立的书名号部分(必须包含句子其他成分)

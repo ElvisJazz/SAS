@@ -23,13 +23,13 @@ public class SentimentSorter {
     private final static String[] NEGATIVE_SENTIMENTS = {"消极", "错误", "悲伤", "渺小", "肮脏", "阻碍"};//
 
     // 正面评价词词典
-    private static Set<String> posOpinionDic = new HashSet<String>();
+    private static Set<String> posOpinionDic = new HashSet<>();
     // 负面评价词典
-    private static Set<String> negOpinionDic = new HashSet<String>();
+    private static Set<String> negOpinionDic = new HashSet<>();
     // 正面感情词词典
-    private static Set<String> posEmotionDic = new HashSet<String>();
+    private static Set<String> posEmotionDic = new HashSet<>();
     // 负面感情词典
-    private static Set<String> negEmotionDic = new HashSet<String>();
+    private static Set<String> negEmotionDic = new HashSet<>();
 
     // 相似度计算独享
     private static WordSimilarity WS = new WordSimilarity();
@@ -205,7 +205,7 @@ public class SentimentSorter {
         double maxPosScore = 0, maxNegScore = 0;
         double tmpPositiveScore, tmpNegativeScore;
         boolean isNegReverse = false;
-        double rate = 1.0;
+        double rate;
         for (String word : wordSet) {
             if(word.startsWith("{w}"))
                 rate = 0.5;

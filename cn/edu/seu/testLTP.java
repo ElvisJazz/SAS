@@ -2,6 +2,7 @@ package cn.edu.seu;
 
 import cn.edu.seu.extractor.CorpusExtractor;
 import cn.edu.seu.ltp_extractor.LTPCorpusExtractor;
+import cn.edu.seu.ltp_extractor.LTPTargetExtractor;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -20,6 +21,7 @@ public class testLTP {
         Scanner cin = new Scanner(System.in);
         // 语料预处理，生成纯句子+纯id标注
         CorpusPreHandler cph = new CorpusPreHandler();
+        //cph.init("corpus//dic//sentimentFilterDic.txt");
         System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5:run in all; 6:just run all sentiment extract" );
         while(cin.hasNext()){
             int a = cin.nextInt();
@@ -111,6 +113,7 @@ public class testLTP {
         // 潜在对象和情感词抽取
         if(runInAllExtract || runInAll || (cin.nextInt()) == 1) {
             LTPCorpusExtractor corpusExtractor = new LTPCorpusExtractor();
+            LTPTargetExtractor.initFilterDic("corpus//dic//sentimentFilterDic.txt");
             corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_semanticCorpus", "corpus//3_ltp_segmentTopicCorpus_pos",
                     "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_semanticTopicCorpus", "corpus//8_alignCorpus_original", "corpus//8_ltp_targetPairCorpus" );
         }

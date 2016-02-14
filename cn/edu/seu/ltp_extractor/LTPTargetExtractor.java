@@ -2,12 +2,14 @@ package cn.edu.seu.ltp_extractor;
 
 import cn.edu.seu.CorpusSegmenter;
 import cn.edu.seu.utils.AlignUtil;
+import cn.edu.seu.utils.LexUtil;
 import cn.edu.seu.utils.PunctuationUtil;
 import com.google.common.collect.HashMultimap;
 import edu.stanford.nlp.util.Pair;
 import cn.edu.seu.extractor.TargetExtractor;
 import cn.edu.seu.SentimentSorter;
 
+import java.io.*;
 import java.security.KeyPair;
 import java.util.*;
 
@@ -38,12 +40,6 @@ public class LTPTargetExtractor {
     }
 
     public static CorpusSegmenter segmenter = new CorpusSegmenter();
-   // 特殊名词
-    public static String SPECIAL_NOUN = " nh ni nl ns nz n ";
-    // 人称名词
-    public static String HUMAN_NOUN = " nh ";
-    // 特别处理的人称代词
-    public static String HUMAN_PRONOUN  = " 你 妳 他 她 你们 妳们 他们 她们 ";
     // 主题相关句子缓存
     private String segTopicSentence;
     private String depTopicSentence;
@@ -52,8 +48,11 @@ public class LTPTargetExtractor {
     // 指代寻找所需参量
     // 当前句子的长度
     private int length;
-    // 对齐所需微博句子
+    // 对齐所需整段微博句子
     private String originalSentence;
+    // 当前分析句子
+    private String currentSentence;
+    private String currentSegSentence;
     private Map<Integer, String> originalNHMap = new LinkedHashMap<>();
 
     // 正文依存关系抽取对象
@@ -85,6 +84,26 @@ public class LTPTargetExtractor {
     private List<Pair<Integer,Integer>> analyseRangeList = new ArrayList<>();
     // 当前主题
     private String topic = null;
+    // 情感句块过滤词典
+    private static Set<String> sentimentFilterDic = new HashSet<>();
+
+    // 初始化
+    public static void initFilterDic(String filterDicPath){
+        try {
+            String tmp;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filterDicPath)),"GBK"));
+            while((tmp=reader.readLine()) != null){
+                tmp = tmp.substring(0,tmp.length()).trim();
+                sentimentFilterDic.add(tmp);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     // 初始化
     public static void init(){
@@ -101,6 +120,8 @@ public class LTPTargetExtractor {
     // 读取文本语料句子的命名实体、依存关系、语义角色
     public void readContentCorpusSentence(String segSentence, String depSentence, String srSentence, String originalSentence) throws Exception {
         this.originalSentence = originalSentence;
+        currentSegSentence = segSentence;
+        currentSentence = "";
         // 记录词性标注等信息
         String tmp;
         length = 0;
@@ -114,6 +135,7 @@ public class LTPTargetExtractor {
             if(index != -1){
                 tmp = segs[i].substring(0, index);
                 segMap.put(i, new Pair<>(segs[i].substring(index+1), tmp));
+                currentSentence += tmp;
                 length += tmp.length();
             }
         }
@@ -165,7 +187,7 @@ public class LTPTargetExtractor {
         for(String t : trunks){
             i = t.lastIndexOf('/');
             tag = t.substring(i + 1);
-            if(tag.equals(HUMAN_NOUN))
+            if(LexUtil.HUMAN_NOUN.contains(" "+tag+" "))
                 originalNHMap.put(ii, t.substring(0, i));
             ii++;
         }
@@ -313,7 +335,7 @@ public class LTPTargetExtractor {
             opinion += "(";
             for(String adverb : adverbs) {
                 opinion += (adverb+" ");
-                for(String wAdv : TargetExtractor.WEAK_ADV){
+                for(String wAdv : LexUtil.WEAK_ADV){
                     if(wAdv.equals(adverb))
                         hasWeakAdv = true;
                 }
@@ -377,7 +399,7 @@ public class LTPTargetExtractor {
                 advWhite.add(false);
                 continue;
             }
-            for(String whiteWord : TargetExtractor.NOT_WHITE_SET){
+            for(String whiteWord : LexUtil.NOT_WHITE_SET){
                 if(adverb.contains(whiteWord)){
                     tFlag = true;
                     break;
@@ -397,7 +419,7 @@ public class LTPTargetExtractor {
                 i++;
                 continue;
             }
-            for(String notWord : TargetExtractor.NOT_SET){
+            for(String notWord : LexUtil.NOT_SET){
                 if(!advWhite.get(i) && notWord.equals(adverb)){
                     flag = !flag;
                     break;
@@ -409,30 +431,20 @@ public class LTPTargetExtractor {
         if(verb.equals(opinion))
             return flag;
         // 否定词白名单
-        for(String whiteWord : TargetExtractor.NOT_WHITE_SET){
+        for(String whiteWord : LexUtil.NOT_WHITE_SET){
             if(verb.contains(whiteWord)){
                 vWhite = true;
                 break;
             }
         }
         // 否定词
-        for(String notWord : TargetExtractor.NOT_SET){
+        for(String notWord : LexUtil.NOT_SET){
             if(!vWhite && notWord.equals(verb)){
                 flag = !flag;
                 break;
             }
         }
         return flag;
-    }
-
-    // 分析并提取出目标元组，输出
-    public HashMultimap<String, String> extract(){
-        extractByA0A1();
-        mark(0);
-        extractByATT();
-        extractByNE();
-        mark(1);
-        return resultTargetPairMap;
     }
 
     // 打标 markNum: 0,取自语义分析 1,取自依存分析
@@ -689,13 +701,13 @@ public class LTPTargetExtractor {
             end++;
         }
         // 代词或隐性A0或A1指代搜寻
-        if(extractor!=null && block.length()==1 && HUMAN_PRONOUN.contains(block+" "))
+        if(extractor!=null && block.length()==1 && LexUtil.HUMAN_PRONOUN.contains(" "+block+" "))
             list.add(new Pair<>(extractor.getNeighborNH(start), ""));
-        else if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
+        if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
             list.add(new Pair<>(getReferenceWord(start, extractor), ""));
         // 考虑是否被《》包裹
         if(block.startsWith("《") && block.endsWith("》"))
-            list.add(new Pair<>(block.substring(1, block.length()-1),""));
+            list.add(new Pair<>(block.substring(1, block.length() - 1),""));
         else{
             // ATT部分包括adj
             List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end, tmpSegMap, depMap.get("ATT"));
@@ -715,6 +727,8 @@ public class LTPTargetExtractor {
                     }
                     lastTmp = tmp1;
                 }
+                if(pair.first == pair.second && tmpSegMap.get(pair.first).first.equals("r"))
+                    continue;
                 for(int j=pair.first; j<pair.second; ++j)
                     target += tmpSegMap.get(j).second;
                 if(!tmpSegMap.get(pair.second).first.equals("nd"))
@@ -761,7 +775,7 @@ public class LTPTargetExtractor {
             List<Pair<Integer,String>> nrList = new ArrayList<>();
             boolean step = false;
             for(int i=start; i<=end; ++i){
-                if(SPECIAL_NOUN.contains(" "+tmpSegMap.get(i).first+" ")){
+                if(LexUtil.SPECIAL_NOUN.contains(" "+tmpSegMap.get(i).first+" ")){
                     // 判断不在《》中
                     for(Pair<Integer,Integer> bPair : bookQuotationList){
                         if(i>=bPair.first && i<=bPair.second){
@@ -880,11 +894,15 @@ public class LTPTargetExtractor {
             // A0 A1存在
             else */if((opinionCode=opinion.get(0).first) !=  0){
                 if(Math.abs(opinionCode)==1 && (node.A1==null || node.predication.first<node.A1.first.first)){
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this)) {
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
+                        putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                    }
                 }else{
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this))
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this)){
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
+                        putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                    }
                 }
             }
             // 副词情感
@@ -981,15 +999,11 @@ public class LTPTargetExtractor {
             extractNodeByA0A1(node, i);
         }
     }
+    // 去掉范围内情感词,获取待连接情感词
 
-    // NR抽取规则
-    public void extractByNE(){
-        // 利用依存关系抽取出与独立的命名实体直接关联的评价词
-        HashMap<Integer, String> potentialNounMap = new HashMap<>();
+    public void removeSentimentInRange(){
         Map<Integer,String> sentimentMap = depTargetExtractor.getPotentialSentimentMap();
         Set<Integer> senDelSet = new HashSet<>();
-        Boolean inRange;
-        String lastEntity = "";
         // 去掉已在范围内的情感词
         for(Pair<Integer,Integer> rangePair : analyseRangeList){
             for(int index : sentimentMap.keySet()){
@@ -999,7 +1013,15 @@ public class LTPTargetExtractor {
         }
         for(int index : senDelSet)
             sentimentMap.remove(index);
+    }
 
+    // NR抽取规则
+    public void extractByNE(){
+        // 利用依存关系抽取出与独立的命名实体直接关联的评价词
+        HashMap<Integer, String> potentialNounMap = new HashMap<>();
+        removeSentimentInRange();
+        Boolean inRange;
+        String lastEntity = "";
         for(int i=0; i<segMap.size(); ++i){
             /*if(analyseRangeList.size() == 0 && segMap.get(i).first.equals("n")){
                 if("".equals(lastEntity)){
@@ -1008,7 +1030,7 @@ public class LTPTargetExtractor {
                     lastEntity += segMap.get(i).second;
                 }
             }*/
-            if(SPECIAL_NOUN.contains(" "+segMap.get(i).first+" ")){
+            if(LexUtil.SPECIAL_NOUN.contains(" "+segMap.get(i).first+" ")){
                 inRange = false;
                 for(Pair<Integer,Integer> rangePair : analyseRangeList){
                     if(i>=rangePair.first && i<=rangePair.second){
@@ -1028,6 +1050,7 @@ public class LTPTargetExtractor {
             }
             if(!"".equals(lastEntity)){
                 potentialNounMap.put(i, lastEntity);
+                //System.out.println(lastEntity);
                 lastEntity = "";
             }
         }
@@ -1059,7 +1082,7 @@ public class LTPTargetExtractor {
         String tmp1, tmp2, phrase="", lastTmp="";
 
         // 去掉已在范围内的情感词
-       for(Pair<Integer,Integer> rangePair : analyseRangeList){
+        for(Pair<Integer,Integer> rangePair : analyseRangeList){
             for(int index : sentimentMap.keySet()){
                 if(index>=rangePair.first && index<=rangePair.second)
                     senDelSet.add(index);
@@ -1119,6 +1142,152 @@ public class LTPTargetExtractor {
             }
         }*/
         targetPairMap.putAll(resultMap);
+    }
+
+    // 通过人称代词寻找指代
+    public void extractByPronoun(){
+        // 利用依存关系抽取出与独立的命名实体直接关联的评价词
+        Map<Integer, String> potentialNounMap = new HashMap<>();
+        Map<String, Integer> pronIndexMap = new HashMap<>();
+        removeSentimentInRange();
+        Boolean inRange;
+        String pron = "";
+
+        for(int i=0; i<segMap.size(); ++i){
+            pron = segMap.get(i).second;
+            if(LexUtil.HUMAN_PRONOUN.contains(" "+pron+" ")){
+                inRange = false;
+                for(Pair<Integer,Integer> rangePair : analyseRangeList){
+                    if(i>=rangePair.first && i<=rangePair.second){
+                        inRange = true;
+                        break;
+                    }
+                }
+                if(!inRange) {
+                    analyseRangeList.add(new Pair<>(i, i));
+                    potentialNounMap.put(i+1, pron);
+                    if(!pronIndexMap.containsKey(pron))
+                        pronIndexMap.put(pron, i);
+                }
+            }
+        }
+        depTargetExtractor.clearResult();
+        depTargetExtractor.setPotentialNounMap(potentialNounMap);
+        HashMultimap<String, String> resultMap = depTargetExtractor.extract();
+        /*if(resultMap.containsKey("#")){
+            if(topic == null){
+                getTopicTarget();
+            }
+            if(!"".equals(topic)){
+                Set<String> values = resultMap.get("#");
+                resultMap.putAll(topic, values);
+                resultMap.removeAll("#");
+            }
+        }*/
+        String nh;
+        HashMultimap<String, String> newResultMap = HashMultimap.create();
+        for(String key : resultMap.keySet()){
+            if(pronIndexMap.containsKey(key)){
+                nh = getNeighborNH(pronIndexMap.get(key));
+                System.out.println(originalSentence+" "+nh);
+                if(!"".equals(nh))
+                    newResultMap.putAll(nh, resultMap.get(key));
+            }
+        }
+        targetPairMap.putAll(newResultMap);
+    }
+
+
+    // 分析并提取出目标元组，输出
+    public HashMultimap<String, String> extract(){
+        extractByA0A1();
+        //filterVirtualSentiment();
+        mark(0);
+        extractByATT();
+        extractByNE();
+        //extractByPronoun();
+        filterVirtualSentiment();
+        mark(1);
+        return resultTargetPairMap;
+    }
+    // 是否是宾语
+    public boolean isObject(String word){
+        HashMultimap<String, Pair<Integer, Integer>> depMap = depTargetExtractor.getDepMap();
+        int index = findIndexFromSeg(segMap, 0, word, false);
+        if(index == -1)
+            return false;
+        index++;
+        for(String dep : LexUtil.OBJECT_REL_SET_FOR_LTP){
+            for(Pair<Integer, Integer> pair : depMap.get(dep)){
+                if(pair.second == index)
+                    return true;
+            }
+        }
+        // ATT情况
+        for(Pair<Integer, Integer> pair : depMap.get("ATT")){
+            if(pair.first==index || pair.second==index)
+                return true;
+        }
+        return false;
+    }
+
+    // 过滤虚拟语态词附近的情感词
+    public void filterVirtualSentiment(){
+        List<Pair<Integer, Integer>> rangeList = new ArrayList<>();
+        int index, startIndex, endIndex = 0;
+        for(String word : sentimentFilterDic){
+            while(currentSegSentence.contains(" "+word+"/") && endIndex<currentSentence.length() && (index=currentSentence.indexOf(word, endIndex)) != -1){
+                if(isObject(word)){
+                    endIndex = index + 1;
+                    continue;
+                }
+                /*for(startIndex=index-1; startIndex>0; startIndex--){
+                    if(PunctuationUtil.END_PUNCTUATION.contains(originalSentence.charAt(startIndex)+""))
+                        break;
+                }
+                //*/startIndex = index;
+                for(endIndex=index+1; endIndex<currentSentence.length(); endIndex++){
+                    if(PunctuationUtil.END_PUNCTUATION.contains(currentSentence.charAt(endIndex)+""))
+                        break;
+                }
+                startIndex = startIndex < 0? 0 : startIndex;
+                System.out.println(word);
+                rangeList.add(new Pair<>(startIndex, endIndex));
+            }
+        }
+
+        boolean inRange;
+        HashMultimap<String, String> tmpTargetPairMap = HashMultimap.create();
+        for(String key : targetPairMap.keySet()){
+            inRange = false;
+            index = currentSentence.indexOf(key);
+            for(Pair<Integer,Integer> pair : rangeList){
+                if(index>=pair.first && index<=pair.second){
+                    inRange = true;
+                    break;
+                }
+            }
+            if(!inRange) {
+                for(String sen : targetPairMap.get(key)){
+                    startIndex = sen.indexOf('(');
+                    String word = sen.substring(0, startIndex);
+                    inRange = false;
+                    index = currentSentence.indexOf(word);
+                    for(Pair<Integer,Integer> pair : rangeList){
+                        if(index>=pair.first && index<=pair.second){
+                            inRange = true;
+                            break;
+                        }
+                    }
+                    if(!inRange)
+                        tmpTargetPairMap.put(key, sen);
+                    else{
+                        System.out.println(currentSentence+"\n"+key+" "+sen);
+                    }
+                }
+            }
+        }
+        targetPairMap = tmpTargetPairMap;
     }
 
     public static void main(String args[]){

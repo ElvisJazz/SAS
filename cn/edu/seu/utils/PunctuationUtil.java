@@ -10,5 +10,7 @@ package cn.edu.seu.utils;
 public class PunctuationUtil {
     // 标点符号
     public static String PUNCTUATION = "$% ,，、.。;；:!！?？-—_=+<>（）(){}|\\/*&^'\"”“’‘@#";
+    // 一般句末标点符号
+    public static String END_PUNCTUATION = ",，.。；;!！?？~";
 
 }

@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,16 +17,19 @@ import java.util.ArrayList;
  */
 public class Evaluator {
     // 存储精确评价下提交结果中正确的样例数
-    private ArrayList<Integer> seriousCorrectSet = new ArrayList<Integer>();
+    private List<Integer> seriousCorrectSet = new ArrayList<>();
     // 存储宽松评价下提交结果中正确的覆盖率
-    private ArrayList<Double> softCorrectForPSet = new ArrayList<Double>();
-    private ArrayList<Double> softCorrectForRSet = new ArrayList<Double>();
+    private List<Double> softCorrectForPSet = new ArrayList<>();
+    private List<Double> softCorrectForRSet = new ArrayList<>();
     //提交结果中总的样例数；评测文本中所有样例数
-    private ArrayList<Integer> allPostSet = new ArrayList<Integer>();
-    private ArrayList<Integer> allSystemSet = new ArrayList<Integer>();
+    private List<Integer> allPostSet = new ArrayList<>();
+    private List<Integer> allSystemSet = new ArrayList<>();
 
     // 统计各个文本中错误感情数
-    private ArrayList<Integer> wrongSentimentSet = new ArrayList<Integer>();
+    private List<Integer> wrongSentimentSet = new ArrayList<>();
+
+    // filename
+    private List<String> fileNames = new ArrayList<>();
 
     // 精确和宽松评价下提交结果中正确的样例数临时变量
     private int seriousCount = 0;
@@ -43,6 +47,7 @@ public class Evaluator {
         }
 
         for(int i=0; i<resultCorpusArray.length; ++i){
+            fileNames.add(resultCorpusArray[i].getName());
             evaluate(evaluateCorpusArray[i].getAbsolutePath(), resultCorpusArray[i].getAbsolutePath(), isSentiment);
             System.out.println(resultCorpusArray[i].getName()+"评测完成！");
         }
@@ -262,6 +267,9 @@ public class Evaluator {
             int fileNum = seriousCorrectSet.size();
 
             writer= new FileWriter(file);
+            for(int i=0; i<fileNum; ++i){
+                writer.write(i+"\t"+fileNames.get(i)+"\r\n");
+            }
             // 输出每个文件的精确评价下的正确样例数、宽松评价下的正确样例数、识别的样例数、系统的样例数
             writer.write("【序号】精确正确样例数 宽松正确样例数 识别的样例数 系统的样例数 感情错误的样例数\r\n");
             for(int i=0; i<fileNum; ++i){

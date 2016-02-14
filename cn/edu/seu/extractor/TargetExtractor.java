@@ -1,6 +1,7 @@
 package cn.edu.seu.extractor;
 
 import cn.edu.seu.SentimentSorter;
+import cn.edu.seu.utils.LexUtil;
 import com.google.common.collect.HashMultimap;
 import edu.stanford.nlp.util.Pair;
 
@@ -25,35 +26,11 @@ class Node{
 }
 
 public class TargetExtractor {
-    // 名词性惯用语,名词性语素,副动词,名动词,不及物动词（内动词）,动词性惯用语,动词性语素,形容词
-    public final static String[] OPINION_SET_FOR_STF = {"/nl", "/ng", "/a"};
-    public final static String[] OPINION_SET_FOR_LTP = {"/a", "/d", "/v", "/n", "/i"};
-    // 动词性情感词黑名单
-    public final static String[] BLACK_OPINION_SET = {"/vshi", "/vyou", "/vf", "/vx"};
-    // 基本目标依赖关系类型
-    public final static String[] BASIC_TARGET_REL_SET_FOR_STF = {"root", "dep", "subj", "mod", "comp", "nn"};
-    public final static String[] BASIC_TARGET_REL_SET_FOR_LTP = {"HED", "ATT", "SBV", "VOB", "FOB", "POB", "IOB", "ADV", "CMP"};
-    // 根关系
-    public final static String ROOT_FOR_STF = "root";
-    public final static String ROOT_FOR_LTP = "HED";
-    // adv
-    public final static String ADV_DEP_FOR_STF = "advmod";
-    public final static String ADV_DEP_FOR_LTP = "ADV";
-    // coo
-    public final static String COO_DEP_FOR_STF = "conj";
-    public final static String COO_DEP_FOR_LTP = "COO";
-    // 反转关系
-    public final static String NEG_FOR_STF = "neg";
-    // 副词消弱标记
-    public final static String[] WEAK_ADV = {}; // 只是 “仅仅，不过，而已”
-    // 否定词
-    public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "不大", "不太", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得","没什么"};
-    // 否定词白名单
-    public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
+
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
     private HashMultimap<String, String> targetPairMap = HashMultimap.create();
     // 候选名词
-    private HashMap<Integer, String> potentialNounMap = new HashMap<Integer, String>();
+    private Map<Integer, String> potentialNounMap = new HashMap<Integer, String>();
     // 候选情感词
     private HashMap<Integer, String> potentialSentimentMap = new HashMap<Integer, String>();
     // 副词
@@ -75,7 +52,7 @@ public class TargetExtractor {
     }
 
     // 设置潜在评价对象数组
-    public void setPotentialNounMap(HashMap<Integer, String> potentialNounMap){
+    public void setPotentialNounMap(Map<Integer, String> potentialNounMap){
         this.potentialNounMap = potentialNounMap;
     }
 
@@ -128,7 +105,7 @@ public class TargetExtractor {
         if(depSentence==null || depSentence.trim().equals(""))
             return;
         depSentence = depSentence.substring(1, depSentence.length()-1);
-        String advType = type.equals(EXTRACT_TYPE.STF)? ADV_DEP_FOR_STF:ADV_DEP_FOR_LTP;
+        String advType = type.equals(EXTRACT_TYPE.STF)? LexUtil.ADV_DEP_FOR_STF: LexUtil.ADV_DEP_FOR_LTP;
         depSentence += ", ";
         String[] blockArray = depSentence.split("\\), ");
         int index = 0, index2 = 0;
@@ -187,7 +164,7 @@ public class TargetExtractor {
             for(String adverb : indirectDepMap.get(sen)) {
                 if(adverb != null){
                     senStr += (adverb+" ");
-                    for(String wAdv : WEAK_ADV){
+                    for(String wAdv : LexUtil.WEAK_ADV){
                         if(wAdv.equals(adverb))
                             hasWeakAdv = true;
                     }
@@ -204,7 +181,7 @@ public class TargetExtractor {
 
     // Root规则抽取 ：情感词与主题关联
     public void extractByRootRule(){
-        String rootStr = (type.equals(EXTRACT_TYPE.LTP))? ROOT_FOR_LTP : ROOT_FOR_STF;
+        String rootStr = (type.equals(EXTRACT_TYPE.LTP))? LexUtil.ROOT_FOR_LTP : LexUtil.ROOT_FOR_STF;
         Set<Pair<Integer, Integer>> set = depMap.get(rootStr);
         Iterator<Pair<Integer,Integer>> iterator = set.iterator();
         if(iterator.hasNext()){
@@ -417,7 +394,7 @@ public class TargetExtractor {
                     if(adverb.equals(sentiment))
                         continue;
                     // 检测是否在白名单中
-                    for(String whiteWord : NOT_WHITE_SET){
+                    for(String whiteWord : LexUtil.NOT_WHITE_SET){
                         if(whiteWord.equals(adverb)){
                             isWhiteWord = true;
                             break;
@@ -430,7 +407,7 @@ public class TargetExtractor {
                     }
                     // 检测是否是否定词
                     else{
-                        for(String notWord : NOT_SET){
+                        for(String notWord : LexUtil.NOT_SET){
                             if(adverb.equals(notWord)){
                                 flag = !flag;
                             }
@@ -445,7 +422,7 @@ public class TargetExtractor {
         }
         // 依存关系反转
         if(type.equals(EXTRACT_TYPE.STF)){
-            Set<Pair<Integer,Integer>> negSet = depMap.get(NEG_FOR_STF);
+            Set<Pair<Integer,Integer>> negSet = depMap.get(LexUtil.NEG_FOR_STF);
             String sentimentStr;
             Iterator iterator = negSet.iterator();
             while(iterator.hasNext()){
@@ -468,7 +445,7 @@ public class TargetExtractor {
 
     // 并列评价对象搜索
     public void cooRule(){
-        String coo = type.equals(EXTRACT_TYPE.LTP)? COO_DEP_FOR_LTP : COO_DEP_FOR_STF;
+        String coo = type.equals(EXTRACT_TYPE.LTP)? LexUtil.COO_DEP_FOR_LTP : LexUtil.COO_DEP_FOR_STF;
         String target;
         for(Pair<Integer,Integer> pair : depMap.get(coo)){
             if(potentialNounMap.containsKey(pair.first) && targetPairMap.containsKey(target = potentialNounMap.get(pair.first))){
@@ -495,9 +472,9 @@ public class TargetExtractor {
     public boolean isContainsSentiment(String word){
         String[] set;
         if(type == EXTRACT_TYPE.STF)
-            set = OPINION_SET_FOR_STF;
+            set = LexUtil.OPINION_SET_FOR_STF;
         else
-            set = OPINION_SET_FOR_LTP;
+            set = LexUtil.OPINION_SET_FOR_LTP;
 
         for(String label : set){
             if(word.contains(label))
@@ -505,7 +482,7 @@ public class TargetExtractor {
         }
         if(word.contains("/v")){
             if(type == EXTRACT_TYPE.STF){
-                for(String label : BLACK_OPINION_SET){
+                for(String label : LexUtil.BLACK_OPINION_SET){
                     if(word.contains(label))
                         return false;
                 }
@@ -532,11 +509,11 @@ public class TargetExtractor {
         String extendLabelStr;
         String[] set;
         if(type == EXTRACT_TYPE.STF) {
-            extendLabelStr = COO_DEP_FOR_STF;
-            set = BASIC_TARGET_REL_SET_FOR_STF;
+            extendLabelStr = LexUtil.COO_DEP_FOR_STF;
+            set = LexUtil.BASIC_TARGET_REL_SET_FOR_STF;
         }else {
-            extendLabelStr = COO_DEP_FOR_LTP;
-            set = BASIC_TARGET_REL_SET_FOR_LTP;
+            extendLabelStr = LexUtil.COO_DEP_FOR_LTP;
+            set = LexUtil.BASIC_TARGET_REL_SET_FOR_LTP;
         }
         if(extendLabel && word.contains(extendLabelStr))
             return true;
