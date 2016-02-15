@@ -400,9 +400,9 @@ public class CorpusPreHandler {
     }
 
     public static  void main(String args[]){
-        String sentence = "#央视财经# ### 请您睁大您明亮的双眼+++apos;澄海玩具如是毒玩具 ";
+        String sentence = "nt";
 
-        sentence = sentence.replace("#", "").trim();
-        System.out.println(sentence);
+        boolean is = sentence.matches("(nt)|(nd)");
+        System.out.println(is);
     }
 }

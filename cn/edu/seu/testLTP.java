@@ -113,7 +113,7 @@ public class testLTP {
         // 潜在对象和情感词抽取
         if(runInAllExtract || runInAll || (cin.nextInt()) == 1) {
             LTPCorpusExtractor corpusExtractor = new LTPCorpusExtractor();
-            LTPTargetExtractor.initFilterDic("corpus//dic//sentimentFilterDic.txt");
+            LTPTargetExtractor.initDic("corpus//dic//sentimentFilterDic.txt", "corpus//dic//sentimentNounDic.txt");
             corpusExtractor.extractorAll("corpus//3_ltp_segmentCorpus_pos", "corpus//5_ltp_dependencyCorpus", "corpus//7_ltp_semanticCorpus", "corpus//3_ltp_segmentTopicCorpus_pos",
                     "corpus//5_ltp_dependencyTopicCorpus", "corpus//7_ltp_semanticTopicCorpus", "corpus//8_alignCorpus_original", "corpus//8_ltp_targetPairCorpus" );
         }

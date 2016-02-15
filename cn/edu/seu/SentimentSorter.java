@@ -50,7 +50,7 @@ public class SentimentSorter {
             // 读取词典
             for(int i=0; i<4; ++i){
                 while((tmp=bufVec.get(i).readLine()) != null){
-                    tmp = tmp.substring(0,tmp.length()).trim();
+                    tmp = tmp.trim();
                     setVec.get(i).add(tmp);
                 }
             }
@@ -106,7 +106,7 @@ public class SentimentSorter {
                 HashMultimap<String, String> nounSentimentMap = readNounSentiment(sentence);
                 // 分析当前句子
                 for (String noun : nounSentimentMap.keySet()) {
-                    String outputTag = compute(nounSentimentMap.get(noun), segSentence);
+                    String outputTag = compute(noun, nounSentimentMap.get(noun), segSentence);
                     if (!OTHER.equals(outputTag))
                         fileWriter.write("[" + noun + ", " + outputTag + "]");
                 }
@@ -200,25 +200,40 @@ public class SentimentSorter {
     }
 
     // 计算与种子词情感相似度值,返回正满POS，负面NEG,其他OTHER
-    public static String compute(Set<String> wordSet, String segSentence) {
+    public static String compute(String target, Set<String> wordSet, String segSentence) {
         double posScore = 0, negScore = 0;
         double maxPosScore = 0, maxNegScore = 0;
         double tmpPositiveScore, tmpNegativeScore;
         boolean isNegReverse = false;
-        double rate;
+        double rate, baseScore, score;
+        String oSentence = segSentence.replaceAll("/\\S*\\s*", "");
+        int index = oSentence.indexOf(target);
+        index = index==-1? 0 : index;
+        int sIndex;
         for (String word : wordSet) {
+            // 计算基础分，由距离和词性决定
+            sIndex = oSentence.indexOf(word);
+            if(sIndex == index)
+                sIndex = index - 1;
+            if(segSentence.contains(word+"/d"))
+                baseScore = 0.7;//*Math.log(oSentence.length()/Math.abs(index-sIndex));
+            else
+                baseScore = 1.0;//*Math.log(oSentence.length()/Math.abs(index-sIndex));
+            // 计算分值系数
             if(word.startsWith("{w}"))
                 rate = 0.5;
             else
                 rate = 1.0;
-            word = word.substring(3);
+            score = baseScore*rate;
+
             // 处理反转情况 ,形如： (-)高兴
+            word = word.substring(3);
             if(word.contains("(-)")){
                 isNegReverse = true;
                 word = word.substring(3);
             }
             // 问号反转
-            int index = segSentence.indexOf(word);
+            index = segSentence.indexOf(word);
             if(index != -1){
                 index = segSentence.indexOf("/w", index);
                 if(index!=-1 && (segSentence.charAt(index-1)=='？' || segSentence.charAt(index-1)=='?')){
@@ -228,7 +243,7 @@ public class SentimentSorter {
                         isNegReverse = true;
                 }
             }
-
+            // 处理形容词含“的”的情况
             if(word.length() > 2 && word.contains("的")){
                 //System.out.println(word);
                 index = word.indexOf("的");
@@ -238,6 +253,7 @@ public class SentimentSorter {
                     word = word.substring(index+1);
             }
 
+            // 相似度计算
             for (int i = 0; i < POSITIVE_SENTIMENTS.length; ++i) {
                 tmpPositiveScore = WS.simWord(word, POSITIVE_SENTIMENTS[i]);
                 tmpNegativeScore = WS.simWord(word, NEGATIVE_SENTIMENTS[i]);
@@ -248,15 +264,15 @@ public class SentimentSorter {
 
                 if (tmpPositiveScore > tmpNegativeScore) {
                     if(isNegReverse){
-                        negScore += rate;
+                        negScore += score;
                     }else{
-                        posScore += rate;
+                        posScore += score;
                     }
                 } else if (tmpNegativeScore > tmpPositiveScore) {
                     if(isNegReverse){
-                        posScore += rate;
+                        posScore += score;
                     }else{
-                        negScore += rate;
+                        negScore += score;
                     }
                 }
             }
@@ -264,15 +280,15 @@ public class SentimentSorter {
                 // 从情感词典中匹配
                 if(posOpinionDic.contains(word) || posEmotionDic.contains(word)) {
                     if(isNegReverse){
-                        negScore += rate;
+                        negScore += score;
                     }else{
-                        posScore += rate;
+                        posScore += score;
                     }
                 }else if(negOpinionDic.contains(word) || negEmotionDic.contains(word)){
                     if(isNegReverse){
-                        posScore += rate;
+                        posScore += score;
                     }else{
-                        negScore += rate;
+                        negScore += score;
                     }
                 }
             }
