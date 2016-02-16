@@ -24,7 +24,7 @@ public class AlignUtil {
 
     public static void init(){
         segmenter.useLTPPos = segmenter.useLTPSeg = true;
-        segmenter.init();
+        segmenter.init("corpus//dic//scoreFilterDic.txt");
         dependencyParser.useLTPDep = true;
         dependencyParser.init();
     }

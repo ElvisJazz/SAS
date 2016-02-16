@@ -58,7 +58,7 @@ public class testLTP {
             CorpusSegmenter seg = new CorpusSegmenter();
             seg.useLTPSeg = true;
             seg.useLTPPos = true;
-            if(!seg.init())
+            if(!seg.init("corpus//dic//scoreFilterDic.txt"))
                 return;
             // 批量生成带pos的分词
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_ltp_segmentCorpus_noPos", false);

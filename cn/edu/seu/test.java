@@ -46,7 +46,7 @@ public class test {
         // 分词操作
         if(a == 1) {
             CorpusSegmenter seg = new CorpusSegmenter();
-            if(!seg.init())
+            if(!seg.init("corpus//dic//scoreFilterDic.txt"))
                 return;
             // 批量生成带pos和不带pos的分词
             seg.batchSegment("corpus//2_preprocessCorpus", "corpus//3_segmentCorpus_pos", true);

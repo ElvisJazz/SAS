@@ -35,7 +35,8 @@ public class CorpusSegmenter {
     }
 
     //  初始化
-    public boolean init(){
+    public boolean init(String coreDicPath){
+        CoreSentenceFilter.readDic(coreDicPath);
         if(useLTPSeg){
             if(Segmentor.create("ltp_data/cws.model") < 0){
                 System.err.println("load failed");
@@ -162,7 +163,7 @@ public class CorpusSegmenter {
                 else
                     nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
             }
-            writer.write(nativeBytes);
+            writer.write(CoreSentenceFilter.filter(nativeBytes));
 
             System.out.println(outputFileName + "分词完成！");
 
@@ -195,7 +196,7 @@ public class CorpusSegmenter {
                 nativeBytes += ' ';
             }
         }
-        return nativeBytes;
+        return CoreSentenceFilter.filter(nativeBytes);
     }
 
     // 分词

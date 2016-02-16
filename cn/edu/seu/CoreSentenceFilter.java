@@ -1,5 +1,6 @@
 package cn.edu.seu;
 
+import cn.edu.seu.utils.PunctuationUtil;
 import edu.stanford.nlp.util.Pair;
 
 import java.io.*;
@@ -27,7 +28,7 @@ public class CoreSentenceFilter {
     public final static String CON = "con";
 
     // 读取核心过滤规则词典
-    public void readDic(String dicPath){
+    public static void readDic(String dicPath){
         // 情感句块过滤词典
         Map<String, Set> setMap = new HashMap<>();
         setMap.put(AXB, AXBDic);
@@ -35,10 +36,12 @@ public class CoreSentenceFilter {
         setMap.put(CON, contrastDic);
         String tmp;
         String[] line;
-        BufferedReader reader;
+        BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(dicPath)),"GBK"));
             while((tmp=reader.readLine()) != null){
+                if("".equals(tmp))
+                    continue;
                 line = tmp.trim().split(" ");
                 if(AXB.equals(line[0])){
                     setMap.get(AXB).add(new Pair<>(line[1], line[2]));
@@ -52,24 +55,113 @@ public class CoreSentenceFilter {
             e.printStackTrace();
         }catch (IOException e) {
             e.printStackTrace();
+        }finally {
+            if(reader != null)
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
         }
     }
 
-    // 过滤"就...而言，据...报道"之类的句块
-    public static String filterByAXBRule(String sentence){
+    // 过滤
+    public static String filter(String segSentence){
+        segSentence = " " + segSentence + " ";
+        String result = filterByAXBRule(segSentence);
+        result = filterByStatementRule(result);
+        result = filterByContrastRule(result);
+        return result.trim();
+    }
 
-        return sentence;
+    // 过滤"就...而言，据...报道"之类的句块
+    private static String filterByAXBRule(String segSentence){
+        int index1, index2, index3;
+        boolean hasPunctuation;
+        for(Pair<String,String> pair : AXBDic){
+            index1 = segSentence.indexOf(" "+pair.first+"/");
+            index2 = segSentence.indexOf(" "+pair.second+"/", index1+1);
+            index3 = segSentence.indexOf(" ", index2+1);
+            if(index1!=-1 && index2!=-1 && index3!=-1){
+                hasPunctuation = false;
+                for(int i=index1; i<index2; i++){
+                    if(PunctuationUtil.END_PUNCTUATION.contains(""+segSentence.charAt(i))){
+                        hasPunctuation = true;
+                        break;
+                    }
+                }
+                if(!hasPunctuation){
+                    if(PunctuationUtil.END_PUNCTUATION.contains(""+segSentence.charAt(index3+1)))
+                        index3 = segSentence.indexOf(" ", index3+1);
+
+                    index2 = index3+1;
+                    segSentence = segSentence.replace(segSentence.substring(index1, index2), "");
+                }
+            }
+        }
+        return segSentence;
     }
 
     // 过滤"说，认为，主张"之类的陈述性句块
-    public static String filterByStatementRule(String sentence){
+    private static String filterByStatementRule(String segSentence){
+        int index1, index2, index3, lastIndex;
+        for(String sta : statementDic){
+            lastIndex = 0;
+            index2 = segSentence.indexOf(" "+sta+"/");
+            index1 = segSentence.lastIndexOf("/n", index2 - 1);
+            // 往前寻找连续的名词
+            index3 = index1;
+            while(index3 != -1){
+                if(segSentence.charAt(index3+1) != 'n')
+                    break;
+                lastIndex = index3;
+                index3 = segSentence.lastIndexOf("/", index3-1);
+            }
+            if(index1!=-1 && index2!=-1){
+                index1 = segSentence.lastIndexOf(" ", lastIndex);
+                index3 = segSentence.indexOf(" ", index2+1);
+                if(PunctuationUtil.STATEMENT_PUNCTUATION.contains(""+segSentence.charAt(index3+1)))
+                    index3 = segSentence.indexOf(" ", index3+1);
 
-        return sentence;
+                index2 = index3+1;
+                segSentence = segSentence.replace(segSentence.substring(index1+1, index2), "");
+            }
+        }
+        return segSentence;
     }
 
     // 转折句式，根据情况保留转折成分
-    public static String filterByContrastRule(String sentence){
+    private static String filterByContrastRule(String segSentence){
+        /*int index1, index2, index3, lastIndex;
+        for(String con : contrastDic){
+            lastIndex = 0;
+            index2 = segSentence.indexOf(" "+con+"/");
+            index1 = segSentence.lastIndexOf("/n", index2-1);
+            // 往前寻找连续的名词
+            index3 = index1;
+            while(index3 != -1){
+                if(segSentence.charAt(index3+1) != 'n')
+                    break;
+                lastIndex = index3;
+                index3 = segSentence.lastIndexOf("/", index3-1);
+            }
+            if(index1!=-1 && index2!=-1){
+                index1 = segSentence.lastIndexOf(" ", lastIndex);
+                index3 = segSentence.indexOf(" ", index2);
+                if(PunctuationUtil.END_PUNCTUATION.contains(""+segSentence.charAt(index3+1)))
+                    index3 = segSentence.indexOf(" ", index3+1);
 
-        return sentence;
+                index2 = index3+1;
+                segSentence = segSentence.replace(segSentence.substring(index1+1, index2), "");
+            }
+        }*/
+        return segSentence;
+    }
+
+    public static void main(String[] args){
+        String s = "就/p 我/r 推测/v ，/wp 你/r 还是/v 个/q 孩子/n 啊/u ！/wp 汪峰/nh 分析/v 我/r 不/d 会/v 永远/d  上/v  不/d  了/v  头条/n  ！/wp";
+        CoreSentenceFilter.readDic("corpus//dic//scoreFilterDic.txt");
+        s = CoreSentenceFilter.filter(s);
+        System.out.println(s);
     }
 }

@@ -118,7 +118,7 @@ public class LTPTargetExtractor {
     // 初始化
     public static void init(){
         segmenter.useLTPSeg = segmenter.useLTPPos = true;
-        segmenter.init();
+        segmenter.init("corpus//dic//scoreFilterDic.txt");
         //AlignUtil.init();
     }
 
@@ -241,13 +241,12 @@ public class LTPTargetExtractor {
             String type, seq, lastSeq="", lastType="", space="";
             int beg, end, lastEnd=0;
             boolean isRepeatA = false;
+            boolean isTargetTag = true;
             while(i<seqs.length){
                 type = seqs[i].replaceAll("type=", "");
-                beg =  Integer.valueOf(seqs[i+1].replaceAll("beg=", ""));
+                beg =  Integer.valueOf(seqs[i + 1].replaceAll("beg=", ""));
                 end =  Integer.valueOf(seqs[i+2].replaceAll("end=", ""));
                 seq =  seqs[i+3].replaceAll("seq=", "");
-                minBeg = (minBeg<beg)? minBeg : beg;
-                maxEnd = (maxEnd>end)? maxEnd : end;
                 // 如果上一次type为副词或A0或A1，且这一次也是同样的标注，则选择其一或合并
                 /*if(lastType.equals(type)) {
                     // 副词
@@ -288,11 +287,19 @@ public class LTPTargetExtractor {
                     node.A2 = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("ADV")){
                     node.adverb = new Pair<>(new Pair<>(beg,end), seq);
+                }else{
+                    isTargetTag = false;
+                }
+
+                if(isTargetTag){
+                    minBeg = (minBeg<beg)? minBeg : beg;
+                    maxEnd = (maxEnd>end)? maxEnd : end;
                 }
                 //lastEnd = end;
                 if(lastType.equals(type) && (type.equals("A0")))
                     isRepeatA = true;
                 lastType = type;
+                isTargetTag = true;
                 //lastSeq = seq;
                 i += 4;
             }
@@ -728,9 +735,10 @@ public class LTPTargetExtractor {
 
     // 从某一成分中抽出潜在评价对象和评价词
     public static List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair,
-                                                                         Map<Integer, Pair<String,String>> tmpSegMap, HashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor){
+            Map<Integer, Pair<String,String>> tmpSegMap, HashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor){
         String block = "";
 
+        boolean findMQ = false;
         int start=0, end=0;
         if(nodeAPair != null){
             block = nodeAPair.second;
@@ -765,6 +773,16 @@ public class LTPTargetExtractor {
             String target = "", opinion = "";
             String tmp1, tmp2, lastTmp="";
             for(Pair<Integer,Integer> pair : targetRangeList){
+                if(tmpSegMap.get(pair.first).first.equals("m") && pair.first+1<tmpSegMap.size() && tmpSegMap.get(pair.first+1).first.equals("q")){
+                    findMQ = true;
+                    for(int ii=pair.first; ii<=pair.second; ii++)
+                        System.out.print(tmpSegMap.get(ii).second);
+                    System.out.println();
+                    continue;
+                }
+                if(pair.first == pair.second && tmpSegMap.get(pair.first).first.equals("r"))
+                    continue;
+
                 for(int i=pair.first; i<pair.second; ++i){
                     tmp1 = tmpSegMap.get(i).first;
                     tmp2 = tmpSegMap.get(i+1).first;
@@ -778,8 +796,6 @@ public class LTPTargetExtractor {
                     }
                     lastTmp = tmp1;
                 }
-                if(pair.first == pair.second && tmpSegMap.get(pair.first).first.equals("r"))
-                    continue;
                 for(int j=pair.first; j<pair.second; ++j)
                     target += tmpSegMap.get(j).second;
                 if(!tmpSegMap.get(pair.second).first.equals("nd"))
@@ -869,7 +885,7 @@ public class LTPTargetExtractor {
                 list.add(new Pair<>(lastPair.second, ""));
         }
         if(list.size() == 0){
-            if(isAdj(tmpSegMap.get(end).first))
+            if(isAdj(tmpSegMap.get(end).first) || findMQ)
                 block = "";
             list.add(new Pair<>(block, ""));
         }
@@ -1051,7 +1067,7 @@ public class LTPTargetExtractor {
                 }
             }
             //if(putOne)
-            analyseRangeList.add(new Pair<>(node.beg, node.end));
+                analyseRangeList.add(new Pair<>(node.beg, node.end));
         }/*else if(node.A1!=null && ((node.predication!=null && node.predication.first<node.A1.first.first
                 && node.predication.second.matches(".*[\\u6709\\u6ca1\\u65e0].*")) ||
                 (node.adverb!=null  && node.adverb.first.first<node.A1.first.first
@@ -1182,6 +1198,14 @@ public class LTPTargetExtractor {
                 // 处理n+de+a, a+de+n等情况
                 boolean isStep = false;
                 boolean onlyHasMQ = true;
+
+                if(segMap.get(attPair.first).first.equals("m") && attPair.first+1<segMap.size() && segMap.get(attPair.first+1).first.equals("q")){
+                    for(int ii=attPair.first; ii<=attPair.second; ii++)
+                        System.out.print(segMap.get(ii).second);
+                    System.out.println();
+                    continue;
+                }
+
                 for(int i=attPair.first; i<attPair.second; ++i){
                     tmp1 = segMap.get(i).first;
                     tmp2 = segMap.get(i+1).first;
