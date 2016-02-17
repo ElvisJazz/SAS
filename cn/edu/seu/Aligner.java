@@ -112,13 +112,14 @@ public class Aligner {
                 if(alignSentence==null || objectSentence==null)
                     break;
 
+                alignOffset = Integer.parseInt(alignOffsetFileBufferReader.readLine());
+                originalSentence  = alignOriginalFileBufferReader.readLine();
+                preSentence = preFileBufferReader.readLine();
+
                 if("".equals(objectSentence)){
                     writer.write("\n");
                     continue;
                 }
-                alignOffset = Integer.parseInt(alignOffsetFileBufferReader.readLine());
-                originalSentence  = alignOriginalFileBufferReader.readLine();
-                preSentence = preFileBufferReader.readLine();
                 // 循环读取句子中的情感词对
                 while(true){
                     index1 = objectSentence.indexOf("[", index3);
@@ -143,7 +144,7 @@ public class Aligner {
                             startIndex = alignSentence.lastIndexOf(tmpWord, alignOffset);
                         endIndex = startIndex + tmpWord.length() - 1;
                         if(startIndex != -1)
-                            tmpResultMap.put(startIndex, new Pair<Integer, String>(endIndex, tmpLabel));
+                            tmpResultMap.put(startIndex, new Pair<>(endIndex, tmpLabel));
                     }else{
                         for(Integer num1 : tmpResultMap.keySet()) {
                             writer.write("["+String.valueOf(num1)+","+String.valueOf(tmpResultMap.get(num1).first)+","+tmpResultMap.get(num1).second+"]");

@@ -140,9 +140,11 @@ public class CorpusSegmenter {
             }else if(useLTPPos && isPos){
                 List<String> words;
                 List<String> postags = new ArrayList<String>();
+                String tmpS;
                 int size = 0, index = 0;
                 String[] sentences = sInput.split("\n");
                 for(String s : sentences){
+                    tmpS = "";
                     if(index == sentences.length-1)
                         break;
                     index++;
@@ -150,12 +152,13 @@ public class CorpusSegmenter {
                     words = Arrays.asList(s.split(" "));
                     size = Postagger.postag(words, postags);
                     for(int i = 0; i < size; i++) {
-                        nativeBytes += (words.get(i)+"/"+postags.get(i));
+                        tmpS += (words.get(i)+"/"+postags.get(i));
                         if(i != size-1) {
-                            nativeBytes += ' ';
+                            tmpS += ' ';
                         }
                     }
-                    nativeBytes += '\n';
+                    tmpS = CoreSentenceFilter.filter(tmpS);
+                    nativeBytes += (tmpS + '\n');
                 }
             }else{
                 if(isPos)
@@ -163,7 +166,7 @@ public class CorpusSegmenter {
                 else
                     nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
             }
-            writer.write(CoreSentenceFilter.filter(nativeBytes));
+            writer.write(nativeBytes);
 
             System.out.println(outputFileName + "分词完成！");
 

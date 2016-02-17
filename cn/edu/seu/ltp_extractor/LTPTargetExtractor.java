@@ -773,13 +773,13 @@ public class LTPTargetExtractor {
             String target = "", opinion = "";
             String tmp1, tmp2, lastTmp="";
             for(Pair<Integer,Integer> pair : targetRangeList){
-                if(tmpSegMap.get(pair.first).first.equals("m") && pair.first+1<tmpSegMap.size() && tmpSegMap.get(pair.first+1).first.equals("q")){
+               /* if(tmpSegMap.get(pair.first).first.equals("m") && pair.first+1<tmpSegMap.size() && tmpSegMap.get(pair.first+1).first.equals("q")){
                     findMQ = true;
                     for(int ii=pair.first; ii<=pair.second; ii++)
                         System.out.print(tmpSegMap.get(ii).second);
                     System.out.println();
                     continue;
-                }
+                }*/
                 if(pair.first == pair.second && tmpSegMap.get(pair.first).first.equals("r"))
                     continue;
 
@@ -1199,12 +1199,12 @@ public class LTPTargetExtractor {
                 boolean isStep = false;
                 boolean onlyHasMQ = true;
 
-                if(segMap.get(attPair.first).first.equals("m") && attPair.first+1<segMap.size() && segMap.get(attPair.first+1).first.equals("q")){
+                /*if(segMap.get(attPair.first).first.equals("m") && attPair.first+1<segMap.size() && segMap.get(attPair.first+1).first.equals("q")){
                     for(int ii=attPair.first; ii<=attPair.second; ii++)
                         System.out.print(segMap.get(ii).second);
                     System.out.println();
                     continue;
-                }
+                }*/
 
                 for(int i=attPair.first; i<attPair.second; ++i){
                     tmp1 = segMap.get(i).first;

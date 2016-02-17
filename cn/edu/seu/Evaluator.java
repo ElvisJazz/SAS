@@ -1,9 +1,6 @@
 package cn.edu.seu;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +28,8 @@ public class Evaluator {
     // filename
     private List<String> fileNames = new ArrayList<>();
 
+    FileWriter ww;
+
     // 精确和宽松评价下提交结果中正确的样例数临时变量
     private int seriousCount = 0;
     private double softCountForP = 0.0;
@@ -39,6 +38,7 @@ public class Evaluator {
 
     // 评估所有文件
     public void evaluateAll(String evaluateCorpusDir, String resultCorpusDir, boolean isSentiment){
+
         File[] evaluateCorpusArray = (new File(evaluateCorpusDir)).listFiles();
         File[] resultCorpusArray = (new File(resultCorpusDir)).listFiles();
         if(evaluateCorpusArray.length != resultCorpusArray.length){
@@ -48,10 +48,15 @@ public class Evaluator {
 
         for(int i=0; i<resultCorpusArray.length; ++i){
             fileNames.add(resultCorpusArray[i].getName());
-            evaluate(evaluateCorpusArray[i].getAbsolutePath(), resultCorpusArray[i].getAbsolutePath(), isSentiment);
-            System.out.println(resultCorpusArray[i].getName()+"评测完成！");
+            try {
+                ww = new FileWriter(new File(resultCorpusArray[i].getName()));
+                evaluate(evaluateCorpusArray[i].getAbsolutePath(), resultCorpusArray[i].getAbsolutePath(), isSentiment);
+                System.out.println(resultCorpusArray[i].getName()+"评测完成！");
+                ww.close();
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         }
-
     }
 
     // 评估单个文件
@@ -86,6 +91,7 @@ public class Evaluator {
             String systemLine[] = evaluateStr.split("\n");
             for(int i=0; i<postLine.length; ++i){
                 computeCorrect(postLine[i], systemLine[i], isSentiment);
+                ww.write("\n");
             }
             seriousCorrectSet.add(new Integer(seriousCount));
             softCorrectForPSet.add(new Double(softCountForP));
@@ -138,7 +144,8 @@ public class Evaluator {
         String startSystemIndex = null, endSystemIndex = null;
         String postSentiment = null, systemSentiment = null;
         double matchLength = 0.0, allLengthForP = 0.0, allLengthForR = 0.0;
-        Integer startPostIndexValue, endPostIndexValue,startSystemIndexValue,endSystemIndexValue;
+        boolean isStepReadPost = false;
+        Integer startPostIndexValue = 0, endPostIndexValue = 0,startSystemIndexValue = 0,endSystemIndexValue = 0;
         // 分别获取提交和系统行中的起始位置和情感词
        while(true){
            systemIndex1 = systemLine.indexOf('[', systemIndex2);
@@ -162,56 +169,72 @@ public class Evaluator {
 
            if(startSystemIndex!=null && endSystemIndex!=null && systemSentiment!=null){
                while(true){
-                   postIndex1 = postLine.indexOf('[', postIndex2);
-                   if(postIndex1 == -1)
-                       return;
-                   postIndex2 = postLine.indexOf(',', postIndex1);
-                   if(postIndex2 == -1)
-                       return;
-                   startPostIndex = postLine.substring(postIndex1+1, postIndex2);
-                   postIndex1 = postLine.indexOf(',', postIndex2+1);
-                   if(postIndex1 == -1)
-                       return;
-                   endPostIndex = postLine.substring(postIndex2+1, postIndex1);
-                   postIndex2 = postLine.indexOf(']', postIndex1+1);
-                   if(postIndex2 == -1)
-                       return;
-                   postSentiment = postLine.substring(postIndex1+1, postIndex2);
+                   if(!isStepReadPost){
+                       postIndex1 = postLine.indexOf('[', postIndex2);
+                       if(postIndex1 == -1)
+                           return;
+                       postIndex2 = postLine.indexOf(',', postIndex1);
+                       if(postIndex2 == -1)
+                           return;
+                       startPostIndex = postLine.substring(postIndex1+1, postIndex2);
+                       postIndex1 = postLine.indexOf(',', postIndex2+1);
+                       if(postIndex1 == -1)
+                           return;
+                       endPostIndex = postLine.substring(postIndex2+1, postIndex1);
+                       postIndex2 = postLine.indexOf(']', postIndex1+1);
+                       if(postIndex2 == -1)
+                           return;
+                       postSentiment = postLine.substring(postIndex1+1, postIndex2);
 
-                   // 提交部分已遍历完
-                   if(startPostIndex==null || endPostIndex==null || postSentiment==null)
-                       return;
+                       // 提交部分已遍历完
+                       if(startPostIndex==null || endPostIndex==null || postSentiment==null)
+                           return;
 
-                   // 判断标注部分是否与系统当前的标注部分有重叠
-                   startPostIndexValue = Integer.valueOf(startPostIndex);
-                   endPostIndexValue = Integer.valueOf(endPostIndex);
-
+                       // 判断标注部分是否与系统当前的标注部分有重叠
+                       startPostIndexValue = Integer.valueOf(startPostIndex);
+                       endPostIndexValue = Integer.valueOf(endPostIndex);
+                   }
                    if((startPostIndexValue>=startSystemIndexValue && startPostIndexValue<=endSystemIndexValue) ||
-                           (endPostIndexValue>=startSystemIndexValue && endPostIndexValue<=endSystemIndexValue)){
+                           (endPostIndexValue>=startSystemIndexValue && endPostIndexValue<=endSystemIndexValue) ||
+                           (startPostIndexValue<=startSystemIndexValue && endPostIndexValue>=endSystemIndexValue)){
                        if(!postSentiment.equals(systemSentiment)){
-                           ++wrongSentimentCount;
-                           if(isSentiment)
-                                break;
+                           if(!isStepReadPost)
+                               ++wrongSentimentCount;
+                           if(isSentiment){
+                               if(endPostIndexValue < endSystemIndexValue){
+                                   isStepReadPost = false;
+                                   continue;
+                               }else{
+                                   isStepReadPost = true;
+                                   break;
+                               }
+                           }
                        }
                        // 精确匹配
                        if(startPostIndexValue.equals(startSystemIndexValue) && endPostIndexValue.equals(endSystemIndexValue)) {
                            ++seriousCount;
                            ++softCountForP;
                            ++softCountForR;
+                           isStepReadPost = false;
+                           try {
+                               ww.write("1");
+                           } catch (IOException e) {
+                               e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                           }
                            break;
                        }
                        // 覆盖率匹配计算
                        else{
                            if(startPostIndexValue>=startSystemIndexValue){
                                if(endPostIndexValue > endSystemIndexValue)
-                                    matchLength = endSystemIndexValue - startPostIndexValue+1;
+                                   matchLength = endSystemIndexValue - startPostIndexValue+1;
                                else
                                    matchLength = endPostIndexValue - startPostIndexValue+1;
                            }else{
-                               if(startPostIndexValue < startSystemIndexValue)
+                               if(endPostIndexValue < endSystemIndexValue)
                                    matchLength = endPostIndexValue - startSystemIndexValue+1;
                                else
-                                   matchLength = endPostIndexValue - startPostIndexValue+1;
+                                   matchLength = endSystemIndexValue - startSystemIndexValue+1;
                            }
                            allLengthForP = endPostIndexValue - startPostIndexValue+1;
                            allLengthForR = endSystemIndexValue - startSystemIndexValue+1;
@@ -222,11 +245,20 @@ public class Evaluator {
 
                            softCountForP += (matchLength / allLengthForP);
                            softCountForR += (matchLength / allLengthForR);
-                           break;
+
+                           if(endPostIndexValue < endSystemIndexValue){
+                               isStepReadPost = false;
+                               continue;
+                           }else{
+                               isStepReadPost = true;
+                               break;
+                           }
                         }
-                   } else if(startPostIndexValue < startSystemIndexValue){
+                   } else if(endPostIndexValue < startSystemIndexValue){
+                       isStepReadPost = false;
                        continue;
                    } else{
+                       isStepReadPost = true;
                        break;
                    }
                }
