@@ -19,8 +19,8 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class AlignUtil {
-    private static CorpusSegmenter segmenter = new CorpusSegmenter();
-    private static DependencyParser dependencyParser = new DependencyParser();
+    public static CorpusSegmenter segmenter = new CorpusSegmenter();
+    public static DependencyParser dependencyParser = new DependencyParser();
 
     public static void init(){
         segmenter.useLTPPos = segmenter.useLTPSeg = true;
@@ -66,7 +66,7 @@ public class AlignUtil {
             }
             HashMultimap<String, Pair<Integer,Integer>> depMap = dependencyParser.getDependencyUseLTP(words, tags);
             Pair<Pair<Integer, Integer>,String> pair = new Pair<>(new Pair<>(0, words.size()-1), sentence);
-            list = LTPTargetExtractor.getPotentialTargetAndOpinion(pair, segMap, depMap, null);
+            list = LTPTargetExtractor.getPotentialTargetAndOpinion(pair, segMap, depMap, null, false);
             if(isLastPart || !list.get(0).first.equals(sentence))
                 break;
             else{

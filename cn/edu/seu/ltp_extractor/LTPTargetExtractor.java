@@ -38,16 +38,18 @@ public class LTPTargetExtractor {
         public int beg;
         public int end;
     }
-
-    public static CorpusSegmenter segmenter = new CorpusSegmenter();
+/*
+    public static CorpusSegmenter segmenter = new CorpusSegmenter();*/
     // 主题相关句子缓存
     private String segTopicSentence;
     private String depTopicSentence;
     private String srTopicSentence;
 
     // 指代寻找所需参量
-    // 当前句子的长度
+    // 当前处理块的长度
     private int length;
+    // 当前处理块的起始
+    private int start;
     // 对齐所需整段微博句子
     private String originalSentence;
     // 当前分析句子
@@ -65,6 +67,8 @@ public class LTPTargetExtractor {
     // 主题存储词性列表：位置，<标注，词>
     private Map<Integer, Pair<String,String>> topicSegMap;
 
+    // 当前处理语义节点
+    private SRNode curNode;
     // 存储正文中语义角色列表:是否处理过，语义角色节点
     private List<SRNode> srList;
     // 存储主题中语义角色列表:是否处理过，语义角色节点
@@ -117,14 +121,14 @@ public class LTPTargetExtractor {
 
     // 初始化
     public static void init(){
-        segmenter.useLTPSeg = segmenter.useLTPPos = true;
-        segmenter.init("corpus//dic//scoreFilterDic.txt");
-        //AlignUtil.init();
+       /* segmenter.useLTPSeg = segmenter.useLTPPos = true;
+        segmenter.init("corpus//dic//scoreFilterDic.txt");*/
+        AlignUtil.init();
     }
 
     public static void destroy(){
-        segmenter.destroy();
-        //AlignUtil.destroy();
+        /*segmenter.destroy();*/
+        AlignUtil.destroy();
     }
 
     // 读取文本语料句子的命名实体、依存关系、语义角色
@@ -135,6 +139,7 @@ public class LTPTargetExtractor {
         // 记录词性标注等信息
         String tmp;
         length = 0;
+        start = 0;
         segMap = new HashMap();
         String[] segs = segSentence.split(" ");
         int index;
@@ -145,8 +150,8 @@ public class LTPTargetExtractor {
             if(index != -1){
                 tmp = segs[i].substring(0, index);
                 segMap.put(i, new Pair<>(segs[i].substring(index+1), tmp));
-                currentSentence += tmp;
-                length += tmp.length();
+                currentSentence += tmp;/*
+                length += tmp.length();*/
             }
         }
         // 记录依存关系
@@ -181,22 +186,22 @@ public class LTPTargetExtractor {
                 if(node.A0 != null && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
                     if(Math.abs(SentimentSorter.getSentimentWordType(node.predication.second)) == 2){
                         if(node.A1 != null)
-                            target = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
+                            target = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false).get(0).first;
                         else
                             target = getTopicTarget();
                     }
                     else
-                        target = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
+                        target = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true).get(0).first;
                     allSubjectMap.put(new Pair<>(node.beg, node.end), target);
                 }else if(node.A1!=null && index<srList.size()-1 && !hasA0OrA1(node, srList.get(index+1))){
                     if(Math.abs(SentimentSorter.getSentimentWordType(node.predication.second)) == 1) {
                         if(node.A0 != null)
-                            target = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
+                            target = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true).get(0).first;
                         else
                             target = getTopicTarget();
                     }
                     else
-                        target = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this).get(0).first;
+                        target = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false).get(0).first;
                     allSubjectMap.put(new Pair<>(node.beg, node.end), target);
                 }
             }
@@ -206,7 +211,7 @@ public class LTPTargetExtractor {
 
     // 读取所有人名
     public void readAllNH(){
-        String segSentence = segmenter.segmentSentenceUseLTP(originalSentence);
+        String segSentence = AlignUtil.segmenter.segmentSentenceUseLTP(originalSentence);
         String[] trunks = segSentence.split(" ");
         int i = 0, ii = 0;
         String tag;
@@ -418,6 +423,10 @@ public class LTPTargetExtractor {
 
         if(isReverse(originalOpinion, adverbs, verb))
             opinion = "(-)"+opinion;
+        /*if(opinion.contains("其实"))            {
+            System.out.println(originalSentence);
+            System.out.println(target+" "+opinion);
+        }*/
         targetPairMap.put(target, opinion);
         lastTargetPair.first = target;
         lastTargetPair.second = opinion;
@@ -625,7 +634,7 @@ public class LTPTargetExtractor {
         }
         if(topicSegMap.size() > 0){
             Pair<Pair<Integer,Integer>,String> pair = new Pair<>(new Pair<>(0,topicSegMap.size()-1), segTopicSentence.replaceAll("/[a-z ]*", ""));
-            List<Pair<String,String>> list = getPotentialTargetAndOpinion(pair, topicSegMap, topicDepTargetExtractor.getDepMap(), null);
+            List<Pair<String,String>> list = getPotentialTargetAndOpinion(pair, topicSegMap, topicDepTargetExtractor.getDepMap(), null, false);
             String result = list.size()>0 ? list.get(0).first : "";
             topic = result;
             return result;
@@ -699,7 +708,7 @@ public class LTPTargetExtractor {
             lastSubject = allSubjectMap.get(pair);
         }*/
        /*if("".equals(lastSubject)){
-            String result  = AlignUtil.getNeighborTarget(extractor.originalSentence, index, extractor.length);
+            String result  = AlignUtil.getNeighborTarget(extractor.originalSentence, extractor.start, extractor.length);
             if(result != null)
                 lastSubject = result;
        }*/
@@ -735,9 +744,25 @@ public class LTPTargetExtractor {
 
     // 从某一成分中抽出潜在评价对象和评价词
     public static List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair,
-            Map<Integer, Pair<String,String>> tmpSegMap, HashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor){
-        String block = "";
+            Map<Integer, Pair<String,String>> tmpSegMap, HashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor, boolean isA0){
 
+        // 若A0为空，优先寻找谓词最近的SBV主语部分
+        if(isA0 && nodeAPair==null && extractor!=null){
+            for(Pair<Integer,Integer> pair : extractor.depTargetExtractor.getDepMap().get("SBV")){
+                if(pair.first == extractor.curNode.predication.first+1){
+                    nodeAPair = new Pair<>(new Pair<>(pair.second-1, pair.second-1), tmpSegMap.get(pair.second-1).second);
+                }
+            }
+            if(extractor.curNode.A1 != null){
+                extractor.start = findIndexFromSeg(tmpSegMap, extractor.curNode.A1.first.first, tmpSegMap.get(extractor.curNode.A1.first.first).second, true);
+                extractor.length = findIndexFromSeg(tmpSegMap, extractor.curNode.A1.first.second, tmpSegMap.get(extractor.curNode.A1.first.second).second, true) - extractor.start;
+            }else{
+                extractor.start = 0;
+                extractor.length = 0;
+            }
+        }
+
+        String block = "";
         boolean findMQ = false;
         int start=0, end=0;
         if(nodeAPair != null){
@@ -755,15 +780,18 @@ public class LTPTargetExtractor {
         if(hasNoNoun)
             return list;*/
         // 助词对象缺失
-        if(end!=-1 && tmpSegMap.get(end).first.equals("u") && end<tmpSegMap.size()-1){
+        if(tmpSegMap.get(end).first.equals("u") && end<tmpSegMap.size()-1){
             block += tmpSegMap.get(end+1).second;
             end++;
         }
         // 代词或隐性A0或A1指代搜寻
         if(extractor!=null && block.length()==1 && LexUtil.HUMAN_PRONOUN.contains(" "+block+" "))
             list.add(new Pair<>(extractor.getNeighborNH(start), ""));
-        if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))
-            list.add(new Pair<>(getReferenceWord(start, extractor), ""));
+        if(extractor!=null && block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m")))){
+            String target = getReferenceWord(start, extractor);
+            if(!"".equals(target))
+                list.add(new Pair<>(target, ""));
+        }
         // 考虑是否被《》包裹
         if(block.startsWith("《") && block.endsWith("》"))
             list.add(new Pair<>(block.substring(1, block.length() - 1),""));
@@ -772,20 +800,22 @@ public class LTPTargetExtractor {
             List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end, tmpSegMap, depMap.get("ATT"));
             String target = "", opinion = "";
             String tmp1, tmp2, lastTmp="";
+            boolean onlyHasMQ = true;
             for(Pair<Integer,Integer> pair : targetRangeList){
-               /* if(tmpSegMap.get(pair.first).first.equals("m") && pair.first+1<tmpSegMap.size() && tmpSegMap.get(pair.first+1).first.equals("q")){
-                    findMQ = true;
-                    for(int ii=pair.first; ii<=pair.second; ii++)
-                        System.out.print(tmpSegMap.get(ii).second);
-                    System.out.println();
-                    continue;
-                }*/
+                onlyHasMQ = true;
+                target = "";
+                opinion = "";
+
                 if(pair.first == pair.second && tmpSegMap.get(pair.first).first.equals("r"))
                     continue;
 
                 for(int i=pair.first; i<pair.second; ++i){
                     tmp1 = tmpSegMap.get(i).first;
                     tmp2 = tmpSegMap.get(i+1).first;
+
+                    if(!tmp1.equals("m") && !tmp1.equals("q") && !tmp1.equals("nt") && !tmp1.equals("nd"))
+                        onlyHasMQ = false;
+
                     if((isAdj(tmp1) || (tmp1.equals("v") && isAdj(lastTmp)) || (!tmp1.equals("n") && SentimentSorter.getSentimentWordType(tmpSegMap.get(i).second)!=0)) && tmp2.equals("u") && i+1<pair.second){
                         pair.first = i+2;
                         opinion = tmpSegMap.get(i).second;
@@ -796,15 +826,25 @@ public class LTPTargetExtractor {
                     }
                     lastTmp = tmp1;
                 }
-                for(int j=pair.first; j<pair.second; ++j)
-                    target += tmpSegMap.get(j).second;
-                if(!tmpSegMap.get(pair.second).first.equals("nd"))
-                    target += tmpSegMap.get(pair.second).second;
+                // 过滤
+                boolean isStep = false;
+                /*if("m".equals(tmpSegMap.get(pair.first).first)*//* && pair.first+1<tmpSegMap.size() && tmpSegMap.get(pair.first+1).first.equals("q")*//*){
+                    //findMQ = true;
+                    for(int ii=pair.first; ii<=pair.second; ii++)
+                        System.out.print("-1"+tmpSegMap.get(ii).second);
+                    System.out.println();
+                    isStep = true;
+                    //continue;
+                }*/
 
-                if(!target.equals("")){
+                if(!isStep){
+                    for(int j=pair.first; j<pair.second; ++j)
+                        target += tmpSegMap.get(j).second;
+                    if(!tmpSegMap.get(pair.second).first.equals("nd"))
+                        target += tmpSegMap.get(pair.second).second;
+                }
+                if(!target.equals("") && !onlyHasMQ){
                     list.add(new Pair<String,String>(target,opinion));
-                    target = "";
-                    opinion = "";
                 }
             }
             // 含《》且不在之前的ATT中
@@ -885,7 +925,7 @@ public class LTPTargetExtractor {
                 list.add(new Pair<>(lastPair.second, ""));
         }
         if(list.size() == 0){
-            if(isAdj(tmpSegMap.get(end).first) || findMQ)
+            if((end!=-1 && isAdj(tmpSegMap.get(end).first)) || findMQ)
                 block = "";
             list.add(new Pair<>(block, ""));
         }
@@ -955,30 +995,24 @@ public class LTPTargetExtractor {
             // A0 A1不存在
             if(node.A0==null && node.A1==null && (lastNode==null || node.predication.first>lastNode.end)
                     && Math.abs(SentimentSorter.getSentimentWordType(node.predication.second))!=2){
-                for(Pair<Integer,Integer> pair : depTargetExtractor.getDepMap().get("SBV")){
-                    if(pair.first == node.predication.first+1){
-                        Pair<Pair<Integer,Integer>, String> node0 = new Pair<>(new Pair<>(pair.second-1, pair.second-1), segMap.get(pair.second-1).second);
-                        List<Pair<String,String>> list = getPotentialTargetAndOpinion(node0, segMap, depTargetExtractor.getDepMap(), this);
-                        String target;
-                        for(Pair<String,String> pair0 : list){
-                            target =  pair0.first;
-                            if(!"".equals(target)){
-                                //System.out.println(currentSentence+"\n"+target+" "+node.predication.second);
-                                putOne = putTargetAndOpinion(target, node.predication.second, range, node.predication.second, false);
-                            }
-                        }
+                List<Pair<String,String>> list = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true);
+                String target;
+                for(Pair<String,String> pair0 : list){
+                    target =  pair0.first;
+                    if(!"".equals(target)){
+                        putOne = putTargetAndOpinion(target, node.predication.second, range, node.predication.second, false);
                     }
                 }
             }
-            // A0 A1存在
+            // A0 A1存在之一
             else if((opinionCode=opinion.get(0).first) !=  0){
                 if(Math.abs(opinionCode)==1 && (node.A1==null || node.predication.first<node.A1.first.first)){
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this)) {
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true)) {
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
                         putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                     }
                 }else{
-                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this)){
+                    for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false)){
                         putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
                         putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                     }
@@ -986,9 +1020,9 @@ public class LTPTargetExtractor {
             }
             // 副词情感
             else if(node.adverb!=null && opinion.get(1).first != 0){
-                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this);
+                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true);
                 if(node.A0==null && node.A1!=null && node.predication.first>node.A1.first.first)
-                    potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
+                    potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false);
                 for(Pair<String,String> pair : potentialPairList){
                     if(pair.second.length() > 0)
                         putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
@@ -998,13 +1032,13 @@ public class LTPTargetExtractor {
             }
             else{
                 String blackNoun = "";
-                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this);
+                List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true);
                 int num = 0;
                 boolean isA0Pair = true;
                 // 有A0A1或无A0有A1：A0中寻找评价对象，优先A0中寻找评价词，其次是A1
                 while(node.A1!= null && !putOne){
                     if(node.predication.first > node.A1.first.first){
-                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false);
                         //isA0Pair = false;
                     }
                     for(Pair<String,String> pair : potentialPairList){
@@ -1035,14 +1069,22 @@ public class LTPTargetExtractor {
                         break;
                     else{
                         potentialPairList.clear();
-                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this);
+                        potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false);
                         num++;
                     }
                 }
                 // 有A0A1或无A1有A0：若有A1则从A1中寻找评价对象，优先A0中寻找评价词，其次是自身；若无A1则从A0中寻找评价对象和评价词
+                potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true);
                 if(node.A0 != null){
                     if(node.A1 != null) {
-                        potentialPairList.addAll(getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this));
+                        List<Pair<String,String>> potentialPairList1 = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false);
+                        for(Pair<String,String> pair : potentialPairList) {
+                            for(Pair<String,String> pair1 : potentialPairList1){
+                                System.out.println(pair.first+" "+pair1.second);
+                                putOne = putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
+                            }
+                        }
+                        potentialPairList.addAll(potentialPairList1);
                     }
                     for(Pair<String,String> pair : potentialPairList){
                         if(!pair.first.equals(blackNoun)){
@@ -1065,31 +1107,32 @@ public class LTPTargetExtractor {
                         }
                     }
                 }
+
             }
-            //if(putOne)
-                analyseRangeList.add(new Pair<>(node.beg, node.end));
-        }/*else if(node.A1!=null && ((node.predication!=null && node.predication.first<node.A1.first.first
+            analyseRangeList.add(new Pair<>(node.beg, node.end));
+        }else if(node.A1!=null && ((node.predication!=null && node.predication.first<node.A1.first.first
                 && node.predication.second.matches(".*[\\u6709\\u6ca1\\u65e0].*")) ||
                 (node.adverb!=null  && node.adverb.first.first<node.A1.first.first
                         && node.adverb.second.matches(".*[\\u6709\\u6ca1\\u65e0].*")))){
             for(String nounSen : sentimentNounDic){
                 if(node.A1.second.contains(nounSen)){
-                    List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this);
+                    List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true);
                     for(Pair<String,String> pair : potentialPairList){
-                        putOne = putTargetAndOpinion(pair.first, node.A1.second, range, node.predication.second, false);
+                        putOne = putTargetAndOpinion(pair.first, "好", range, node.predication.second, false);
                         System.err.println(pair.first+" "+node.A1.second);
                     }
                     break;
                 }
             }
-            //analyseRangeList.add(new Pair<>(node.beg, node.end));
-        }*/
+            analyseRangeList.add(new Pair<>(node.beg, node.end));
+        }
     }
 
     // A0-A1抽取规则
     public void extractByA0A1(){
         for(int i=0; i<srList.size(); ++i){
             SRNode node = srList.get(i);
+            curNode = node;
             extractNodeByA0A1(node, i);
             lastNode = node;
         }
@@ -1198,36 +1241,40 @@ public class LTPTargetExtractor {
                 // 处理n+de+a, a+de+n等情况
                 boolean isStep = false;
                 boolean onlyHasMQ = true;
-
-                /*if(segMap.get(attPair.first).first.equals("m") && attPair.first+1<segMap.size() && segMap.get(attPair.first+1).first.equals("q")){
-                    for(int ii=attPair.first; ii<=attPair.second; ii++)
-                        System.out.print(segMap.get(ii).second);
-                    System.out.println();
-                    continue;
-                }*/
+                phrase = "";
 
                 for(int i=attPair.first; i<attPair.second; ++i){
+                    onlyHasMQ = true;
                     tmp1 = segMap.get(i).first;
                     tmp2 = segMap.get(i+1).first;
-                    if(!tmp1.equals("m") && !tmp1.equals("q"))
+                    if(!tmp1.equals("m") && !tmp1.equals("q") && !tmp1.equals("nt") && !tmp1.equals("nd"))
                         onlyHasMQ = false;
 
                     if((isAdj(tmp1)  || (tmp1.equals("v") && isAdj(lastTmp)) || (!tmp1.equals("n") && SentimentSorter.getSentimentWordType(segMap.get(i).second)!=0)) && tmp2.equals("u") && i+1<attPair.second){
                         i++;
+                        attPair.first++;
                         phrase = "";
                         continue;
                     }
                     else if(((tmp1.equals("u") && (isAdj(tmp2) || (!tmp2.equals("n") && SentimentSorter.getSentimentWordType(segMap.get(i+1).second)!=0))) || (isAdj(tmp1) && tmp2.equals("v") && lastTmp.equals("u"))) && i-1>=attPair.first){
                         isStep = true;
+                        attPair.second = i-1;
                         break;
                     }
                     phrase += segMap.get(i).second;
                 }
+                // 过滤
+                /*if("m".equals(segMap.get(attPair.first).first)*//* && attPair.first+1<segMap.size() && segMap.get(attPair.first+1).first.equals("q")*//*){
+                    for(int ii=attPair.first; ii<=attPair.second; ii++)
+                        System.out.print("-2"+segMap.get(ii).second);
+                    System.out.println();
+                    continue;
+                }*/
+
                 if(!isStep && !isAdj(segMap.get(attPair.second).first) && !segMap.get(attPair.second).first.equals("nd"))
                     phrase += segMap.get(attPair.second).second;
                 if(!"".equals(phrase) && !onlyHasMQ)
                     potentialNounMap.put(attPair.second+1, phrase);
-                phrase = "";
             }
         }
         depTargetExtractor.clearResult();
