@@ -254,7 +254,7 @@ public class SentimentSorter {
             }
 
             // 相似度计算
-            for (int i = 0; i < POSITIVE_SENTIMENTS.length; ++i) {
+           /* for (int i = 0; i < POSITIVE_SENTIMENTS.length; ++i) {
                 tmpPositiveScore = WS.simWord(word, POSITIVE_SENTIMENTS[i]);
                 tmpNegativeScore = WS.simWord(word, NEGATIVE_SENTIMENTS[i]);
 
@@ -275,7 +275,7 @@ public class SentimentSorter {
                         negScore += score;
                     }
                 }
-            }
+            }*/
             if(posScore == negScore){
                 // 从情感词典中匹配
                 if(posOpinionDic.contains(word) || posEmotionDic.contains(word)) {

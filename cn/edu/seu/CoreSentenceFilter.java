@@ -25,7 +25,6 @@ public class CoreSentenceFilter {
     // 类型
     public final static String AXB = "axb";
     public final static String STA = "sta";
-    public final static String CON = "con";
 
     // 读取核心过滤规则词典
     public static void readDic(String dicPath){
@@ -33,7 +32,6 @@ public class CoreSentenceFilter {
         Map<String, Set> setMap = new HashMap<>();
         setMap.put(AXB, AXBDic);
         setMap.put(STA, statementDic);
-        setMap.put(CON, contrastDic);
         String tmp;
         String[] line;
         BufferedReader reader = null;
@@ -70,7 +68,6 @@ public class CoreSentenceFilter {
         segSentence = " " + segSentence + " ";
         String result = filterByAXBRule(segSentence);
         result = filterByStatementRule(result);
-        result = filterByContrastRule(result);
         return result.trim();
     }
 
@@ -132,34 +129,6 @@ public class CoreSentenceFilter {
                 //System.err.println(segSentence);
             }
         }
-        return segSentence;
-    }
-
-    // 转折句式，根据情况保留转折成分
-    private static String filterByContrastRule(String segSentence){
-        /*int index1, index2, index3, lastIndex;
-        for(String con : contrastDic){
-            lastIndex = 0;
-            index2 = segSentence.indexOf(" "+con+"/");
-            index1 = segSentence.lastIndexOf("/n", index2-1);
-            // 往前寻找连续的名词
-            index3 = index1;
-            while(index3 != -1){
-                if(segSentence.charAt(index3+1) != 'n')
-                    break;
-                lastIndex = index3;
-                index3 = segSentence.lastIndexOf("/", index3-1);
-            }
-            if(index1!=-1 && index2!=-1){
-                index1 = segSentence.lastIndexOf(" ", lastIndex);
-                index3 = segSentence.indexOf(" ", index2);
-                if(PunctuationUtil.END_PUNCTUATION.contains(""+segSentence.charAt(index3+1)))
-                    index3 = segSentence.indexOf(" ", index3+1);
-
-                index2 = index3+1;
-                segSentence = segSentence.replace(segSentence.substring(index1+1, index2), "");
-            }
-        }*/
         return segSentence;
     }
 

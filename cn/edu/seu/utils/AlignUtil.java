@@ -26,12 +26,12 @@ public class AlignUtil {
         segmenter.useLTPPos = segmenter.useLTPSeg = true;
         segmenter.init("corpus//dic//scoreFilterDic.txt");
         dependencyParser.useLTPDep = true;
-        dependencyParser.init();
+        //dependencyParser.init();
     }
 
     public static void destroy(){
         segmenter.destroy();
-        dependencyParser.destroy();
+        //dependencyParser.destroy();
     }
 
     public static String getNeighborTarget(String sentence, int index, int length){
@@ -66,8 +66,8 @@ public class AlignUtil {
             }
             HashMultimap<String, Pair<Integer,Integer>> depMap = dependencyParser.getDependencyUseLTP(words, tags);
             Pair<Pair<Integer, Integer>,String> pair = new Pair<>(new Pair<>(0, words.size()-1), sentence);
-            list = LTPTargetExtractor.getPotentialTargetAndOpinion(pair, segMap, depMap, null, false);
-            if(isLastPart || !list.get(0).first.equals(sentence))
+            list = LTPTargetExtractor.getPotentialTargetAndOpinion(pair, segMap, depMap, null, false, true);
+            if(isLastPart || !"".equals(list.get(0).first))
                 break;
             else{
                 sentence = sentence.substring(index+length);
