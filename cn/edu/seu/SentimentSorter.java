@@ -32,7 +32,7 @@ public class SentimentSorter {
     private static Set<String> negEmotionDic = new HashSet<>();
 
     // 相似度计算独享
-    private static WordSimilarity WS = new WordSimilarity();
+    public static WordSimilarity WS = new WordSimilarity();
 
     public static void init(String posDicPath, String negDicPath, String posEmotionDicPath, String negEmotionDicPath){
         Vector<BufferedReader> bufVec = new Vector<>();

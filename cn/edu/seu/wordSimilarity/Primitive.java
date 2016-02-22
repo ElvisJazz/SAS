@@ -3,8 +3,7 @@
  */
 package cn.edu.seu.wordSimilarity;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,8 +33,7 @@ public class Primitive {
         String line = null;
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(
-                    "dict/WHOLE.DAT"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("dict/WHOLE.DAT")),"GBK"));
             line = reader.readLine();
 
             while (line != null) {

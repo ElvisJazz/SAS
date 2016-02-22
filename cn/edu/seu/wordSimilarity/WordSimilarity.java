@@ -3,9 +3,7 @@
  */
 package cn.edu.seu.wordSimilarity;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,7 +88,7 @@ public class WordSimilarity {
         String line = null;
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new FileReader("dict/glossary.dat"));
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("dict/glossary.dat")),"GBK"));
             line = reader.readLine();
             while (line != null) {
                 // parse the line
@@ -481,25 +479,7 @@ public class WordSimilarity {
      * @param args
      */
     public static void main(String[] args) throws Exception {
-        // TODO Auto-generated method stub
-        BufferedReader reader = new BufferedReader(new FileReader(
-                "dict/glossary.dat"));
-        Set<String> set = new HashSet<String>();
-        String line = reader.readLine();
-        while (line != null) {
-            // System.out.println(line);
-            line = line.replaceAll("\\s+", " ");
-            String[] strs = line.split(" ");
-            for (int i = 0; i < strs.length; i++) {
-                System.out.print(" " + strs[i]);
-            }
-            System.out.println();
-            set.add(strs[1]);
-            line = reader.readLine();
-        }
-        System.out.println(set.size());
-        for (String name : set) {
-            System.out.println(name);
-        }
+        WordSimilarity ws = new WordSimilarity();
+        System.out.println(ws.simWord("", "人"));
     }
 }
