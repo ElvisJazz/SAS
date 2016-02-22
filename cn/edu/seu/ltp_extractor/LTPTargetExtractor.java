@@ -315,6 +315,8 @@ public class LTPTargetExtractor {
                     node.A1 = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("A2")){
                     node.A1 = new Pair<>(new Pair<>(beg,end), seq);
+                }else if(type.equals("A3")){
+                    node.A0 = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("ADV")){
                     node.adverb = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("DIS")){
@@ -895,7 +897,7 @@ public class LTPTargetExtractor {
                     // 处理人名抽取
                     boolean hasHN = false;
                     double sim = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
-                    if(tmpSegMap.get(pair.first).first.equals("nh") && sim>0.6)
+                    if(tmpSegMap.get(pair.first).first.equals("nh") && sim>0.7)
                         hasHN = true;
                     // 生成评价对象
                     int j=pair.first;
@@ -1165,7 +1167,8 @@ public class LTPTargetExtractor {
                             }
                         }
                     }
-                    if(putOne || num==1 || (node.A0!=null && LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" ")))
+                    if(putOne || num==1 || (node.A0!=null && LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" "))
+                        || LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
                         break;
                     else{
                         potentialPairList.clear();
@@ -1183,7 +1186,7 @@ public class LTPTargetExtractor {
                                 putOne = putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
                             }
                         }
-                        if(!LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" "))
+                        if(!LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" ") &&  !LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
                             potentialPairList.addAll(potentialPairList1);
                     }
                     for(Pair<String,String> pair : potentialPairList){
@@ -1412,7 +1415,7 @@ public class LTPTargetExtractor {
                 boolean hasHN = false;
                 double sim = SentimentSorter.WS.simWord(segMap.get(attPair.second).second, "人");
                 if(segMap.get(attPair.first).first.equals("nh"))
-                if(sim>0.6)
+                if(sim>0.7)
                     hasHN = true;
                 int j=attPair.first;
                 for(; j<attPair.second; ++j){

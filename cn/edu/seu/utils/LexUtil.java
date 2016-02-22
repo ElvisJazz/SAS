@@ -42,4 +42,6 @@ public class LexUtil {
     public final static String[] NOT_SET = {"不", "非", "无","没", "少", "不多", "不大", "不太", "否认", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得", "没有", "没什么"};
     // 否定词白名单
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
+    // A0作为评价对象的关联性普通动词
+    public final static String RELATE_COMMON_VERB = " 是 让 使 使得 有 作为 ";
 }
