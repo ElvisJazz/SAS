@@ -315,9 +315,9 @@ public class LTPTargetExtractor {
                     node.A1 = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("A2")){
                     node.A1 = new Pair<>(new Pair<>(beg,end), seq);
-                }else if(type.equals("A3")){
+                }/*else if(type.equals("A3")){
                     node.A0 = new Pair<>(new Pair<>(beg,end), seq);
-                }else if(type.equals("ADV")){
+                }*/else if(type.equals("ADV")){
                     node.adverb = new Pair<>(new Pair<>(beg,end), seq);
                 }else if(type.equals("DIS")){
                     node.dis = seq;
@@ -825,6 +825,7 @@ public class LTPTargetExtractor {
             end = nodeAPair.first.second;
         }
         List<Pair<String,String>> list = new ArrayList<>();
+        List<Integer> indexList = new ArrayList<>();
         /*// 一个名词都没有，则跳过
         boolean hasNoNoun = true;
         for(int i=start; i<=end; ++i){
@@ -850,8 +851,10 @@ public class LTPTargetExtractor {
         if(block.startsWith("《") && block.endsWith("》"))
             list.add(new Pair<>(block.substring(1, block.length() - 1),""));
         else if(list.size() == 0){
-            if(extractor != null && extractor.curNode != null)
-                end = end==0? extractor.curNode.end : end;
+            if(extractor != null && extractor.curNode != null && isA0)
+                end = end<=0? extractor.curNode.predication.first : end;/*
+            else if(!isA0)
+                end = end==-1? extractor.curNode.predication.first : end;*/
             // ATT部分包括adj
             List<Pair<Integer, Integer>> targetRangeList = getATTDepRangeList(start, end, tmpSegMap, depMap.get("ATT"));
             String target = "", opinion = "";
@@ -895,7 +898,7 @@ public class LTPTargetExtractor {
                 // 处理获取的ATT
                 if(!isStep){
                     // 处理人名抽取
-                    boolean hasHN = false;
+                    /*-boolean hasHN = false;
                     double sim = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
                     if(tmpSegMap.get(pair.first).first.equals("nh") && sim>0.7)
                         hasHN = true;
@@ -910,16 +913,20 @@ public class LTPTargetExtractor {
                         }else{
                             target += tmpSegMap.get(j).second;
                         }
-                    }
+                    }*/
+                    Pair<Boolean, Pair<String,Integer>> result = getHN(tmpSegMap, pair, extractor);
+                    int j = result.second.second;
+                    target = result.second.first;
                     // 处理结尾是时间名词
-                    if(!tmpSegMap.get(pair.second).first.equals("nd") && (!hasHN || (j==pair.second && tmpSegMap.get(j).first.startsWith("n"))))
+                    if(!tmpSegMap.get(pair.second).first.equals("nd") && (!result.first || (j==pair.second && tmpSegMap.get(j).first.startsWith("n"))))
                         target += tmpSegMap.get(j).second;
                     // 添加已分析范围
                     if(extractor!=null && isFindSBV)
                         extractor.range.first = extractor.range.first > pair.first? pair.first : extractor.range.first;
                 }
                 if(!target.equals("") && !onlyHasMQ){
-                    list.add(new Pair<String,String>(target,opinion));
+                    list.add(new Pair<>(target,opinion));
+                    indexList.add(pair.second);
                     break;
                 }
             }
@@ -938,6 +945,7 @@ public class LTPTargetExtractor {
                                 }
                                 bookQuotationList.add(new Pair<>(index1+1, index2-1));
                                 list.add(new Pair<>(target,""));
+                                indexList.add(index2);
                                 target = "";
                             }
                         }
@@ -947,6 +955,7 @@ public class LTPTargetExtractor {
                         }
                         bookQuotationList.add(new Pair<>(index1+1, index2-1));
                         list.add(new Pair<>(target,""));
+                        indexList.add(index2);
                         target = "";
                     }
                 }else{
@@ -1001,14 +1010,24 @@ public class LTPTargetExtractor {
                     lastPair.second = pair.second;
                 }
             }
-            if(lastPair != null)
+            if(lastPair != null){
                 addWithoutRedundantKey(list, targetRangeList, lastPair);
+                indexList.add(lastPair.first);
+            }
         }
         if(list.size() == 0){
             if((end!=-1 && isAdj(tmpSegMap.get(end).first)) || findMQ || canBeEmpty)
                 block = "";
             list.add(new Pair<>(block, ""));
         }else if("".equals(block)){
+           /* int min = indexList.size()-1;
+            int index = 0;
+            for(int i=0; i<indexList.size(); ++i){
+                if(indexList.get(i) < min){
+                    min = indexList.get(i);
+                    index = i;
+                }
+            }*/
             Pair<String,String> pair = list.get(0);
             list = new ArrayList<>();
             list.add(pair);
@@ -1020,6 +1039,35 @@ public class LTPTargetExtractor {
             }
         }*/
         return list;
+    }
+
+    // 筛选人名，返回人名+当前处理位置的下一个位置
+    public static Pair<Boolean,Pair<String, Integer>> getHN(Map<Integer, Pair<String,String>> tmpSegMap, Pair<Integer,Integer> pair, LTPTargetExtractor extractor){
+        // 处理人名抽取
+        // 是否有人名
+        boolean hasHN = false;
+        String target = "";
+        double sim = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
+        if(extractor!=null && tmpSegMap.get(pair.first).first.equals("r") && sim>0.7){
+            hasHN = true;
+            target = extractor.getNeighborNH(pair.first);
+            return new Pair<>(hasHN, new Pair<>(target, -1));
+        }
+        if(tmpSegMap.get(pair.first).first.equals("nh") && sim>0.7)
+            hasHN = true;
+        // 生成评价对象
+        int j=pair.first;
+        for(; j<pair.second; ++j){
+            if(hasHN){
+                if(tmpSegMap.get(j).first.startsWith("n") || tmpSegMap.get(j).first.equals("u") || tmpSegMap.get(j).first.equals("c"))
+                    target += tmpSegMap.get(j).second;
+                else
+                    break;
+            }else{
+                target += tmpSegMap.get(j).second;
+            }
+        }
+        return new Pair<>(hasHN, new Pair<>(target, j));
     }
 
     // 无冗余添加
@@ -1412,23 +1460,11 @@ public class LTPTargetExtractor {
                     continue;
                 }*/
                 // 处理人名抽取
-                boolean hasHN = false;
-                double sim = SentimentSorter.WS.simWord(segMap.get(attPair.second).second, "人");
-                if(segMap.get(attPair.first).first.equals("nh"))
-                if(sim>0.7)
-                    hasHN = true;
-                int j=attPair.first;
-                for(; j<attPair.second; ++j){
-                    if(hasHN){
-                        if(segMap.get(j).first.startsWith("n") || segMap.get(j).first.equals("u") || segMap.get(j).first.equals("c"))
-                            phrase += segMap.get(j).second;
-                        else
-                            break;
-                    }else{
-                        phrase += segMap.get(j).second;
-                    }
-                }
-                if(!hasHN || (j==attPair.second && segMap.get(attPair.second).first.startsWith("n"))){
+                Pair<Boolean, Pair<String,Integer>> result = getHN(segMap, attPair, null);
+                int j = result.second.second;
+                phrase = result.second.first;
+
+                if(!result.first || (j==attPair.second && segMap.get(attPair.second).first.startsWith("n"))){
                     if(isStep)
                         phrase += segMap.get(attPair.second).second;
                     else if(!isAdj(segMap.get(attPair.second).first) && !segMap.get(attPair.second).first.equals("nd"))

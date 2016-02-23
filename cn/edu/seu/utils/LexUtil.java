@@ -44,4 +44,6 @@ public class LexUtil {
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
     // A0作为评价对象的关联性普通动词
     public final static String RELATE_COMMON_VERB = " 是 让 使 使得 有 作为 ";
+    // 情感词词性
+    public final static String SENTIMENT_TAG = " a b d n i v u z m ws ";
 }
