@@ -376,8 +376,9 @@ public class LTPTargetExtractor {
     public boolean putTargetAndOpinion(String target, String opinion, Pair<Integer,Integer> range, String verb, boolean fromSelf){
         target = target.trim();
         opinion = opinion.trim();
-        if(target==null || target.length()<2 || opinion==null || opinion.equals("") ||
-                SentimentSorter.getSentimentWordType(opinion)==0 || target.equals(opinion))
+        if(target==null || target.length()<2 || opinion==null || opinion.equals("") /*||
+                SentimentSorter.getSentimentWordType(target)!=0 */|| SentimentSorter.getSentimentWordType(opinion)==0 ||
+                target.equals(opinion))
             return false;
 
         // 过滤无关评价对象
@@ -720,13 +721,13 @@ public class LTPTargetExtractor {
             for(; i>0; i--){
                 if(extractor.segMap.get(i).first.equals("wp"))
                     break;
-                tmp += extractor.segMap.get(i).second;
+                tmp = extractor.segMap.get(i).second+tmp;
             }
             startIndex = i;
             if(startIndex<=index-1 && !"".equals(tmp)){
                 tmp += "$";
                 Pair<Pair<Integer,Integer>,String> nodeAPair = new Pair<>(new Pair<>(startIndex+1, index-1), tmp);
-                lastSubject = getPotentialTargetAndOpinion(nodeAPair, extractor.segMap, extractor.depTargetExtractor.getDepMap(), null, false, false).get(0).first;
+                lastSubject = getPotentialTargetAndOpinion(nodeAPair, extractor.segMap, extractor.depTargetExtractor.getDepMap(), extractor, false, false).get(0).first;
                 if(tmp.equals(lastSubject))
                     lastSubject = "";
             }
@@ -1048,13 +1049,14 @@ public class LTPTargetExtractor {
         boolean hasHN = false;
         String target = "";
         double sim = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
-        if(extractor!=null && tmpSegMap.get(pair.first).first.equals("r") && sim>0.7){
-            hasHN = true;
-            target = extractor.getNeighborNH(pair.first);
-            return new Pair<>(hasHN, new Pair<>(target, -1));
-        }
         if(tmpSegMap.get(pair.first).first.equals("nh") && sim>0.7)
             hasHN = true;
+        else if(extractor!=null &&  sim>0.7){
+            hasHN = true;
+            target = extractor.getNeighborNH(pair.first);
+            if(!"".equals(target))
+                return new Pair<>(hasHN, new Pair<>(target, -1));
+        }
         // 生成评价对象
         int j=pair.first;
         for(; j<pair.second; ++j){
@@ -1152,7 +1154,7 @@ public class LTPTargetExtractor {
                 for(Pair<String,String> pair0 : list){
                     target =  pair0.first;
                     if(!"".equals(target)){
-                        putOne = putTargetAndOpinion(target, node.predication.second, range, node.predication.second, false);
+                        putOne |= putTargetAndOpinion(target, node.predication.second, range, node.predication.second, false);
                     }
                 }
             }
@@ -1160,13 +1162,13 @@ public class LTPTargetExtractor {
             else if((opinionCode=opinion.get(0).first) !=  0){
                 if(Math.abs(opinionCode)==1 && (node.A1==null || node.predication.first<node.A1.first.first)){
                     for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true, false)) {
-                        putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
-                        putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                        putOne |= putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
+                        putOne |= putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                     }
                 }else{
                     for(Pair<String,String> pair : getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false, false)){
-                        putOne = putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
-                        putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                        putOne |= putTargetAndOpinion(pair.first, opinion.get(0).second, range, node.predication.second, false);
+                        putOne |= putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                     }
                 }
             }
@@ -1177,9 +1179,9 @@ public class LTPTargetExtractor {
                     potentialPairList = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false, false);
                 for(Pair<String,String> pair : potentialPairList){
                     if(pair.second.length() > 0)
-                        putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                        putOne |= putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                     else
-                        putOne = putTargetAndOpinion(pair.first, opinion.get(1).second, range, node.predication.second, false);
+                        putOne |= putTargetAndOpinion(pair.first, opinion.get(1).second, range, node.predication.second, false);
                 }
             }
             else{
@@ -1206,12 +1208,12 @@ public class LTPTargetExtractor {
                     if(opinion1.get(0).first != 0){
                         for(Pair<String,String> pair : potentialPairList){
                             if(!pair.first.equals(blackNoun))
-                                putOne = putTargetAndOpinion(pair.first, opinion1.get(0).second, range, node.predication.second, false);
+                                putOne |= putTargetAndOpinion(pair.first, opinion1.get(0).second, range, node.predication.second, false);
                         }
                     }else{
                         for(Pair<String,String> pair : potentialPairList){
                             if(!pair.first.equals(blackNoun)){
-                                putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                                putOne |= putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                             }
                         }
                     }
@@ -1231,7 +1233,7 @@ public class LTPTargetExtractor {
                         List<Pair<String,String>> potentialPairList1 = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false, false);
                         for(Pair<String,String> pair : potentialPairList) {
                             for(Pair<String,String> pair1 : potentialPairList1){
-                                putOne = putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
+                                putOne |= putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
                             }
                         }
                         if(!LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" ") &&  !LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
@@ -1249,16 +1251,17 @@ public class LTPTargetExtractor {
                     if(opinion0.get(0).first != 0) {
                         for(Pair<String,String> pair : potentialPairList) {
                             if(!pair.first.equals(blackNoun))
-                                putOne = putTargetAndOpinion(pair.first, opinion0.get(0).second, range, node.predication.second, false);
+                                putOne |= putTargetAndOpinion(pair.first, opinion0.get(0).second, range, node.predication.second, false);
                         }
                     }else{
                         for(Pair<String,String> pair : potentialPairList){
                             if(!pair.first.equals(blackNoun))
-                                putOne = putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
+                                putOne |= putTargetAndOpinion(pair.first, pair.second, range, node.predication.second, true);
                         }
                     }
                 }
             }
+
             analyseRangeList.add(range);
         }else if(node.A1!=null && ((node.predication!=null && node.predication.first<node.A1.first.first
                 && node.predication.second.matches(".*[\\u6709\\u6ca1\\u65e0].*")) ||
@@ -1275,9 +1278,9 @@ public class LTPTargetExtractor {
                     List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true, false);
                     for(Pair<String,String> pair : potentialPairList){
                         if(hasWhatEffect)
-                            putOne = putTargetAndOpinion(pair.first, "坏", range, node.predication.second, false);
+                            putOne |= putTargetAndOpinion(pair.first, "坏", range, node.predication.second, false);
                         else
-                            putOne = putTargetAndOpinion(pair.first, "好", range, node.predication.second, false);
+                            putOne |= putTargetAndOpinion(pair.first, "好", range, node.predication.second, false);
                        /* System.err.println(originalSentence);
                         System.err.println(pair.first+" "+node.A1.second);*/
                     }
@@ -1460,7 +1463,7 @@ public class LTPTargetExtractor {
                     continue;
                 }*/
                 // 处理人名抽取
-                Pair<Boolean, Pair<String,Integer>> result = getHN(segMap, attPair, null);
+                Pair<Boolean, Pair<String,Integer>> result = getHN(segMap, attPair, this);
                 int j = result.second.second;
                 phrase = result.second.first;
 
