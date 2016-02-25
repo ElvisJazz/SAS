@@ -132,12 +132,12 @@ public class Aligner {
                         CorpusSegmenter segmenter = new CorpusSegmenter();
                         String segSentence = segmenter.segmentSentence(alignSentence, true);
                         // 处理无评价对象的情况
-                        if("#".equals(tmpWord)){
+                        /*if("#".equals(tmpWord)){
                             tmpWord = getTargetObjectFormNeighborhood(segSentence);
                             //tmpWord = AlignUtil.getNeighborTarget(originalSentence, alignOffset, preSentence.length());
                             if(tmpWord == null)
                                 continue;
-                        }
+                        }*/
                         // 处理偏移问题
                         startIndex = alignSentence.indexOf(tmpWord, alignOffset);
                         if(startIndex == -1)

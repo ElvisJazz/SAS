@@ -133,7 +133,7 @@ public class CoreSentenceFilter {
     }
 
     public static void main(String[] args){
-        String s = "就/p ,/w 我/r 推测/v ，/wp 你/r 还是/v 个/q 孩子/n 啊/u ！/wp 汪峰/nh 分析/v 我/r 不/d 会/v 永远/d  上/v  不/d  了/v  头条/n  ！/wp";
+        String s = "我觉得，不论从什么角度讲，他算的上是个伟人";
         CoreSentenceFilter.readDic("corpus//dic//scoreFilterDic.txt");
         s = CoreSentenceFilter.filter(s);
         System.out.println(s);

@@ -376,9 +376,8 @@ public class LTPTargetExtractor {
     public boolean putTargetAndOpinion(String target, String opinion, Pair<Integer,Integer> range, String verb, boolean fromSelf){
         target = target.trim();
         opinion = opinion.trim();
-        if(target==null || target.length()<2 || opinion==null || opinion.equals("") /*||
-                SentimentSorter.getSentimentWordType(target)!=0 */|| SentimentSorter.getSentimentWordType(opinion)==0 ||
-                target.equals(opinion))
+        if(target==null || target.length()<2 || opinion==null || opinion.equals("") ||
+                SentimentSorter.getSentimentWordType(opinion)==0 || target.endsWith(opinion))
             return false;
 
         // 过滤无关评价对象
@@ -707,7 +706,7 @@ public class LTPTargetExtractor {
     }
 
     // 指代及隐性搜索，寻找上一个
-    public static String getReferenceWord(int index, LTPTargetExtractor extractor){
+    public static String getReferenceWord(int index, LTPTargetExtractor extractor, boolean isUseLastTarget){
         String lastSubject = "";
         // 本句代词邻近搜索
         if(index>0 && !(lastSubject=extractor.getContinurousNoun(index - 1)).equals(""))
@@ -750,10 +749,10 @@ public class LTPTargetExtractor {
         }*/
 
         // 从主题获取
-        if("".equals(lastSubject))
+        if(isUseLastTarget && "".equals(lastSubject))
             lastSubject = extractor.getTopicTarget();
         // 获取上一个评价对象
-        if("".equals(lastSubject) && extractor.targetPairMap.size() > 0)
+        if(isUseLastTarget && "".equals(lastSubject) && extractor.targetPairMap.size() > 0)
             return extractor.lastTargetPair.first;
         // 从下文获取
        /* if("".equals(lastSubject) && iterator.hasNext()){
@@ -844,7 +843,7 @@ public class LTPTargetExtractor {
         if(extractor!=null && block.length()<=2 && LexUtil.HUMAN_PRONOUN.contains(" "+block+" "))
             list.add(new Pair<>(extractor.getNeighborNH(start), ""));
         if(/*(list.size()==0 || list.get(0).first.equals("")) && */extractor!=null && (block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))){
-            String target = getReferenceWord(start, extractor);
+            String target = getReferenceWord(start, extractor, true);
             if(!"".equals(target))
                 list.add(new Pair<>(target, ""));
         }
@@ -1021,15 +1020,15 @@ public class LTPTargetExtractor {
                 block = "";
             list.add(new Pair<>(block, ""));
         }else if("".equals(block)){
-           /* int min = indexList.size()-1;
+            int min = indexList.size()-1;
             int index = 0;
             for(int i=0; i<indexList.size(); ++i){
                 if(indexList.get(i) < min){
                     min = indexList.get(i);
                     index = i;
                 }
-            }*/
-            Pair<String,String> pair = list.get(0);
+            }
+            Pair<String,String> pair = list.get(index);
             list = new ArrayList<>();
             list.add(pair);
         }
@@ -1398,16 +1397,28 @@ public class LTPTargetExtractor {
         depTargetExtractor.clearResult();
         depTargetExtractor.setPotentialNounMap(potentialNounMap);
         HashMultimap<String, String> resultMap = depTargetExtractor.extract();
-        /*if(resultMap.containsKey("#")){
-            if(topic == null){
-                getTopicTarget();
-            }
-            if(!"".equals(topic)){
+        if(resultMap.containsKey("#")){
+            // 先从前文获取#指代评价对象
+            String opinion = resultMap.get("#").iterator().next();
+            int endIndex = opinion.lastIndexOf('(');
+            if(endIndex != -1)
+                opinion = opinion.substring(0, endIndex);
+            int wordIndex = findIndexFromSeg(segMap, 0, opinion, false);
+            this.curNode = new SRNode();
+            this.curNode.beg = this.curNode.end = wordIndex;
+            String target = getReferenceWord(wordIndex, this, false);
+            /*if("".equals(target)){
+                if(topic == null){
+                    getTopicTarget();
+                }
+                target = topic;
+            }*/
+            if(!"".equals(target)){
                 Set<String> values = resultMap.get("#");
-                resultMap.putAll(topic, values);
-                resultMap.removeAll("#");
+                resultMap.putAll(target, values);
             }
-        }*/
+            resultMap.removeAll("#");
+        }
         targetPairMap.putAll(resultMap);
     }
 
@@ -1481,16 +1492,28 @@ public class LTPTargetExtractor {
         depTargetExtractor.clearResult();
         depTargetExtractor.setPotentialNounMap(potentialNounMap);
         HashMultimap<String, String> resultMap = depTargetExtractor.extract();
-        /*if(resultMap.containsKey("#")){
-            if(topic == null){
-                getTopicTarget();
-            }
-            if(!"".equals(topic)){
+        if(resultMap.containsKey("#")){
+            // 先从前文获取#指代评价对象
+            String opinion = resultMap.get("#").iterator().next();
+            int endIndex = opinion.lastIndexOf('(');
+            if(endIndex != -1)
+                opinion = opinion.substring(0, endIndex);
+            int wordIndex = findIndexFromSeg(segMap, 0, opinion, false);
+            this.curNode = new SRNode();
+            this.curNode.beg = this.curNode.end = wordIndex;
+            String target = getReferenceWord(wordIndex, this, false);
+            /*if("".equals(target)){
+                if(topic == null){
+                    getTopicTarget();
+                }
+                target = topic;
+            }*/
+            if(!"".equals(target)){
                 Set<String> values = resultMap.get("#");
-                resultMap.putAll(topic, values);
-                resultMap.removeAll("#");
+                resultMap.putAll(target, values);
             }
-        }*/
+                resultMap.removeAll("#");
+        }
         targetPairMap.putAll(resultMap);
     }
 
