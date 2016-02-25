@@ -25,7 +25,7 @@ public class AlignUtil {
     public static void init(){
         segmenter.useLTPPos = segmenter.useLTPSeg = true;
         segmenter.init("corpus//dic//scoreFilterDic.txt");
-        dependencyParser.useLTPDep = true;
+        //dependencyParser.useLTPDep = true;
         //dependencyParser.init();
     }
 
@@ -76,6 +76,7 @@ public class AlignUtil {
         }
         if(list != null)
             return list.get(0).first;
+
         return null;
     }
 

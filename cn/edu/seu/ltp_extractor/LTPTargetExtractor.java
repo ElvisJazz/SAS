@@ -30,7 +30,7 @@ public class LTPTargetExtractor {
         // 副词 beg,seq
         public Pair<Pair<Integer,Integer>,String> adverb = null;
         // 转折
-         public String dis = null;
+        public String dis = null;
         // 施事者 beg,seq
         public Pair<Pair<Integer,Integer>,String> A0 = null;
         // 受事者 beg,seq
@@ -102,6 +102,9 @@ public class LTPTargetExtractor {
     private static Set<String> sentimentNounDic = new HashSet<>();
     // 转折词词典
     private static Set<String> contrastDic = new HashSet<>();
+
+    // 上一句的评价对象
+    //private static
 
     // 初始化
     public static void initDic(String filterDicPath, String sentimentNounDicPath, String contrastDicPath){
@@ -371,15 +374,46 @@ public class LTPTargetExtractor {
         topicSrList = new ArrayList();
         readSR(srTopicSentence, true);
     }
+    // 去掉字符串首尾标点符号
+    public String filterBEPunctuation(String word){
+        while(word.length()>0 && PunctuationUtil.PUNCTUATION.contains(""+word.charAt(0))){
+            word = word.substring(1);
+        }
+        while(word.length()>0 && PunctuationUtil.PUNCTUATION.contains(""+word.charAt(word.length()-1))){
+            word = word.substring(0, word.length()-1);
+        }
+        return word;
+    }
+
+    // 检测并保留评价对象和评价词有效部分
+    public boolean checkValid(Pair<String,String> pair){
+        String target = pair.first;
+        String opinion = pair.second;
+        if(target==null || opinion==null || target.equals("") || opinion.equals(""))
+            return false;
+        target = filterBEPunctuation(target.trim());
+        String oOpinion = opinion.trim();
+        int index = opinion.lastIndexOf('(');
+        if(index != -1)
+            opinion = oOpinion.substring(0, index);
+        index = opinion.indexOf(')');
+        if(index != -1)
+            opinion = opinion.substring(index+1);
+        if(target.length()<2 || opinion.equals("") || SentimentSorter.getSentimentWordType(opinion)==0 || target.endsWith(opinion))
+            return false;
+        pair.first = target;
+        pair.second = oOpinion;
+        return true;
+    }
 
     // 填充评价对象和评价词map, fromSelf:是否情感词取自同一语义成分
     public boolean putTargetAndOpinion(String target, String opinion, Pair<Integer,Integer> range, String verb, boolean fromSelf){
-        target = target.trim();
-        opinion = opinion.trim();
-        if(target==null || target.length()<2 || opinion==null || opinion.equals("") ||
-                SentimentSorter.getSentimentWordType(opinion)==0 || target.endsWith(opinion))
+        Pair<String,String> pair0 = new Pair<>(target, opinion);
+        if(!checkValid(pair0))
             return false;
 
+        target = pair0.first;
+        opinion = pair0.second;
         // 过滤无关评价对象
         for(Pair<String,String> pair : segMap.values()){
             if(pair.second.equals(target)){
@@ -680,7 +714,7 @@ public class LTPTargetExtractor {
         String lastNH = "";
         index = currentSegSentenceOffset+index;
         for(int i : originalNHMap.keySet()){
-            if(i > index)
+            if(i>index && !"".equals(lastNH))
                 break;
             lastNH = originalNHMap.get(i);
         }
@@ -789,7 +823,7 @@ public class LTPTargetExtractor {
 
     // 是否是修饰词
     public static boolean isAdj(String word){
-        if(word.equals("a") || word.equals("i"))
+        if(word.equals("a") || word.equals("i") || word.equals("b"))
             return true;
         return false;
     }
@@ -1189,6 +1223,7 @@ public class LTPTargetExtractor {
                 List<Pair<String,String>> potentialPairList = getPotentialTargetAndOpinion(node.A0, segMap, depTargetExtractor.getDepMap(), this, true, false);
                 int num = 0;
                 boolean isA0Pair = true;
+
                 // 有A0A1或无A0有A1：A0中寻找评价对象，优先A0中寻找评价词，其次是A1
                 while(node.A1!= null){
                     if(node.predication.first > node.A1.first.first){
@@ -1205,9 +1240,13 @@ public class LTPTargetExtractor {
                         }
                     }
                     if(opinion1.get(0).first != 0){
+                        // 判断是否是与人名关联的
+                        Pair<Boolean, Pair<String,Integer>> hnResult = getHN(segMap, node.A1.first, this);
                         for(Pair<String,String> pair : potentialPairList){
-                            if(!pair.first.equals(blackNoun))
-                                putOne |= putTargetAndOpinion(pair.first, opinion1.get(0).second, range, node.predication.second, false);
+                            if(!pair.first.equals(blackNoun)){
+                                if(!hnResult.first || num==1 || pair.first.contains(hnResult.second.first))
+                                    putOne |= putTargetAndOpinion(pair.first, opinion1.get(0).second, range, node.predication.second, false);
+                            }
                         }
                     }else{
                         for(Pair<String,String> pair : potentialPairList){
@@ -1230,11 +1269,16 @@ public class LTPTargetExtractor {
                 if(node.A0 != null){
                     if(node.A1 != null) {
                         List<Pair<String,String>> potentialPairList1 = getPotentialTargetAndOpinion(node.A1, segMap, depTargetExtractor.getDepMap(), this, false, false);
+                        // 判断是否是与人名关联的
+                        Pair<Boolean, Pair<String,Integer>> hnResult = getHN(segMap, node.A1.first, this);
                         for(Pair<String,String> pair : potentialPairList) {
-                            for(Pair<String,String> pair1 : potentialPairList1){
-                                putOne |= putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
+                            if(!hnResult.first || pair.first.contains(hnResult.second.first)){
+                                for(Pair<String,String> pair1 : potentialPairList1){
+                                    putOne |= putTargetAndOpinion(pair.first, pair1.second, range, node.predication.second, false);
+                                }
                             }
                         }
+
                         if(!LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" ") &&  !LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
                             potentialPairList.addAll(potentialPairList1);
                     }
@@ -1419,7 +1463,13 @@ public class LTPTargetExtractor {
             }
             resultMap.removeAll("#");
         }
-        targetPairMap.putAll(resultMap);
+        for(Map.Entry<String,String> entry : resultMap.entries()){
+            Pair<String,String> pair0 = new Pair<>(entry.getKey(), entry.getValue());
+            if(checkValid(pair0))
+                targetPairMap.put(pair0.first, pair0.second);
+            /*else
+                System.out.println(pair0);*/
+        }
     }
 
     // ATT抽取规则
@@ -1514,7 +1564,11 @@ public class LTPTargetExtractor {
             }
                 resultMap.removeAll("#");
         }
-        targetPairMap.putAll(resultMap);
+        for(Map.Entry<String,String> entry : resultMap.entries()){
+            Pair<String,String> pair0 = new Pair<>(entry.getKey(), entry.getValue());
+            if(checkValid(pair0))
+                targetPairMap.put(pair0.first, pair0.second);
+        }
     }
 
     // 通过人称代词寻找指代
