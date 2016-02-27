@@ -129,8 +129,8 @@ public class Aligner {
                         tmpWord = objectSentence.substring(index1+1, index2);
                         tmpLabel = objectSentence.substring(index2+2, index3);
                         // 分词处理
-                        CorpusSegmenter segmenter = new CorpusSegmenter();
-                        String segSentence = segmenter.segmentSentence(alignSentence, true);
+                        //CorpusSegmenter segmenter = new CorpusSegmenter();
+                        //String segSentence = segmenter.segmentSentence(alignSentence, true);
                         // 处理无评价对象的情况
                         /*if("#".equals(tmpWord)){
                             tmpWord = getTargetObjectFormNeighborhood(segSentence);

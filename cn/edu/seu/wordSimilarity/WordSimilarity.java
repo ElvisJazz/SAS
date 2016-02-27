@@ -480,6 +480,6 @@ public class WordSimilarity {
      */
     public static void main(String[] args) throws Exception {
         WordSimilarity ws = new WordSimilarity();
-        System.out.println(ws.simWord("", "人"));
+        System.out.println(ws.simWord("民族英雄", "人"));
     }
 }

@@ -3,6 +3,7 @@ package cn.edu.seu.extractor;
 import cn.edu.seu.SentimentSorter;
 import cn.edu.seu.utils.LexUtil;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import edu.stanford.nlp.util.Pair;
 
 import java.util.*;
@@ -28,18 +29,18 @@ class Node{
 public class TargetExtractor {
 
     // 存储抽取的名词和对应的情感词（可为动词、形容词a,名词性惯用语nl, 名词性语素ng）
-    private HashMultimap<String, String> targetPairMap = HashMultimap.create();
+    private LinkedHashMultimap<String, String> targetPairMap = LinkedHashMultimap.create();
     // 候选名词
-    private Map<Integer, String> potentialNounMap = new HashMap<Integer, String>();
+    private Map<Integer, String> potentialNounMap = new LinkedHashMap<Integer, String>();
     // 候选情感词
-    private HashMap<Integer, String> potentialSentimentMap = new HashMap<Integer, String>();
+    private HashMap<Integer, String> potentialSentimentMap = new LinkedHashMap<Integer, String>();
     // 副词
-    private HashMap<Integer, String> adverbMap = new HashMap<Integer, String>();
+    private HashMap<Integer, String> adverbMap = new LinkedHashMap<Integer, String>();
 
     // 所有词块节点存储
-    private HashMap<Integer, Node> nodeMap = new HashMap<Integer, Node>();
+    private HashMap<Integer, Node> nodeMap = new LinkedHashMap<Integer, Node>();
     // 依存关系存储   rel,head->tail
-    private HashMultimap<String, Pair<Integer,Integer>> depMap = HashMultimap.create();
+    private LinkedHashMultimap<String, Pair<Integer,Integer>> depMap = LinkedHashMultimap.create();
     // 以支配词为键值的依存关系存储
     //private HashMap<Integer, Set<Pair<Integer, String>>> headDepMap = new HashMap();
     // 抽取类型
@@ -57,7 +58,7 @@ public class TargetExtractor {
     }
 
     // 获取依存关系映射
-    public HashMultimap<String, Pair<Integer, Integer>> getDepMap() {
+    public LinkedHashMultimap<String, Pair<Integer, Integer>> getDepMap() {
         return depMap;
     }
 
@@ -215,7 +216,7 @@ public class TargetExtractor {
             String rel = (String)entry.getKey();
             Integer index1 = 0, index2 = 0;
             // 关系是否属于情感关系类型subj, obj, mod, ccomp
-            if(isContainsTargetRel(rel, false)){
+            if(isContainsTargetRel(rel, true)){
                 index1 = ((Pair<Integer, Integer>)entry.getValue()).first;
                 index2 = ((Pair<Integer, Integer>)entry.getValue()).second;
 
@@ -460,7 +461,7 @@ public class TargetExtractor {
     }
 
     // 分析并提取出目标元组，输出
-    public HashMultimap<String, String> extract(){
+    public LinkedHashMultimap<String, String> extract(){
         extractByRootRule();
         extractByDirectRule();
         extractByIndirectRule();

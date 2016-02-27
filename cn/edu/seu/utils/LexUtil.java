@@ -9,9 +9,11 @@ package cn.edu.seu.utils;
  */
 public class LexUtil {
     // 特殊名词
-    public static String SPECIAL_NOUN = " nh ni nl ns nz n ";
+    public static String SPECIAL_NOUN_LTP = " nh ni nl ns nz n ";
+    public static String SPECIAL_NOUN_STF = " n nr1 nr2 nrj nrf nsf nt nz ";
     // 人称名词
-    public static String HUMAN_NOUN = " nh ";
+    public static String HUMAN_NOUN_LTP = " nh ";
+    public static String HUMAN_NOUN_STF = " nr1 nr2 nrj nrf ";
     // 特别处理的人称代词
     public static String HUMAN_PRONOUN  = " 你 妳 他 她 你们 妳们 他们 她们 ";
 
@@ -39,7 +41,7 @@ public class LexUtil {
     // 副词消弱标记
     public final static String[] WEAK_ADV = {}; // 只是 “仅仅，不过，而已”
     // 否定词
-    public final static String[] NOT_SET = {"不", "非", "无","没", "不多", "不大", "不太", "否认", "无法", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得", "没有", "没什么"};
+    public final static String[] NOT_SET = {"不", "非", "无", "没", "反", "不多", "不大", "不太", "否认", "无法", "毫无", "缺乏", "减轻", "减缓", "减慢", "减少", "缓解","缓减","缓轻","遏制","阻止","不可","不能","不得", "没有", "没什么"};
     // 否定词白名单
     public final static String[] NOT_WHITE_SET = {"不论", "不得不", "不过", "不可不", "非常",  "无非", "无论","没准","不少"};
     // A0作为评价对象的关联性普通动词

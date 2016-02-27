@@ -1,6 +1,7 @@
 package cn.edu.seu.extractor;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 
 import java.io.*;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class CorpusExtractor {
 
             String phraseSentence="", depSentence="";
             int i = 0;
-            HashMap<Integer, HashMultimap<String, String>> outputMap = new HashMap();
+            HashMap<Integer, LinkedHashMultimap<String, String>> outputMap = new HashMap();
             while((phraseSentence=bufferPhraseReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null){
                 // 分别读取词组句子和关系句子，输出目标元组（评价对象，情感词）
                 TargetExtractor extractor = new TargetExtractor();

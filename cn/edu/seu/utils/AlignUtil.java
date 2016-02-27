@@ -4,6 +4,7 @@ import cn.edu.seu.CorpusSegmenter;
 import cn.edu.seu.DependencyParser;
 import cn.edu.seu.ltp_extractor.LTPTargetExtractor;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import edu.stanford.nlp.util.Pair;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class AlignUtil {
                 segMap.put(ii, new Pair<>(tags.get(ii),words.get(ii)));
                 ii++;
             }
-            HashMultimap<String, Pair<Integer,Integer>> depMap = dependencyParser.getDependencyUseLTP(words, tags);
+            LinkedHashMultimap<String, Pair<Integer,Integer>> depMap = dependencyParser.getDependencyUseLTP(words, tags);
             Pair<Pair<Integer, Integer>,String> pair = new Pair<>(new Pair<>(0, words.size()-1), sentence);
             list = LTPTargetExtractor.getPotentialTargetAndOpinion(pair, segMap, depMap, null, false, true);
             if(isLastPart || !"".equals(list.get(0).first))

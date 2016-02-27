@@ -23,8 +23,8 @@ public class testLTP {
         CorpusPreHandler cph = new CorpusPreHandler();
         //cph.init("corpus//dic//sentimentFilterDic.txt");
         System.out.println("输入：1.预处理标注语料; 2.预处理评测语料对齐; 3.预处理评估语料对齐; 4~:下一步; 5:run in all; 6:just run all sentiment extract" );
-        while(cin.hasNext()){
-            int a = cin.nextInt();
+        while(true/*cin.hasNext()*/){
+            int a = 6;//cin.nextInt();
             if(a == 1) {
                 cph.handleAllOriginalCorpus("corpus//1_originalCorpus", "corpus//2_preprocessCorpus", "corpus//2_preprocessTopicCorpus", false, false);  // 预处理标注语料
                 //break;

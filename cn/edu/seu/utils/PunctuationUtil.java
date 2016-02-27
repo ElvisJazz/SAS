@@ -9,9 +9,9 @@ package cn.edu.seu.utils;
  */
 public class PunctuationUtil {
     // 标点符号
-    public static String PUNCTUATION = "$% ,，、.。;；:!！?？-—_=+<>（）(){}|\\/*&^'\"”“’‘@#";
+    public static String PUNCTUATION = "…$% ,，、.。;；:!！?？-—_=+<>（）(){}|\\/*&^'\"”“’‘@#";
     // 一般句末标点符号
-    public static String END_PUNCTUATION = ",，.。；;!！?？~";
+    public static String END_PUNCTUATION = ",，.。；;!！?？~…";
     // 陈述标点符号
     public static String STATEMENT_PUNCTUATION = ":,：，—";
 }

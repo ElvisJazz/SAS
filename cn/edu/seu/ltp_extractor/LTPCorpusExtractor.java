@@ -1,9 +1,11 @@
 package cn.edu.seu.ltp_extractor;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,7 +71,7 @@ public class LTPCorpusExtractor {
             String segSentence="", depSentence="", srSentence="";
             String segTopicSentence="", depTopicSentence="", srTopicSentence="", originalSentence="";
             int i = 0;
-            HashMap<Integer, HashMultimap<String, String>> outputMap = new HashMap();
+            HashMap<Integer, LinkedHashMultimap<String, String>> outputMap = new HashMap();
             while((segSentence=bufferSegReader.readLine())!=null && (depSentence = bufferDepReader.readLine())!=null && (srSentence = bufferSrReader.readLine())!=null && (originalSentence=bufferOriginalReader.readLine())!=null
                     && (segTopicSentence=bufferSegTopicReader.readLine())!=null && (depTopicSentence = bufferDepTopicReader.readLine())!=null && (srTopicSentence = bufferSrTopicReader.readLine())!=null){
                 // 分别读取分词（包括了命名实体识别）、依存关系、语义角色文件，输出目标元组（评价对象，情感词）
@@ -81,11 +83,11 @@ public class LTPCorpusExtractor {
                 i++;
             }
             // 输出名词-情感词关系对，以空格隔开
-            HashMultimap<String, String> subMap = null;
+            LinkedHashMultimap<String, String> subMap = null;
             String opinion, mark;
             int index1, index2;
-            for(HashMap.Entry entry : outputMap.entrySet()){
-                subMap = (HashMultimap<String, String>)entry.getValue();
+            for(Map.Entry entry : outputMap.entrySet()){
+                subMap = (LinkedHashMultimap<String, String>)entry.getValue();
                 // 输出每句的关系对
                 for(HashMap.Entry<String,String> entry1 : subMap.entries()){
                     opinion = entry1.getValue();
