@@ -1,5 +1,7 @@
 package cn.edu.seu;
 
+import cn.edu.seu.utils.AlignUtil;
+import cn.edu.seu.utils.LexUtil;
 import cn.edu.seu.utils.PunctuationUtil;
 import edu.hit.ir.ltp4j.Pair;
 import org.dom4j.Document;
@@ -161,6 +163,11 @@ public class CorpusPreHandler {
                             // 处理句子中的.
                             sentence = sentence.replaceAll("\\.","，");
 
+                            // 过滤非否定词白名单
+                            for(String whiteWord : LexUtil.FILTER_WHITE_SET){
+                                sentence = sentence.replaceAll(whiteWord, "");
+                            }
+
                             // 寻找句子中的主题
                             if(topicWriter != null){
                                 Pair<String, String> result = getTopicAndContent(sentence, hashtag, false);
@@ -175,6 +182,10 @@ public class CorpusPreHandler {
 
                             // 处理正文空格前后均无标点的情况
                             sentence = handleSpaceInSentence(sentence);
+
+                            // 为情感后指词添加主语（若无）
+                            if(!isAlignFile)
+                                sentence = addSubject(sentence);
 
                             if(alignOffsetWriter != null && "Y".equals(opinionated))
                                 alignOffsetWriter.write(offset+"\n");
@@ -234,6 +245,23 @@ public class CorpusPreHandler {
         }
     }
 
+    // 为情感后指词添加主语
+    public String addSubject(String sentence){
+        AlignUtil.init();
+        String segSentence = AlignUtil.segmenter.segmentSentence(sentence, false);
+        String trunks[] = segSentence.split(" ");
+        StringBuilder result = new StringBuilder();
+        if(Math.abs(SentimentSorter.getSentimentWordType(trunks[0])) == 2)
+            result.append("我");
+        result.append(trunks[0]);
+        for(int i=1; i<trunks.length; i++){
+            if(PunctuationUtil.PUNCTUATION.contains(trunks[i-1]) && Math.abs(SentimentSorter.getSentimentWordType(trunks[i])) == 2)
+                result.append("我");
+            result.append(trunks[i]);
+        }
+        return result.toString();
+    }
+
     // 获取句子中的主题和正文
     /*1）《XXX》在句首（其前可含其他符号）或句末（其后可含其他符号）出现，与正文以空格分开。
       2）【XXX】在句首出现
@@ -254,11 +282,17 @@ public class CorpusPreHandler {
                 } else
                     break;
             }
-            if(isDeleteTopic)
-                sentence = sentence.replaceAll("#.*#", "").trim();
+            if(isDeleteTopic){
+                String tmp = sentence.replaceFirst("#.*#", "").trim();
+                if(!"".equals(tmp))
+                    sentence = tmp;
+            }
 
             sentence = sentence.replaceFirst("#", "").trim();
-            sentence = sentence.replaceFirst("#", ",").trim();
+            if(sentence.contains("# "))
+                sentence = sentence.replaceFirst("# ", ",").trim();
+            else
+                sentence = sentence.replaceFirst("#", ",").trim();
             sentence = sentence.replaceAll("#", "").trim();
 
         }

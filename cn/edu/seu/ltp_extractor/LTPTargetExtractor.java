@@ -43,8 +43,8 @@ public class LTPTargetExtractor {
         public int beg;
         public int end;
     }
-/*
-    public static CorpusSegmenter segmenter = new CorpusSegmenter();*/
+    /*
+        public static CorpusSegmenter segmenter = new CorpusSegmenter();*/
     // 主题相关句子缓存
     private String segTopicSentence;
     private String depTopicSentence;
@@ -417,8 +417,9 @@ public class LTPTargetExtractor {
         index = opinion.indexOf(')');
         if(index != -1)
             opinion = opinion.substring(index+1);
+        int targetIndex = findIndexFromSeg(segMap, 0, target, false);
         if(target.length()<2 || opinion.equals("") || SentimentSorter.getSentimentWordType(opinion)==0
-                || SentimentSorter.getSentimentWordType(target)!=0 || target.endsWith(opinion))
+                || (targetIndex!=-1 && SentimentSorter.getSentimentWordType(target)!=0 && !segMap.get(targetIndex).first.contains("n")) || target.endsWith(opinion))
             return false;
         pair.first = target;
         pair.second = oOpinion;
@@ -758,7 +759,7 @@ public class LTPTargetExtractor {
             else
                 break;
         }
-        for(int i=index; i<segMap.size(); i++){
+        for(int i=index+1; i<segMap.size(); i++){
             if(segMap.get(i).first.startsWith("n"))
                 s += segMap.get(i).second;
             else
@@ -768,10 +769,10 @@ public class LTPTargetExtractor {
     }
 
     // 指代及隐性搜索，寻找上一个
-    public static String getReferenceWord(int index, LTPTargetExtractor extractor, boolean isUseLastTarget){
+    public static String getReferenceWord(int index, LTPTargetExtractor extractor, boolean isUseLastTarget, boolean isFindR){
         String lastSubject = "";
         // 本句代词邻近搜索
-        if(index>0 && !(lastSubject=extractor.getContinurousNoun(index - 1)).equals(""))
+        if(isFindR && index>0 && !(lastSubject=extractor.getContinurousNoun(index - 1)).equals(""))
             return lastSubject;
         // 从本句的本段中找
         if("".equals(lastSubject)){
@@ -862,7 +863,7 @@ public class LTPTargetExtractor {
 
     // 从某一成分中抽出潜在评价对象和评价词
     public static List<Pair<String,String>> getPotentialTargetAndOpinion(Pair<Pair<Integer,Integer>,String> nodeAPair,
-            Map<Integer, Pair<String,String>> tmpSegMap, LinkedHashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor, boolean isA0, boolean canBeEmpty){
+        Map<Integer, Pair<String,String>> tmpSegMap, LinkedHashMultimap<String, Pair<Integer,Integer>> depMap, LTPTargetExtractor extractor, boolean isA0, boolean canBeEmpty){
         boolean isFindSBV = false;
         hasChanged = true;
         // 若A0为空，优先寻找谓词最近的SBV主语部分
@@ -910,7 +911,7 @@ public class LTPTargetExtractor {
         if(extractor!=null && block.length()<=2 && LexUtil.HUMAN_PRONOUN.contains(" "+block+" "))
             list.add(new Pair<>(extractor.getNeighborNH(start), ""));
         if(/*(list.size()==0 || list.get(0).first.equals("")) && */extractor!=null && (block=="" || (block.length()==1 && (tmpSegMap.get(start).first.equals("r") || tmpSegMap.get(start).first.equals("m"))))){
-            String target = getReferenceWord(start, extractor, true);
+            String target = getReferenceWord(start, extractor, true, true);
             if(!"".equals(target))
                 list.add(new Pair<>(target, ""));
         }
@@ -1117,15 +1118,17 @@ public class LTPTargetExtractor {
         // 是否有人名
         boolean hasHN = false;
         String target = "";
-        double sim1 = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
-        //double sim2 = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "品德");
-        if(tmpSegMap.get(pair.first).first.equals("nh") && sim1>0.7/* && sim1>sim2*/)
+        boolean isHuman = SentimentSorter.WS.isHuman(tmpSegMap.get(pair.second).second);
+        double sim = SentimentSorter.WS.simWord(tmpSegMap.get(pair.second).second, "人");
+        if(tmpSegMap.get(pair.first).first.equals("nh") &&  sim>0.7 && isHuman)
             hasHN = true;
-        else if(extractor!=null &&  sim1>0.7/* && sim1>sim2*/){
+        else if(extractor!=null &&  sim>0.7 && isHuman){
             hasHN = true;
             target = extractor.getNeighborNH(pair.second);
-            if(!"".equals(target))
+            if(!"".equals(target)) {
+                System.err.println(extractor.currentSentence+" "+tmpSegMap.get(pair.second).second+" "+target);
                 return new Pair<>(hasHN, new Pair<>(target, -1));
+            }
         }
         // 生成评价对象
         int j=pair.first;
@@ -1295,7 +1298,7 @@ public class LTPTargetExtractor {
                         }
                     }
                     if(putOne || num==1 || (node.A0!=null && LexUtil.HUMAN_PRONOUN.contains(" "+node.A0.second+" "))
-                        || LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
+                            || LexUtil.RELATE_COMMON_VERB.contains(" "+node.predication+" "))
                         break;
                     else{
                         potentialPairList.clear();
@@ -1490,7 +1493,7 @@ public class LTPTargetExtractor {
             int wordIndex = findIndexFromSeg(segMap, 0, opinion, false);
             this.curNode = new SRNode();
             this.curNode.beg = this.curNode.end = wordIndex;
-            String target = getReferenceWord(wordIndex, this, false);
+            String target = getReferenceWord(wordIndex, this, false, false);
             /*if("".equals(target)){
                 if(topic == null){
                     getTopicTarget();
@@ -1591,7 +1594,7 @@ public class LTPTargetExtractor {
             int wordIndex = findIndexFromSeg(segMap, 0, opinion, false);
             this.curNode = new SRNode();
             this.curNode.beg = this.curNode.end = wordIndex;
-            String target = getReferenceWord(wordIndex, this, false);
+            String target = getReferenceWord(wordIndex, this, false, false);
             /*if("".equals(target)){
                 if(topic == null){
                     getTopicTarget();
@@ -1602,7 +1605,7 @@ public class LTPTargetExtractor {
                 Set<String> values = resultMap.get("#");
                 resultMap.putAll(target, values);
             }
-                resultMap.removeAll("#");
+            resultMap.removeAll("#");
         }
         for(Map.Entry<String,String> entry : resultMap.entries()){
             Pair<String,String> pair0 = new Pair<>(entry.getKey(), entry.getValue());

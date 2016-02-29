@@ -475,11 +475,23 @@ public class WordSimilarity {
         }
     }
 
+    public boolean  isHuman(String word){
+        if (this.ALLWORDS.containsKey(word)) {
+            List<Word> list = this.ALLWORDS.get(word);
+            for(Word w : list){
+                if (!w.isStructruralWord() && w.getFirstPrimitive().equals("人")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     /**
      * @param args
      */
     public static void main(String[] args) throws Exception {
-        WordSimilarity ws = new WordSimilarity();
-        System.out.println(ws.simWord("民族英雄", "人"));
+        WordSimilarity ws = new WordSimilarity();/*
+        System.out.println(ws.simWord("英雄", "人"));*/
+        System.out.println(ws.isHuman("英雄"));
     }
 }

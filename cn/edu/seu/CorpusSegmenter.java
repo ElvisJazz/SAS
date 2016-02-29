@@ -21,6 +21,7 @@ public class CorpusSegmenter {
     public boolean useLTPSeg = false;
     public boolean useLTPPos = false;
 
+    public static boolean isInitCLIB = false;
     // 定义接口CLibrary，继承自com.sun.jna.Library
     public interface CLibrary extends Library{
         CLibrary Instance = (CLibrary) Native.loadLibrary("NLPIR", CLibrary.class);
@@ -63,6 +64,8 @@ public class CorpusSegmenter {
                     System.err.println("初始化失败！");
                     return false;
                 }
+
+                isInitCLIB = true;
             }catch (Exception e) {
                 e.printStackTrace();
                 return false;
@@ -205,8 +208,9 @@ public class CorpusSegmenter {
     // 分词
     public String segmentSentence(String sentence, boolean isPos){
         try {
+            if(!isInitCLIB){
                 String argu = "";
-                String system_charset = "GBK";
+                String system_charset = "UTF-8";
                 int charset_type = 1;
                 int init_flag = 0;
                 init_flag = CLibrary.Instance.NLPIR_Init(argu.getBytes(system_charset), charset_type, "0".getBytes(system_charset));
@@ -215,12 +219,15 @@ public class CorpusSegmenter {
                     System.err.println("初始化失败！");
                     return null;
                 }
-
+                isInitCLIB = true;
+            }
                 String nativeBytes = null;
                 if(isPos)
                     nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sentence, 1);
-                else
+                else {
+                    //System.out.println(sentence);
                     nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sentence, 0);
+                }
 
                return nativeBytes;
         }catch (Exception e) {

@@ -22,17 +22,25 @@ import java.util.Map;
 public class AlignUtil {
     public static CorpusSegmenter segmenter = new CorpusSegmenter();
     public static DependencyParser dependencyParser = new DependencyParser();
+    public static boolean isInit = false;
+    public static boolean isDestroy = false;
 
     public static void init(){
-        segmenter.useLTPPos = segmenter.useLTPSeg = true;
-        segmenter.init("corpus//dic//scoreFilterDic.txt");
-        //dependencyParser.useLTPDep = true;
-        //dependencyParser.init();
+        if(!isInit){
+            segmenter.useLTPPos = segmenter.useLTPSeg = true;
+            segmenter.init("corpus//dic//scoreFilterDic.txt");
+            isInit = true;
+            //dependencyParser.useLTPDep = true;
+            //dependencyParser.init();
+        }
     }
 
     public static void destroy(){
-        segmenter.destroy();
-        //dependencyParser.destroy();
+        if(!isDestroy){
+            segmenter.destroy();
+            isDestroy = true;
+            //dependencyParser.destroy();
+        }
     }
 
     public static String getNeighborTarget(String sentence, int index, int length){
