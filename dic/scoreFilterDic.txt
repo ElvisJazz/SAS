@@ -1,0 +1,69 @@
+axb 据 报道
+axb 据 分析
+axb 据 判断
+axb 据 推测
+axb 据 猜测
+axb 据 爆料
+axb 据 来看
+axb 就 分析
+axb 就 判断
+axb 就 推测
+axb 就 猜测
+axb 就 而言
+axb 就 来说
+axb 就 来看 
+axb 从 来看
+axb 从 来说
+axb 当 时候
+axb 当 时
+
+sta 说
+sta 说道
+sta 猜测
+sta 推测
+sta 爆料
+sta 判断
+sta 报道
+sta 猜
+sta 可想而知
+sta 知道
+sta 信
+sta 相信
+sta 点评
+sta 评论
+sta 认为
+sta 以为
+sta 看来
+sta 想
+sta 想想
+sta 看看
+sta 说明
+sta 表明
+sta 证明
+sta 明白
+sta 表示
+sta 感觉
+sta 觉得
+sta 深知
+sta 估计
+sta 显露出
+sta 显露了
+sta 显示出
+sta 显示了
+sta 反映了
+sta 反映出
+sta 称
+sta 据说
+sta 发现
+sta 看到
+sta 坚信	
+sta 听说	
+sta 想不到	
+sta 感到	
+sta 深感	
+sta 承认
+sta 真不知
+sta 真不知道
+sta 觉着
+sta 赶角
+sta 赶脚

@@ -418,7 +418,7 @@ public class LTPTargetExtractor {
         if(index != -1)
             opinion = opinion.substring(index+1);
         int targetIndex = findIndexFromSeg(segMap, 0, target, false);
-        if(target.length()<2 || opinion.equals("") || SentimentSorter.getSentimentWordType(opinion)==0
+        if((target.length()<2 && (targetIndex==-1 || !segMap.get(targetIndex).first.startsWith("n"))) || opinion.equals("") || SentimentSorter.getSentimentWordType(opinion)==0
                 || (targetIndex!=-1 && SentimentSorter.getSentimentWordType(target)!=0 && !segMap.get(targetIndex).first.contains("n")) || target.endsWith(opinion))
             return false;
         pair.first = target;
@@ -788,7 +788,8 @@ public class LTPTargetExtractor {
             startIndex = i;
             if(startIndex<=index-1 && !"".equals(tmp)){
                 Pair<Pair<Integer,Integer>,String> nodeAPair = new Pair<>(new Pair<>(startIndex+1, index-1), tmp);
-                lastSubject = getPotentialTargetAndOpinion(nodeAPair, extractor.segMap, extractor.depTargetExtractor.getDepMap(), extractor, false, false).get(0).first;
+                List<Pair<String,String>> list = getPotentialTargetAndOpinion(nodeAPair, extractor.segMap, extractor.depTargetExtractor.getDepMap(), extractor, false, false);
+                lastSubject = list.get(0).first;
                 if(!hasChanged)
                     lastSubject = "";
             }
@@ -1126,7 +1127,7 @@ public class LTPTargetExtractor {
             hasHN = true;
             target = extractor.getNeighborNH(pair.second);
             if(!"".equals(target)) {
-                System.err.println(extractor.currentSentence+" "+tmpSegMap.get(pair.second).second+" "+target);
+                //System.err.println(extractor.currentSentence+" "+tmpSegMap.get(pair.second).second+" "+target);
                 return new Pair<>(hasHN, new Pair<>(target, -1));
             }
         }
